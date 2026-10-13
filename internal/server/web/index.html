@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalendarz WAT</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="top-bar">
+        <div class="control-group">
+            <label for="planSelector">Grupa:</label>
+            <select id="planSelector"></select>
+        </div>
+
+        <div class="control-group">
+            <label for="weekSelector">Tydzień:</label>
+            <select id="weekSelector"></select>
+        </div>
+
+        <button id="refreshButton" type="button">Odśwież z serwera</button>
+
+        <div class="status">
+            Pobrano: <b id="fetched">-</b><br>
+            Ostatnia modyfikacja: <b id="modified">-</b>
+            <div id="notice" class="notice" role="status"></div>
+        </div>
+    </div>
+
+    <div class="calendar-container">
+        <div class="calendar-grid" id="calendar-grid"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

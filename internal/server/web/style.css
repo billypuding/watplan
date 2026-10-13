@@ -1,0 +1,155 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f6f9;
+}
+
+.top-bar {
+    background-color: #fff;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+select,
+button {
+    padding: 8px 12px;
+    font-size: 15px;
+    border-radius: 6px;
+    border: 1px solid #ccd0d5;
+    outline: none;
+}
+
+button {
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+button:hover {
+    background-color: #0b5ed7;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.status {
+    font-size: 13px;
+    color: #6c757d;
+    margin-left: auto;
+    text-align: right;
+}
+
+.notice {
+    min-height: 1.2em;
+    color: #198754;
+}
+
+.notice.error {
+    color: #dc3545;
+}
+
+.calendar-container {
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    overflow-x: auto;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: 90px repeat(var(--days, 7), minmax(120px, 1fr));
+    grid-template-rows: auto repeat(7, minmax(75px, auto));
+    gap: 1px;
+}
+
+.grid-message {
+    grid-column: 1 / -1;
+    padding: 20px;
+    text-align: center;
+    background-color: #ffffff;
+}
+
+.grid-message.error {
+    color: #dc3545;
+}
+
+.cell-bg {
+    background-color: #ffffff;
+}
+
+.header-cell {
+    background-color: #f8fafc;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #334155;
+}
+
+.header-cell small {
+    display: block;
+    font-weight: normal;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.time-cell {
+    background-color: #f8fafc;
+    padding: 10px 5px;
+    text-align: center;
+    font-size: 13px;
+    color: #475569;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.event-card {
+    margin: 4px;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.event-subject {
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.event-type {
+    display: inline-block;
+    padding: 2px 6px;
+    background: rgba(128, 128, 128, 0.35);
+    border-radius: 10px;
+    width: fit-content;
+    font-size: 11px;
+}
+
+.event-teacher {
+    font-style: italic;
+}

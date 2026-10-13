@@ -1,0 +1,4 @@
+data/
+*.tmp
+watplan
+.DS_Store
