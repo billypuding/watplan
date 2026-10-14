@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"net/http/cookiejar"
+	"net/url"
+	"os"
 	"time"
 
 	"golang.org/x/net/html/charset"
@@ -17,14 +19,26 @@ const (
 	userAgent    = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 )
 
-func FetchHTML(url string) ([]byte, error) {
+func FetchHTML(targetUrl string) ([]byte, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
 	}
-	client := http.Client{Timeout: fetchTimeout, Jar: jar}
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	client := http.Client{
+		Timeout: fetchTimeout,
+		Jar:     jar,
+	}
+
+	if proxyStr := os.Getenv("PLANWAT_PROXY"); proxyStr != "" {
+		if proxyURL, err := url.Parse(proxyStr); err == nil {
+			client.Transport = &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			}
+		}
+	}
+
+	req, err := http.NewRequest(http.MethodGet, targetUrl, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +56,7 @@ func FetchHTML(url string) ([]byte, error) {
 		snippet, _ := io.ReadAll(io.LimitReader(resp.Body, 500))
 		log.Printf(
 			"fetch %s: status=%d server=%q content-type=%q body=%q",
-			url, resp.StatusCode,
+			targetUrl, resp.StatusCode,
 			resp.Header.Get("Server"),
 			resp.Header.Get("Content-Type"),
 			snippet,
