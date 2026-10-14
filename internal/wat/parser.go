@@ -355,10 +355,10 @@ func parseCellFields(cell Cell, subjects, teachers map[string]string) (model.Eve
 			if name, ok := matchTeacher(field, teachers); ok {
 				event.Teacher = name
 			} else {
-				html, _ := cell.Node.Html()
+
 				log.Printf(
-					"parser: nierozpoznane pole %q (wiersz %d, kolumna %d), komórka=%q, HTML=%s",
-					field, cell.Row, cell.Col, cell.Text, html,
+					"parser: nierozpoznane pole %q (wiersz %d, kolumna %d), komórka=%q",
+					field, cell.Row, cell.Col, cell.Text,
 				)
 			}
 		}
