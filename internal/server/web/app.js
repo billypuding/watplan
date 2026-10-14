@@ -9,7 +9,8 @@ const WORKDAYS = 5;
 const WEEKDAYS = 7;
 const NOTICE_MS = 6000;
 
-const planSelector = document.getElementById('planSelector');
+const planSearch = document.getElementById('planSearch');
+const searchResults = document.getElementById('searchResults');
 const weekSelector = document.getElementById('weekSelector');
 const prevWeekBtn = document.getElementById('prevWeekBtn');
 const nextWeekBtn = document.getElementById('nextWeekBtn');
@@ -23,6 +24,8 @@ const notice = document.getElementById('notice');
 let eventsByWeek = {};
 let loadCounter = 0;
 let noticeTimer = null;
+let allPlans = [];
+let currentPlanId = '';
 
 let currentTheme = localStorage.getItem('theme') || 'dark';
 document.documentElement.setAttribute('data-theme', currentTheme);
@@ -86,32 +89,90 @@ async function fetchJSON(url, options) {
 
 async function loadPlans() {
     try {
-        const plans = await fetchJSON('/api/plans');
-        planSelector.replaceChildren(...plans.map(p => new Option(p.name, p.id)));
-
+        allPlans = await fetchJSON('/api/plans');
+        
         const urlParams = new URLSearchParams(window.location.search);
         const planFromUrl = urlParams.get('plan');
         const planFromStorage = localStorage.getItem('selectedPlan');
         const targetPlan = planFromUrl || planFromStorage;
 
-        if (targetPlan && Array.from(planSelector.options).some(opt => opt.value === targetPlan)) {
-            planSelector.value = targetPlan;
+        if (targetPlan) {
+            const found = allPlans.find(p => p.id === targetPlan);
+            if (found) {
+                currentPlanId = found.id;
+                planSearch.value = found.name;
+                localStorage.setItem('selectedPlan', currentPlanId);
+            }
         }
 
-        localStorage.setItem('selectedPlan', planSelector.value);
-
-        await loadPlan();
+        if (currentPlanId) {
+            await loadPlan();
+        } else {
+            showGridMessage('Wyszukaj i wybierz grupę, aby wyświetlić plan', false);
+        }
     } catch (err) {
         showGridMessage(err.message, true);
     }
 }
 
+planSearch.addEventListener('input', () => {
+    const query = planSearch.value.toLowerCase();
+    searchResults.innerHTML = '';
+    
+    if (query.length === 0) {
+        searchResults.classList.add('hidden');
+        return;
+    }
+
+    const filtered = allPlans.filter(p => 
+        p.name.toLowerCase().includes(query) || p.id.toLowerCase().includes(query)
+    );
+
+    if (filtered.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'search-result-item';
+        div.textContent = 'Brak wyników...';
+        searchResults.appendChild(div);
+    } else {
+        filtered.forEach(plan => {
+            const div = document.createElement('div');
+            div.className = 'search-result-item';
+            div.textContent = plan.name;
+            div.addEventListener('click', () => selectPlan(plan.id, plan.name));
+            searchResults.appendChild(div);
+        });
+    }
+    
+    searchResults.classList.remove('hidden');
+});
+
+document.addEventListener('click', (e) => {
+    if (!planSearch.contains(e.target) && !searchResults.contains(e.target)) {
+        searchResults.classList.add('hidden');
+    }
+});
+
+function selectPlan(id, name) {
+    currentPlanId = id;
+    planSearch.value = name;
+    searchResults.classList.add('hidden');
+    
+    localStorage.setItem('selectedPlan', currentPlanId);
+    
+    const url = new URL(window.location);
+    url.searchParams.set('plan', currentPlanId);
+    window.history.replaceState({}, '', url);
+
+    loadPlan();
+}
+
 async function loadPlan() {
+    if (!currentPlanId) return;
     const requestId = ++loadCounter;
     showGridMessage('Ładowanie...', false);
 
     try {
-        const data = await fetchJSON('/api/plan/' + encodeURIComponent(planSelector.value));
+        const data = await fetchJSON('/api/plan/' + encodeURIComponent(currentPlanId));
         if (requestId !== loadCounter) return;
 
         fetchedLabel.textContent = data.fetched_at || 'Brak';
@@ -245,6 +306,7 @@ function createEventCard(event) {
 }
 
 async function refreshServer() {
+    if (!currentPlanId) return;
     refreshButton.textContent = 'Odświeżanie...';
     refreshButton.disabled = true;
 
@@ -269,16 +331,6 @@ themeToggle.addEventListener('click', () => {
     document.documentElement.setAttribute('data-theme', currentTheme);
     localStorage.setItem('theme', currentTheme);
     updateThemeIcon();
-});
-
-planSelector.addEventListener('change', () => {
-    localStorage.setItem('selectedPlan', planSelector.value);
-    
-    const url = new URL(window.location);
-    url.searchParams.set('plan', planSelector.value);
-    window.history.replaceState({}, '', url);
-
-    loadPlan();
 });
 
 weekSelector.addEventListener('change', renderSelectedWeek);

@@ -9,9 +9,12 @@
 <body>
     <div class="top-bar">
         <div class="controls-wrapper">
-            <div class="control-group">
-                <label for="planSelector">Grupa:</label>
-                <select id="planSelector"></select>
+            <div class="control-group search-group">
+                <label for="planSearch">Grupa:</label>
+                <div class="search-container">
+                    <input type="text" id="planSearch" placeholder="Szukaj (np. WEL...)" autocomplete="off">
+                    <div id="searchResults" class="search-results hidden"></div>
+                </div>
             </div>
 
             <div class="control-group week-nav">
@@ -40,10 +43,10 @@
         <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 
-    <script src="app.js"></script>
     <footer class="app-footer">
-        Made by: <a href="https://github.com/billypuding/watplan" target="_blank" rel="noopener noreferrer">billypuding</a>
+        Made by: <a href="https://github.com/billypuding/planwat" target="_blank" rel="noopener noreferrer">billypuding</a>
     </footer>
+
     <script src="app.js"></script>
 </body>
 </html>

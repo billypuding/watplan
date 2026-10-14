@@ -1,14 +1,200 @@
 [
   {
-    "id": "WMT26AX3S1",
-    "name": "WMT26AX3S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AX3S1.htm",
+    "id": "WMT26AE2S6",
+    "name": "WMT26AE2S6",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AE2S6.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AV1S0",
+    "name": "WMT26AV1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AV1S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AV2S0",
+    "name": "WMT26AV2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AV2S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AW1S0",
+    "name": "WMT26AW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW1S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AW2S0",
+    "name": "WMT26AW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW2S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AW3S0",
+    "name": "WMT26AW3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW3S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AW4S0",
+    "name": "WMT26AW4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW4S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AW5S0",
+    "name": "WMT26AW5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW5S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AW6S0",
+    "name": "WMT26AW6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW6S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AW7S0",
+    "name": "WMT26AW7S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW7S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AW8S0",
+    "name": "WMT26AW8S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW8S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AW9S0",
+    "name": "WMT26AW9S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW9S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AX1S1",
+    "name": "WMT26AX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AX1S1.htm",
     "start_year": 2026
   },
   {
     "id": "WMT26AX2S1",
     "name": "WMT26AX2S1",
     "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AX2S1.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AX3S1",
+    "name": "WMT26AX3S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AX3S1.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26AY1S1",
+    "name": "WMT26AY1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AY1S1.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26IX1S1",
+    "name": "WMT26IX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26IX1S1.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26IX2S1",
+    "name": "WMT26IX2S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26IX2S1.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26LW1S0",
+    "name": "WMT26LW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW1S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26LW2S0",
+    "name": "WMT26LW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW2S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26LW3S0",
+    "name": "WMT26LW3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW3S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26LW4S0",
+    "name": "WMT26LW4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW4S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26LW5S0",
+    "name": "WMT26LW5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW5S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26LW6S0",
+    "name": "WMT26LW6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW6S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26LW7S0",
+    "name": "WMT26LW7S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW7S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26LW8S0",
+    "name": "WMT26LW8S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW8S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26LX1S1",
+    "name": "WMT26LX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LX1S1.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26LX2S1",
+    "name": "WMT26LX2S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LX2S1.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26LX3S1",
+    "name": "WMT26LX3S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LX3S1.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26LY1S1",
+    "name": "WMT26LY1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LY1S1.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26SW1S0",
+    "name": "WMT26SW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26SW1S0.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26SX1S1",
+    "name": "WMT26SX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26SX1S1.htm",
+    "start_year": 2026
+  },
+  {
+    "id": "WMT26SX2S1",
+    "name": "WMT26SX2S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26SX2S1.htm",
     "start_year": 2026
   },
   {

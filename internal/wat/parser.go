@@ -3,7 +3,6 @@ package wat
 import (
 	"fmt"
 	"io"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -338,6 +337,8 @@ func parseCellFields(cell Cell, subjects, teachers map[string]string) (model.Eve
 	color, _ := cell.Node.Attr("bgcolor")
 	event := model.Event{Color: strings.ToUpper(color)}
 
+	var firstUnknown string
+
 	cell.Node.Find("font").Each(func(_ int, s *goquery.Selection) {
 		field := strings.TrimSpace(s.Text())
 		if field == "" {
@@ -355,22 +356,36 @@ func parseCellFields(cell Cell, subjects, teachers map[string]string) (model.Eve
 			} else {
 				event.Room = normalizeRoom(field)
 			}
+		case field == "E" || field == "Ep":
+			if event.Type != "" {
+				event.Type += " (" + field + ")"
+			} else {
+				event.Type = "Egzamin"
+			}
 		default:
 			if name, ok := matchTeacher(field, teachers); ok {
 				event.Teacher = name
 			} else {
-				if len(field) > 40 {
-					log.Printf("parser: zignorowano długi komunikat: %q...", field[:40])
-				} else {
-					log.Printf("parser: nierozpoznane pole %q (wiersz %d, kolumna %d)", field, cell.Row, cell.Col)
+				if firstUnknown == "" {
+					firstUnknown = field
 				}
 			}
 		}
 	})
 
 	if event.Subject == "" {
-		return model.Event{}, fmt.Errorf("wiersz %d, kolumna %d: nieznany przedmiot w komórce %q", cell.Row, cell.Col, cell.Text)
+		if firstUnknown != "" {
+			event.Subject = firstUnknown
+		} else {
+			rawText := strings.TrimSpace(cell.Text)
+			if rawText != "" {
+				event.Subject = rawText
+			} else {
+				return model.Event{}, fmt.Errorf("wiersz %d, kolumna %d: brak przedmiotu w komórce", cell.Row, cell.Col)
+			}
+		}
 	}
+
 	return event, nil
 }
 

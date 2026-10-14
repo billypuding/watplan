@@ -170,6 +170,58 @@ button:disabled {
     color: var(--error-color);
 }
 
+.search-container {
+    position: relative;
+    width: 250px;
+}
+
+input#planSearch {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-main);
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.search-results.hidden {
+    display: none;
+}
+
+.search-result-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background-color: var(--nav-btn-hover);
+    color: var(--primary-color);
+}
+
 .calendar-container {
     background: var(--grid-bg);
     border: 1px solid var(--border-color);
@@ -272,6 +324,25 @@ button:disabled {
     opacity: 0.9;
 }
 
+.app-footer {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.app-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.app-footer a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
 @media (max-width: 850px) {
     body {
         padding: 10px;
@@ -293,7 +364,7 @@ button:disabled {
         align-items: flex-start;
     }
 
-    select, .nav-buttons {
+    select, .nav-buttons, .search-container, input#planSearch {
         width: 100%;
     }
 
@@ -313,22 +384,4 @@ button:disabled {
         padding-top: 10px;
         border-top: 1px solid var(--border-color);
     }
-}
-.app-footer {
-    text-align: center;
-    margin-top: 25px;
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-.app-footer a {
-    color: var(--primary-color);
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.2s;
-}
-
-.app-footer a:hover {
-    color: var(--primary-hover);
-    text-decoration: underline;
 }
