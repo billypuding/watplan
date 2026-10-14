@@ -349,17 +349,21 @@ func parseCellFields(cell Cell, subjects, teachers map[string]string) (model.Eve
 			event.Subject = subjects[field]
 		case typeMap[field] != "":
 			event.Type = typeMap[field]
-		case strings.ContainsAny(field, "0123456789"):
-			event.Room = normalizeRoom(field)
+		case isRoomField(field):
+			if event.Room != "" {
+				event.Room += ", " + normalizeRoom(field)
+			} else {
+				event.Room = normalizeRoom(field)
+			}
 		default:
 			if name, ok := matchTeacher(field, teachers); ok {
 				event.Teacher = name
 			} else {
-
-				log.Printf(
-					"parser: nierozpoznane pole %q (wiersz %d, kolumna %d), komórka=%q",
-					field, cell.Row, cell.Col, cell.Text,
-				)
+				if len(field) > 40 {
+					log.Printf("parser: zignorowano długi komunikat: %q...", field[:40])
+				} else {
+					log.Printf("parser: nierozpoznane pole %q (wiersz %d, kolumna %d)", field, cell.Row, cell.Col)
+				}
 			}
 		}
 	})
@@ -404,4 +408,17 @@ func matchTeacher(code string, teachers map[string]string) (string, bool) {
 		return "", false
 	}
 	return match, true
+}
+
+func isRoomField(field string) bool {
+	if strings.ContainsAny(field, "0123456789") {
+		return true
+	}
+
+	upper := strings.ToUpper(field)
+	return strings.Contains(upper, "ONLINE") ||
+		strings.Contains(upper, "AE S") ||
+		strings.Contains(upper, "KINOWA") ||
+		strings.Contains(upper, "HALA") ||
+		strings.Contains(upper, "SALA")
 }

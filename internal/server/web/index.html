@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,21 +8,30 @@
 </head>
 <body>
     <div class="top-bar">
-        <div class="control-group">
-            <label for="planSelector">Grupa:</label>
-            <select id="planSelector"></select>
+        <div class="controls-wrapper">
+            <div class="control-group">
+                <label for="planSelector">Grupa:</label>
+                <select id="planSelector"></select>
+            </div>
+
+            <div class="control-group week-nav">
+                <label for="weekSelector">Tydzień:</label>
+                <div class="nav-buttons">
+                    <button id="prevWeekBtn" class="icon-btn" disabled>‹</button>
+                    <select id="weekSelector"></select>
+                    <button id="nextWeekBtn" class="icon-btn" disabled>›</button>
+                </div>
+            </div>
         </div>
 
-        <div class="control-group">
-            <label for="weekSelector">Tydzień:</label>
-            <select id="weekSelector"></select>
+        <div class="actions-wrapper">
+            <button id="refreshButton" class="primary-btn" type="button">Odśwież z serwera</button>
+            <button id="themeToggle" class="theme-btn" type="button">☀️</button>
         </div>
-
-        <button id="refreshButton" type="button">Odśwież z serwera</button>
 
         <div class="status">
             Pobrano: <b id="fetched">-</b><br>
-            Ostatnia modyfikacja: <b id="modified">-</b>
+            Zmodyfikowano: <b id="modified">-</b>
             <div id="notice" class="notice" role="status"></div>
         </div>
     </div>
@@ -31,6 +40,10 @@
         <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 
+    <script src="app.js"></script>
+    <footer class="app-footer">
+        Made by: <a href="https://github.com/billypuding/watplan" target="_blank" rel="noopener noreferrer">billypuding</a>
+    </footer>
     <script src="app.js"></script>
 </body>
 </html>

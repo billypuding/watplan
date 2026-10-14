@@ -7,7 +7,7 @@
       "subject": "Matematyka 1",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#FF0000"
     },
     {
@@ -27,7 +27,7 @@
       "subject": "Matematyka 1",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#FF0000"
     },
     {
@@ -57,7 +57,7 @@
       "subject": "Szkolenie BHP",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "ONLINE",
       "color": "#EAE8CC"
     },
     {
@@ -67,7 +67,7 @@
       "subject": "Inauguracja WEL",
       "type": "wykład",
       "teacher": "",
-      "room": "Inauguracja WEL 6.10, godz. 9.00 sala kinowa Klub WAT",
+      "room": "S. Kinowa K, Inauguracja WEL 6.10, godz. 9.00 sala kinowa Klub WAT",
       "color": "#FF0000"
     },
     {
@@ -137,7 +137,7 @@
       "subject": "Matematyka 1",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#FF0000"
     },
     {
@@ -157,7 +157,7 @@
       "subject": "Matematyka 1",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#FF0000"
     },
     {
@@ -187,7 +187,7 @@
       "subject": "Szkolenie BHP",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "ONLINE",
       "color": "#EAE8CC"
     },
     {
@@ -317,7 +317,7 @@
       "subject": "Matematyka 1",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#FF0000"
     },
     {
@@ -327,7 +327,7 @@
       "subject": "Matematyka 1",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#FF0000"
     },
     {
@@ -437,7 +437,7 @@
       "subject": "Wprowadzenie do studiowania",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#C7C7C7"
     },
     {
@@ -487,7 +487,7 @@
       "subject": "Matematyka 1",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#FF0000"
     },
     {
@@ -507,7 +507,7 @@
       "subject": "Wprowadzenie do studiowania",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#C7C7C7"
     },
     {
@@ -657,7 +657,7 @@
       "subject": "Matematyka 1",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#FF0000"
     },
     {
@@ -827,7 +827,7 @@
       "subject": "Matematyka 1",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#FF0000"
     },
     {
@@ -947,7 +947,7 @@
       "subject": "Matematyka 1",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#FF0000"
     },
     {
@@ -1137,7 +1137,7 @@
       "subject": "Matematyka 1",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#FF0000"
     },
     {
@@ -1237,7 +1237,7 @@
       "subject": "Matematyka 1",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#FF0000"
     },
     {
@@ -1377,7 +1377,7 @@
       "subject": "Matematyka 2",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#A6D2D2"
     },
     {
@@ -1527,7 +1527,7 @@
       "subject": "Matematyka 2",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#A6D2D2"
     },
     {
@@ -1637,7 +1637,7 @@
       "subject": "Matematyka 2",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#A6D2D2"
     },
     {
@@ -1727,7 +1727,7 @@
       "subject": "Matematyka 2",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#A6D2D2"
     },
     {
@@ -1817,7 +1817,7 @@
       "subject": "Matematyka 2",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#A6D2D2"
     },
     {
@@ -1927,7 +1927,7 @@
       "subject": "Matematyka 2",
       "type": "wykład",
       "teacher": "",
-      "room": "",
+      "room": "aE S",
       "color": "#A6D2D2"
     },
     {
@@ -2001,6 +2001,6 @@
       "color": "#A6D2D2"
     }
   ],
-  "fetched_at": "2026-10-14 14:17:32",
-  "modified_at": "2026-10-13 23:09:14"
+  "fetched_at": "2026-10-14 18:00:54",
+  "modified_at": "2026-10-14 18:00:54"
 }

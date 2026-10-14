@@ -11,7 +11,10 @@ const NOTICE_MS = 6000;
 
 const planSelector = document.getElementById('planSelector');
 const weekSelector = document.getElementById('weekSelector');
+const prevWeekBtn = document.getElementById('prevWeekBtn');
+const nextWeekBtn = document.getElementById('nextWeekBtn');
 const refreshButton = document.getElementById('refreshButton');
+const themeToggle = document.getElementById('themeToggle');
 const grid = document.getElementById('calendar-grid');
 const fetchedLabel = document.getElementById('fetched');
 const modifiedLabel = document.getElementById('modified');
@@ -21,9 +24,11 @@ let eventsByWeek = {};
 let loadCounter = 0;
 let noticeTimer = null;
 
-function pad(n) {
-    return String(n).padStart(2, '0');
-}
+let currentTheme = localStorage.getItem('theme') || 'dark';
+document.documentElement.setAttribute('data-theme', currentTheme);
+updateThemeIcon();
+
+function pad(n) { return String(n).padStart(2, '0'); }
 
 function toISO(date) {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -40,9 +45,7 @@ function addDays(date, n) {
     return result;
 }
 
-function dayIndex(date) {
-    return (date.getDay() + 6) % 7;
-}
+function dayIndex(date) { return (date.getDay() + 6) % 7; }
 
 function getMonday(str) {
     const date = parseISO(str);
@@ -74,11 +77,7 @@ function showGridMessage(text, isError) {
 async function fetchJSON(url, options) {
     const response = await fetch(url, options);
     let body = null;
-    try {
-        body = await response.json();
-    } catch (_) {
-        body = null;
-    }
+    try { body = await response.json(); } catch (_) { body = null; }
     if (!response.ok) {
         throw new Error((body && body.error) || `Błąd serwera (${response.status})`);
     }
@@ -89,6 +88,18 @@ async function loadPlans() {
     try {
         const plans = await fetchJSON('/api/plans');
         planSelector.replaceChildren(...plans.map(p => new Option(p.name, p.id)));
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const planFromUrl = urlParams.get('plan');
+        const planFromStorage = localStorage.getItem('selectedPlan');
+        const targetPlan = planFromUrl || planFromStorage;
+
+        if (targetPlan && Array.from(planSelector.options).some(opt => opt.value === targetPlan)) {
+            planSelector.value = targetPlan;
+        }
+
+        localStorage.setItem('selectedPlan', planSelector.value);
+
         await loadPlan();
     } catch (err) {
         showGridMessage(err.message, true);
@@ -109,11 +120,11 @@ async function loadPlan() {
         populateWeekSelector();
     } catch (err) {
         if (requestId !== loadCounter) return;
-
         eventsByWeek = {};
         fetchedLabel.textContent = '-';
         modifiedLabel.textContent = '-';
         weekSelector.replaceChildren(new Option('Brak danych', ''));
+        updateNavButtons();
         showGridMessage(err.message, true);
     }
 }
@@ -131,13 +142,13 @@ function populateWeekSelector() {
     const mondays = Object.keys(eventsByWeek).sort();
     if (mondays.length === 0) {
         weekSelector.replaceChildren(new Option('Brak zajęć', ''));
+        updateNavButtons();
         showGridMessage('Brak zajęć w planie', false);
         return;
     }
 
     weekSelector.replaceChildren(...mondays.map((monday, i) => {
-        const sunday = toISO(addDays(parseISO(monday), 6));
-        return new Option(`Tydzień ${i + 1}/${mondays.length} (${monday} do ${sunday})`, monday);
+        return new Option(`Tydzień ${i + 1}/${mondays.length}`, monday);
     }));
 
     weekSelector.value = pickInitialWeek(mondays);
@@ -151,6 +162,14 @@ function pickInitialWeek(mondays) {
 
 function renderSelectedWeek() {
     renderWeek(weekSelector.value);
+    updateNavButtons();
+}
+
+function updateNavButtons() {
+    const idx = weekSelector.selectedIndex;
+    const maxIdx = weekSelector.options.length - 1;
+    prevWeekBtn.disabled = idx <= 0 || maxIdx < 0;
+    nextWeekBtn.disabled = idx >= maxIdx || maxIdx < 0;
 }
 
 function renderWeek(monday) {
@@ -210,13 +229,11 @@ function createDayHeader(date, index) {
 function createEventCard(event) {
     const rowStart = START_ROW[event.start];
     const rowEnd = END_ROW_LINE[event.end];
-    if (!rowStart || !rowEnd) {
-        console.warn('Pominięto zajęcia spoza siatki godzin:', event);
-        return null;
-    }
+    if (!rowStart || !rowEnd) return null;
 
     const column = dayIndex(parseISO(event.date)) + 2;
     const card = createCell('event-card', `${rowStart} / ${rowEnd}`, column);
+    
     card.style.backgroundColor = event.color || '#e2e8f0';
     card.style.color = textColorFor(event.color);
 
@@ -243,8 +260,42 @@ async function refreshServer() {
     }
 }
 
-planSelector.addEventListener('change', loadPlan);
+function updateThemeIcon() {
+    themeToggle.textContent = currentTheme === 'light' ? '🌙' : '☀️';
+}
+
+themeToggle.addEventListener('click', () => {
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    localStorage.setItem('theme', currentTheme);
+    updateThemeIcon();
+});
+
+planSelector.addEventListener('change', () => {
+    localStorage.setItem('selectedPlan', planSelector.value);
+    
+    const url = new URL(window.location);
+    url.searchParams.set('plan', planSelector.value);
+    window.history.replaceState({}, '', url);
+
+    loadPlan();
+});
+
 weekSelector.addEventListener('change', renderSelectedWeek);
 refreshButton.addEventListener('click', refreshServer);
+
+prevWeekBtn.addEventListener('click', () => {
+    if (weekSelector.selectedIndex > 0) {
+        weekSelector.selectedIndex--;
+        renderSelectedWeek();
+    }
+});
+
+nextWeekBtn.addEventListener('click', () => {
+    if (weekSelector.selectedIndex < weekSelector.options.length - 1) {
+        weekSelector.selectedIndex++;
+        renderSelectedWeek();
+    }
+});
 
 loadPlans();
