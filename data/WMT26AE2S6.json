@@ -46,7 +46,7 @@
       "end": "15:05",
       "subject": "Działalność szkoleniowa i szkoleniowo-metodyczna",
       "type": "wykład",
-      "teacher": "płk dr  Niemirka Sławomir",
+      "teacher": "płk dr Niemirka Sławomir",
       "room": "AW 3/043",
       "color": "#B7CA4A"
     },
@@ -65,7 +65,7 @@
       "start": "09:50",
       "end": "11:25",
       "subject": "Regulaminy SZ RP",
-      "type": "",
+      "type": "seminarium",
       "teacher": "ppłk rez. mgr Bomba Marcin",
       "room": "AW 3/038",
       "color": "#FF00FF"
@@ -124,9 +124,9 @@
       "date": "2026-12-15",
       "start": "08:00",
       "end": "09:35",
-      "subject": "W.ST",
+      "subject": "PODS.",
       "type": "wykład",
-      "teacher": "",
+      "teacher": "W.ST",
       "room": "50%, AW 3/043",
       "color": "#FF8000"
     },
@@ -134,9 +134,9 @@
       "date": "2026-12-15",
       "start": "09:50",
       "end": "21:15",
-      "subject": "W.ST",
+      "subject": "POLIGON",
       "type": "ćwiczenia",
-      "teacher": "",
+      "teacher": "W.ST",
       "room": "",
       "color": "#FF8000"
     },
@@ -206,7 +206,7 @@
       "end": "13:15",
       "subject": "ZLDT-",
       "type": "wykład",
-      "teacher": "mgr inż.   Juniec Krzysztof",
+      "teacher": "mgr inż. Juniec Krzysztof",
       "room": "103 K",
       "color": "#E6E600"
     },
@@ -266,7 +266,7 @@
       "end": "21:15",
       "subject": "Św.",
       "type": "",
-      "teacher": "",
+      "teacher": "ppłk mgr inż. Świętochowski Mieczysław",
       "room": "",
       "color": ""
     },
@@ -276,7 +276,7 @@
       "end": "21:15",
       "subject": "Św.",
       "type": "",
-      "teacher": "",
+      "teacher": "ppłk mgr inż. Świętochowski Mieczysław",
       "room": "",
       "color": ""
     },
@@ -286,7 +286,7 @@
       "end": "21:15",
       "subject": "Św.",
       "type": "",
-      "teacher": "",
+      "teacher": "ppłk mgr inż. Świętochowski Mieczysław",
       "room": "",
       "color": ""
     },
@@ -295,7 +295,7 @@
       "start": "08:00",
       "end": "09:35",
       "subject": "Regulaminy SZ RP",
-      "type": "",
+      "type": "seminarium",
       "teacher": "ppłk rez. mgr Bomba Marcin",
       "room": "AW 3/038",
       "color": "#FF00FF"
@@ -346,7 +346,7 @@
       "end": "21:15",
       "subject": "Św.",
       "type": "",
-      "teacher": "",
+      "teacher": "ppłk mgr inż. Świętochowski Mieczysław",
       "room": "",
       "color": ""
     },
@@ -365,7 +365,7 @@
       "start": "09:50",
       "end": "11:25",
       "subject": "Gotowość mobilizacyjna i bojowa",
-      "type": "",
+      "type": "seminarium",
       "teacher": "ppłk mgr Lasak Michał",
       "room": "AW 3/038",
       "color": "#C96D7B"
@@ -386,7 +386,7 @@
       "end": "21:15",
       "subject": "Św.",
       "type": "",
-      "teacher": "",
+      "teacher": "ppłk mgr inż. Świętochowski Mieczysław",
       "room": "",
       "color": ""
     },
@@ -526,7 +526,7 @@
       "end": "13:15",
       "subject": "Połączone wsparcie ogniowe",
       "type": "wykład",
-      "teacher": "dr inż.  Krzyżanowski Sławomir",
+      "teacher": "dr inż. Krzyżanowski Sławomir",
       "room": "46 63",
       "color": "#926575"
     },
@@ -625,7 +625,7 @@
       "start": "09:50",
       "end": "11:25",
       "subject": "Szkolenie strzeleckie",
-      "type": "",
+      "type": "seminarium",
       "teacher": "",
       "room": "103 K",
       "color": "#FF0000"
@@ -656,7 +656,7 @@
       "end": "17:35",
       "subject": "Połączone wsparcie ogniowe",
       "type": "ćwiczenia",
-      "teacher": "dr inż.  Krzyżanowski Sławomir",
+      "teacher": "dr inż. Krzyżanowski Sławomir",
       "room": "0.28/ 135",
       "color": "#926575"
     },
@@ -1151,6 +1151,6 @@
       "color": "#787878"
     }
   ],
-  "fetched_at": "2026-10-14 18:38:53",
-  "modified_at": "2026-10-14 18:21:35"
+  "fetched_at": "2026-10-14 20:23:42",
+  "modified_at": "2026-10-14 20:10:32"
 }

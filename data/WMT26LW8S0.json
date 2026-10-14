@@ -456,7 +456,7 @@
       "end": "11:25",
       "subject": "Szkolenie strzeleckie",
       "type": "wykład",
-      "teacher": "",
+      "teacher": "WYK-",
       "room": "103 K",
       "color": "#FF0000"
     },
@@ -2951,6 +2951,6 @@
       "color": "#FF0000"
     }
   ],
-  "fetched_at": "2026-10-14 18:38:54",
-  "modified_at": "2026-10-14 18:21:37"
+  "fetched_at": "2026-10-14 20:23:44",
+  "modified_at": "2026-10-14 20:10:34"
 }
