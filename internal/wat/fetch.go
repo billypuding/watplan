@@ -3,6 +3,7 @@ package wat
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"time"
@@ -38,6 +39,14 @@ func FetchHTML(url string) ([]byte, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		snippet, _ := io.ReadAll(io.LimitReader(resp.Body, 500))
+		log.Printf(
+			"fetch %s: status=%d server=%q content-type=%q body=%q",
+			url, resp.StatusCode,
+			resp.Header.Get("Server"),
+			resp.Header.Get("Content-Type"),
+			snippet,
+		)
 		return nil, fmt.Errorf("status code error: %d", resp.StatusCode)
 	}
 
