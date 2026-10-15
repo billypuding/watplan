@@ -311,7 +311,7 @@ async function refreshServer() {
     refreshButton.disabled = true;
 
     try {
-        await fetchJSON('/api/refresh', { method: 'POST' });
+        await fetchJSON('/api/refresh?plan=' + encodeURIComponent(currentPlanId), { method: 'POST' });
         await loadPlan();
         setNotice('Plan odświeżony', false);
     } catch (err) {

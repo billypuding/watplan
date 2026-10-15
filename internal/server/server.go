@@ -1,9 +1,11 @@
 package server
 
 import (
+	"compress/gzip"
 	"embed"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -27,11 +29,16 @@ type Server struct {
 	store       *store.Store
 	updater     *updater.Updater
 	mu          sync.Mutex
-	lastRefresh time.Time
+	lastRefresh map[string]time.Time
 }
 
 func NewServer(plans []config.PlanConfig, store *store.Store, updater *updater.Updater) *Server {
-	return &Server{plans: plans, store: store, updater: updater}
+	return &Server{
+		plans:       plans,
+		store:       store,
+		updater:     updater,
+		lastRefresh: make(map[string]time.Time),
+	}
 }
 
 func (s *Server) Handler() (http.Handler, error) {
@@ -41,10 +48,13 @@ func (s *Server) Handler() (http.Handler, error) {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/plans", s.handlePlans)
-	mux.HandleFunc("/api/plan/", s.handlePlan)
+
+	mux.HandleFunc("/api/plans", withGzip(s.handlePlans))
+	mux.HandleFunc("/api/plan/", withGzip(s.handlePlan))
 	mux.HandleFunc("/api/refresh", s.handleRefresh)
-	mux.Handle("/", http.FileServer(http.FS(static)))
+
+	mux.Handle("/", withCache(http.FileServer(http.FS(static))))
+
 	return mux, nil
 }
 
@@ -98,38 +108,61 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if wait := s.reserveRefresh(); wait > 0 {
-		w.Header().Set("Retry-After", strconv.Itoa(int(wait.Seconds())+1))
-		writeError(w, http.StatusTooManyRequests, "plan był odświeżany przed chwilą, spróbuj za moment")
+	planID := r.URL.Query().Get("plan")
+	if planID == "" {
+		writeError(w, http.StatusBadRequest, "brak parametru 'plan'")
 		return
 	}
 
-	if err := s.updater.UpdateAll(s.plans); err != nil {
-		log.Printf("ręczne odświeżanie: %v", err)
+	plan, ok := s.getPlan(planID)
+	if !ok {
+		writeError(w, http.StatusNotFound, "nie znaleziono planu")
+		return
+	}
+
+	if wait := s.reserveRefresh(plan.ID); wait > 0 {
+		w.Header().Set("Retry-After", strconv.Itoa(int(wait.Seconds())+1))
+		writeError(w, http.StatusTooManyRequests, "ten plan był odświeżany przed chwilą, spróbuj za moment")
+		return
+	}
+
+	if err := s.updater.Update(plan); err != nil {
+		log.Printf("ręczne odświeżanie planu %s: %v", plan.ID, err)
 		writeError(w, http.StatusBadGateway, "nie udało się pobrać planu ze strony WAT")
 		return
 	}
+
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-func (s *Server) reserveRefresh() time.Duration {
+func (s *Server) reserveRefresh(planID string) time.Duration {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if wait := refreshCooldown - time.Since(s.lastRefresh); wait > 0 {
+	if s.lastRefresh == nil {
+		s.lastRefresh = make(map[string]time.Time)
+	}
+
+	last := s.lastRefresh[planID]
+	if wait := refreshCooldown - time.Since(last); wait > 0 {
 		return wait
 	}
-	s.lastRefresh = time.Now()
+	s.lastRefresh[planID] = time.Now()
 	return 0
 }
 
 func (s *Server) hasPlan(id string) bool {
+	_, ok := s.getPlan(id)
+	return ok
+}
+
+func (s *Server) getPlan(id string) (config.PlanConfig, bool) {
 	for _, p := range s.plans {
 		if p.ID == id {
-			return true
+			return p, true
 		}
 	}
-	return false
+	return config.PlanConfig{}, false
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -140,4 +173,35 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 func writeError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, map[string]string{"error": message})
+}
+
+type gzipResponseWriter struct {
+	io.Writer
+	http.ResponseWriter
+}
+
+func (w gzipResponseWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
+func withGzip(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			next(w, r)
+			return
+		}
+		w.Header().Set("Content-Encoding", "gzip")
+		gz := gzip.NewWriter(w)
+		defer gz.Close()
+
+		gzw := gzipResponseWriter{Writer: gz, ResponseWriter: w}
+		next(gzw, r)
+	}
+}
+
+func withCache(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		next.ServeHTTP(w, r)
+	})
 }

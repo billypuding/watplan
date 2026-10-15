@@ -9,6 +9,7 @@ import (
 	"log"
 	"sync"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/model"
@@ -18,13 +19,25 @@ import (
 
 const timeLayout = "2006-01-02 15:04:05"
 
-type Updater struct {
-	store *store.Store
-	mu    sync.Mutex
+var warsawLoc *time.Location
+
+func init() {
+	var err error
+	warsawLoc, err = time.LoadLocation("Europe/Warsaw")
+	if err != nil {
+		log.Printf("ostrzeżenie: brak strefy Europe/Warsaw, używam czasu lokalnego: %v", err)
+		warsawLoc = time.Local
+	}
 }
 
-func NewUpdater(store *store.Store) *Updater {
-	return &Updater{store: store}
+type Updater struct {
+	store   *store.Store
+	fetcher *wat.Fetcher
+	mu      sync.Mutex
+}
+
+func NewUpdater(store *store.Store, fetcher *wat.Fetcher) *Updater {
+	return &Updater{store: store, fetcher: fetcher}
 }
 
 func (u *Updater) Run(ctx context.Context, plans []config.PlanConfig, interval time.Duration) {
@@ -61,7 +74,7 @@ func (u *Updater) Update(cfg config.PlanConfig) error {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 
-	body, err := wat.FetchHTML(cfg.URL)
+	body, err := u.fetcher.FetchHTML(cfg.URL)
 	if err != nil {
 		return fmt.Errorf("pobieranie: %w", err)
 	}
@@ -82,7 +95,11 @@ func (u *Updater) Update(cfg config.PlanConfig) error {
 		}
 	}
 
-	now := time.Now().Format(timeLayout)
+	if len(old.Events) > 0 && len(events) < len(old.Events)/2 {
+		return fmt.Errorf("podejrzany spadek liczby zajęć (z %d do %d), odrzucam zmianę", len(old.Events), len(events))
+	}
+
+	now := time.Now().In(warsawLoc).Format(timeLayout)
 	diff := model.Diff(old.Events, events)
 
 	modifiedAt := old.ModifiedAt

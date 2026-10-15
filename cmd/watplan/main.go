@@ -14,6 +14,7 @@ import (
 	"github.com/billypuding/watplan/internal/server"
 	"github.com/billypuding/watplan/internal/store"
 	"github.com/billypuding/watplan/internal/updater"
+	"github.com/billypuding/watplan/internal/wat"
 )
 
 const (
@@ -34,7 +35,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	upd := updater.NewUpdater(st)
+	fetcher, err := wat.NewFetcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	upd := updater.NewUpdater(st, fetcher)
 	handler, err := server.NewServer(plans, st, upd).Handler()
 	if err != nil {
 		log.Fatal(err)

@@ -41,7 +41,7 @@ func (s *Store) Load(id string) (model.Plan, error) {
 }
 
 func (s *Store) Save(id string, plan model.Plan) error {
-	data, err := json.MarshalIndent(plan, "", "  ")
+	data, err := json.Marshal(plan)
 	if err != nil {
 		return err
 	}

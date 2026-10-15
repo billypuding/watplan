@@ -1,4 +1,4 @@
 
 *.tmp
-/wat/testdata/
+/internal/wat/testdata/
 .DS_Store

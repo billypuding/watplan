@@ -3,6 +3,7 @@ package wat
 import (
 	"fmt"
 	"io"
+	"log"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -22,6 +23,11 @@ var typeMap = map[string]string{
 	"P":   "projekt",
 	"Z":   "zaliczenie",
 	"Zp":  "zaliczenie poprawkowe",
+	"SSW": "szkolenie",
+	"I":   "inne",
+	"Ing": "inne",
+	"Św.": "święto",
+	"DYS": "dyspozycja",
 }
 
 var ignoredFields = map[string]bool{
@@ -59,7 +65,8 @@ func ParsePlan(r io.Reader, startYear int) ([]model.Event, error) {
 		for _, cell := range row {
 			cellEvents, err := eventsFromCell(cell, block, subjects, index, subjectTeachers)
 			if err != nil {
-				return nil, err
+				log.Printf("pominięto uszkodzoną komórkę: %v", err)
+				continue
 			}
 			events = append(events, cellEvents...)
 		}

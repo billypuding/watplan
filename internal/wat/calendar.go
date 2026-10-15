@@ -2,6 +2,7 @@ package wat
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -88,7 +89,8 @@ func findDays(grid [][]Cell, legendCol, startYear int) ([]dayBlock, error) {
 
 			day, month, err := parseDayMonth(cell.Text)
 			if err != nil {
-				return nil, err
+				log.Printf("błąd daty %q w wierszu %d: %v", cell.Text, row[0].Row, err)
+				continue
 			}
 			if month < prevMonth {
 				year++
@@ -97,7 +99,8 @@ func findDays(grid [][]Cell, legendCol, startYear int) ([]dayBlock, error) {
 
 			date := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 			if date.Weekday() != weekday {
-				return nil, fmt.Errorf("data %s nie wypada w dniu %q", date.Format(dateLayout), row[0].Text)
+				log.Printf("błąd daty %s: nie wypada w dniu %q", date.Format(dateLayout), row[0].Text)
+				continue
 			}
 			block.Dates[cell.Col] = date
 		}

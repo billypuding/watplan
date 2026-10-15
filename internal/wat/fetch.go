@@ -19,25 +19,36 @@ const (
 	userAgent    = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 )
 
-func FetchHTML(targetUrl string) ([]byte, error) {
+type Fetcher struct {
+	client *http.Client
+}
+
+func NewFetcher() (*Fetcher, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
 	}
 
-	client := http.Client{
-		Timeout: fetchTimeout,
-		Jar:     jar,
-	}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
 
 	if proxyStr := os.Getenv("PLANWAT_PROXY"); proxyStr != "" {
-		if proxyURL, err := url.Parse(proxyStr); err == nil {
-			client.Transport = &http.Transport{
-				Proxy: http.ProxyURL(proxyURL),
-			}
+		proxyURL, err := url.Parse(proxyStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid proxy url: %w", err)
 		}
+		transport.Proxy = http.ProxyURL(proxyURL)
 	}
 
+	client := &http.Client{
+		Timeout:   fetchTimeout,
+		Jar:       jar,
+		Transport: transport,
+	}
+
+	return &Fetcher{client: client}, nil
+}
+
+func (f *Fetcher) FetchHTML(targetUrl string) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, targetUrl, nil)
 	if err != nil {
 		return nil, err
@@ -46,7 +57,7 @@ func FetchHTML(targetUrl string) ([]byte, error) {
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
 	req.Header.Set("Accept-Language", "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7")
 
-	resp, err := client.Do(req)
+	resp, err := f.client.Do(req)
 	if err != nil {
 		return nil, err
 	}

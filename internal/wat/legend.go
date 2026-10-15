@@ -8,6 +8,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+var trailingDigitsRe = regexp.MustCompile(`\d+$`)
+
 type abbrEvidence struct {
 	leading int
 	other   int
@@ -122,7 +124,5 @@ func extractTextFromHTMLString(htmlStr string) string {
 	if err != nil {
 		return ""
 	}
-	text := doc.Text()
-	re := regexp.MustCompile(`\d+$`)
-	return cleanText(re.ReplaceAllString(text, ""))
+	return cleanText(trailingDigitsRe.ReplaceAllString(doc.Text(), ""))
 }
