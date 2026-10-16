@@ -23,7 +23,7 @@ WAT publishes class schedules as static plansoft HTML pages, which are hard to r
 ```bash
 git clone https://github.com/billypuding/watplan.git
 cd watplan
-go run .
+go run cmd/watplan/main.go
 ```
 
 Then open `http://127.0.0.1:8080` in your browser.
