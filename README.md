@@ -1,27 +1,37 @@
-# 📅 WatPlan 
+# PlanWat
 
-**WatPlan** to lekka, błyskawiczna i nowoczesna aplikacja webowa napisana w **Go**, służąca do parsowania i wyświetlania planów zajęć studentów Wojskowej Akademii Technicznej (WAT). 
+A free, open-source weekly timetable viewer for students of the Military University of Technology (WAT) in Warsaw.
 
-Zamiast przedzierać się przez nieczytelne, przestarzałe tabele HTML na stronach uczelni, WatPlan pobiera dane, przetwarza je w locie i serwuje w postaci przejrzystego, responsywnego kalendarza – idealnego do szybkiego sprawdzania zajęć na telefonie w drodze na uczelnię.
+WAT publishes class schedules as static plansoft HTML pages, which are hard to read, especially on a phone. PlanWat scrapes that page and shows it as a clean, colour-coded weekly calendar.
 
-## ✨ Główne funkcje
+## Features
 
-* 📱 **Responsywny interfejs (Mobile-First):** Kalendarz płynnie dopasowuje się do ekranów smartfonów, pozwalając na wygodne przewijanie i czytanie bez powiększania ekranu.
-* 🌙 **Ciemny motyw (Dark Mode):** Wbudowany przełącznik motywu jasny/ciemny. Domyślnie ustawiony na tryb ciemny, aby oszczędzać wzrok (i baterię) podczas wieczornych powtórek. Preferencja zapisuje się w pamięci przeglądarki (`localStorage`).
-* 🧠 **Inteligentna nawigacja:** Aplikacja automatycznie grupuje zajęcia i po wejściu na stronę domyślnie wyświetla **aktualny tydzień semestru**. Przeskakiwanie między tygodniami odbywa się za pomocą wygodnych strzałek.
-* 🔗 **Udostępnianie linków (Direct Routing):** Możesz wysłać znajomemu z innego wydziału bezpośredni link do jego planu (np. `?plan=WEL_KOLEGA`). Urządzenie automatycznie zapamięta ten wybór na przyszłość.
-* 🛡️ **Omijanie blokad WAF (Incapsula/Imperva):** Uczelniane serwery potrafią blokować ruch z chmury (np. Render, AWS). WatPlan posiada wbudowaną, bezpieczną obsługę zewnętrznych Proxy przez zmienne środowiskowe, aby zapewnić ciągłość aktualizacji z serwerów WAT.
-* ⚡ **Bez zależności (Zero-dependency Frontend):** Frontend oparty jest na czystym HTML, CSS i Vanilla JS. Backend używa `go:embed` do pakowania wszystkich zasobów w jeden wydajny plik binarny.
+- Weekly grid with an hours column and a colour for each subject
+- Switch between weeks without reloading the page
+- Automatically refreshes when WAT changes the schedule
+- Free and open source
 
-## 🛠️ Technologie
+## How it works
 
-* **Backend:** Go (Golang) + `goquery` (do parsowania struktury HTML).
-* **Frontend:** Vanilla JavaScript, natywny CSS (z użyciem zmiennych CSS).
-* **Baza danych:** Brak. Aplikacja przechowuje zbuforowane i sparsowane plany w prostych plikach `.json` w katalogu `data/`, co czyni ją banalnie prostą w hostowaniu i utrzymaniu.
+1. Fetches the schedule page for a given group from the WAT plansoft server
+2. Parses the HTML into JSON
+3. A Go server renders the weekly view
+4. A background check detects changes in the source schedule and updates the data
 
-## 🚀 Szybki start (Uruchomienie lokalne)
+## Getting started
 
-1. Sklonuj repozytorium:
-   ```bash
-   git clone [https://github.com/billypuding/watplan.git](https://github.com/billypuding/watplan.git)
-   cd watplan
+```bash
+git clone https://github.com/billypuding/watplan.git
+cd watplan
+go run .
+```
+
+Then open `http://127.0.0.1:8080` in your browser.
+
+## Disclaimer
+
+PlanWat is an independent student project, not affiliated with the Military University of Technology. The official schedule is always the source of truth.
+
+## License
+
+MIT
