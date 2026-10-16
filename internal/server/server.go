@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -48,6 +49,13 @@ func (s *Server) Handler() (http.Handler, error) {
 	}
 
 	mux := http.NewServeMux()
+
+	if verificationFile := os.Getenv("GOOGLE_VERIFICATION_FILE"); verificationFile != "" {
+		mux.HandleFunc("/"+verificationFile, func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Write([]byte("google-site-verification: " + verificationFile))
+		})
+	}
 
 	mux.HandleFunc("/api/plans", withGzip(s.handlePlans))
 	mux.HandleFunc("/api/plan/", withGzip(s.handlePlan))
