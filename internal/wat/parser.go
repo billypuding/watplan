@@ -1,7 +1,6 @@
 package wat
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"strings"
@@ -31,7 +30,8 @@ var typeMap = map[string]string{
 }
 
 var ignoredFields = map[string]bool{
-	"X": true,
+	"X":   true,
+	"REZ": true,
 }
 
 func ParsePlan(r io.Reader, startYear int) ([]model.Event, error) {
@@ -50,7 +50,12 @@ func ParsePlan(r io.Reader, startYear int) ([]model.Event, error) {
 	}
 
 	evidence := collectEvidence(grid, legendCol)
-	subjects, teachers, subjectTeachers := buildLegend(grid, legendCol, evidence)
+	subjects, teachers, subjectTeachers, legendTeachers := buildLegend(grid, legendCol, evidence)
+	for code, name := range inferTeacherCodes(grid, legendCol, subjects, legendTeachers) {
+		if teachers[code] == "" {
+			teachers[code] = name
+		}
+	}
 	index := newTeacherIndex(teachers)
 
 	var events []model.Event
@@ -91,9 +96,12 @@ func eventsFromCell(cell Cell, block dayBlock, subjects map[string]string, index
 		return nil, nil
 	}
 
-	event, err := parseCellFields(cell, subjects, index, subjectTeachers)
+	event, ok, err := parseCellFields(cell, subjects, index, subjectTeachers)
 	if err != nil {
 		return nil, err
+	}
+	if !ok {
+		return nil, nil
 	}
 
 	event.Start, event.End, err = cellTimes(cell, block)
@@ -109,7 +117,7 @@ func eventsFromCell(cell Cell, block dayBlock, subjects map[string]string, index
 	return events, nil
 }
 
-func parseCellFields(cell Cell, subjects map[string]string, index *teacherIndex, subjectTeachers map[string]map[string]string) (model.Event, error) {
+func parseCellFields(cell Cell, subjects map[string]string, index *teacherIndex, subjectTeachers map[string]map[string]string) (model.Event, bool, error) {
 	color, _ := cell.Node.Attr("bgcolor")
 	event := model.Event{Color: strings.ToUpper(color)}
 
@@ -199,11 +207,23 @@ func parseCellFields(cell Cell, subjects map[string]string, index *teacherIndex,
 
 	if event.Subject == "" {
 		rawText := strings.TrimSpace(cell.Text)
-		if rawText == "" {
-			return model.Event{}, fmt.Errorf("wiersz %d, kolumna %d: brak przedmiotu w komórce", cell.Row, cell.Col)
+		if rawText == "" || placeholderOnly(fields) {
+			return model.Event{}, false, nil
 		}
 		event.Subject = rawText
 	}
 
-	return event, nil
+	return event, true, nil
+}
+
+func placeholderOnly(fields []cellField) bool {
+	if len(fields) == 0 {
+		return false
+	}
+	for _, f := range fields {
+		if typeMap[f.text] == "" && !ignoredFields[f.text] && f.text != "E" && f.text != "Ep" {
+			return false
+		}
+	}
+	return true
 }

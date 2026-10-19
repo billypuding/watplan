@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"os"
+	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 	_ "time/tzdata"
 
@@ -17,7 +20,11 @@ import (
 	"github.com/billypuding/watplan/internal/wat"
 )
 
-const timeLayout = "2006-01-02 15:04:05"
+const (
+	timeLayout           = "2006-01-02 15:04:05"
+	maxConcurrentUpdates = 16
+	dropConfirmations    = 3
+)
 
 var warsawLoc *time.Location
 
@@ -33,58 +40,140 @@ func init() {
 type Updater struct {
 	store   *store.Store
 	fetcher *wat.Fetcher
+	workers int
 	mu      sync.Mutex
+	locks   map[string]*sync.Mutex
+}
+
+type updateResult struct {
+	events    int
+	oldEvents int
+	streak    int
+	skipped   bool
+	pending   bool
 }
 
 func NewUpdater(store *store.Store, fetcher *wat.Fetcher) *Updater {
-	return &Updater{store: store, fetcher: fetcher}
+	workers := maxConcurrentUpdates
+	if v := os.Getenv("PLANWAT_WORKERS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			workers = n
+		}
+	}
+	return &Updater{
+		store:   store,
+		fetcher: fetcher,
+		workers: workers,
+		locks:   make(map[string]*sync.Mutex),
+	}
 }
 
-func (u *Updater) Run(ctx context.Context, plans []config.PlanConfig, interval time.Duration) {
-	if err := u.UpdateAll(plans); err != nil {
-		log.Printf("odświeżanie przy starcie: %v", err)
+func (u *Updater) planLock(id string) *sync.Mutex {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	lock, ok := u.locks[id]
+	if !ok {
+		lock = &sync.Mutex{}
+		u.locks[id] = lock
+	}
+	return lock
+}
+
+func (u *Updater) UpdateAll(ctx context.Context, plans []config.PlanConfig) error {
+	total := len(plans)
+	if total == 0 {
+		return nil
 	}
 
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
+	workers := u.workers
+	if workers < 1 {
+		workers = maxConcurrentUpdates
+	}
+	if total < workers {
+		workers = total
+	}
 
-	for {
+	var (
+		wg    sync.WaitGroup
+		done  atomic.Int64
+		okN   atomic.Int64
+		skipN atomic.Int64
+		pendN atomic.Int64
+		failN atomic.Int64
+	)
+
+	log.Printf("odświeżanie: start, %d planów, %d równolegle", total, workers)
+
+	jobs := make(chan config.PlanConfig)
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for p := range jobs {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+				res, err := u.update(p)
+				n := done.Add(1)
+				switch {
+				case err != nil:
+					failN.Add(1)
+					log.Printf("[%d/%d] %s: błąd: %v", n, total, p.ID, err)
+				case res.skipped:
+					skipN.Add(1)
+					log.Printf("[%d/%d] %s: pominięto (plan bez zajęć)", n, total, p.ID)
+				case res.pending:
+					pendN.Add(1)
+					log.Printf("[%d/%d] %s: wstrzymano podejrzany spadek (%d -> %d), potwierdzenie %d/%d",
+						n, total, p.ID, res.oldEvents, res.events, res.streak, dropConfirmations)
+				default:
+					okN.Add(1)
+					log.Printf("[%d/%d] %s: %d zajęć", n, total, p.ID, res.events)
+				}
+			}
+		}()
+	}
+
+dispatch:
+	for _, p := range plans {
 		select {
 		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			if err := u.UpdateAll(plans); err != nil {
-				log.Printf("odświeżanie w tle: %v", err)
-			}
+			break dispatch
+		case jobs <- p:
 		}
 	}
-}
+	close(jobs)
+	wg.Wait()
 
-func (u *Updater) UpdateAll(plans []config.PlanConfig) error {
-	var errs []error
-	for _, p := range plans {
-		if err := u.Update(p); err != nil {
-			errs = append(errs, fmt.Errorf("%s: %w", p.ID, err))
-		}
+	fail := failN.Load()
+	log.Printf("odświeżanie: gotowe - %d ok, %d pominiętych, %d wstrzymanych, %d błędów, %d/%d planów",
+		okN.Load(), skipN.Load(), pendN.Load(), fail, done.Load(), total)
+	if fail > 0 {
+		return fmt.Errorf("%d z %d planów nie udało się odświeżyć", fail, total)
 	}
-	return errors.Join(errs...)
+	return nil
 }
 
 func (u *Updater) Update(cfg config.PlanConfig) error {
-	u.mu.Lock()
-	defer u.mu.Unlock()
+	_, err := u.update(cfg)
+	return err
+}
+
+func (u *Updater) update(cfg config.PlanConfig) (updateResult, error) {
+	lock := u.planLock(cfg.ID)
+	lock.Lock()
+	defer lock.Unlock()
 
 	body, err := u.fetcher.FetchHTML(cfg.URL)
 	if err != nil {
-		return fmt.Errorf("pobieranie: %w", err)
+		return updateResult{}, fmt.Errorf("pobieranie: %w", err)
 	}
 
 	events, err := wat.ParsePlan(bytes.NewReader(body), cfg.StartYear)
 	if err != nil {
-		return fmt.Errorf("parsowanie: %w", err)
-	}
-	if len(events) == 0 {
-		return errors.New("pobrano 0 zajęć, poprzednie dane zostają bez zmian")
+		return updateResult{}, fmt.Errorf("parsowanie: %w", err)
 	}
 
 	old, err := u.store.Load(cfg.ID)
@@ -95,8 +184,33 @@ func (u *Updater) Update(cfg config.PlanConfig) error {
 		}
 	}
 
-	if len(old.Events) > 0 && len(events) < len(old.Events)/2 {
-		return fmt.Errorf("podejrzany spadek liczby zajęć (z %d do %d), odrzucam zmianę", len(old.Events), len(events))
+	if len(events) == 0 {
+		if len(old.Events) > 0 {
+			return updateResult{}, fmt.Errorf("nowy odczyt bez zajęć (poprzednio %d), zostawiam poprzednie dane", len(old.Events))
+		}
+		return updateResult{skipped: true}, nil
+	}
+
+	if suspiciousDrop(len(old.Events), len(events)) {
+		streak := 1
+		if old.DropCount == len(events) {
+			streak = old.DropStreak + 1
+		}
+		if streak < dropConfirmations {
+			pending := old
+			pending.DropCount = len(events)
+			pending.DropStreak = streak
+			if err := u.store.Save(cfg.ID, pending); err != nil {
+				return updateResult{}, fmt.Errorf("zapis: %w", err)
+			}
+			return updateResult{
+				events:    len(events),
+				oldEvents: len(old.Events),
+				streak:    streak,
+				pending:   true,
+			}, nil
+		}
+		log.Printf("plan %s: potwierdzony spadek liczby zajęć (z %d do %d)", cfg.ID, len(old.Events), len(events))
 	}
 
 	now := time.Now().In(warsawLoc).Format(timeLayout)
@@ -107,13 +221,16 @@ func (u *Updater) Update(cfg config.PlanConfig) error {
 		modifiedAt = now
 		log.Printf("plan %s: zmiany (dodane %d, usunięte %d, zmienione %d)",
 			cfg.ID, len(diff.Added), len(diff.Removed), len(diff.Modified))
-	} else {
-		log.Printf("plan %s: bez zmian", cfg.ID)
 	}
 
 	plan := model.Plan{Events: events, FetchedAt: now, ModifiedAt: modifiedAt}
 	if err := u.store.Save(cfg.ID, plan); err != nil {
-		return fmt.Errorf("zapis: %w", err)
+		return updateResult{}, fmt.Errorf("zapis: %w", err)
 	}
-	return nil
+	return updateResult{events: len(events)}, nil
+}
+
+func suspiciousDrop(oldCount, newCount int) bool {
+	const minGuardEvents = 8
+	return oldCount >= minGuardEvents && newCount*2 < oldCount
 }

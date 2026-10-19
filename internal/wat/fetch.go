@@ -1,9 +1,11 @@
 package wat
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -14,9 +16,11 @@ import (
 )
 
 const (
-	fetchTimeout = 15 * time.Second
-	maxBodyBytes = 10 << 20
-	userAgent    = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+	fetchTimeout   = 15 * time.Second
+	maxBodyBytes   = 10 << 20
+	fetchAttempts  = 3
+	fetchRetryBase = 400 * time.Millisecond
+	userAgent      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 )
 
 type Fetcher struct {
@@ -49,6 +53,47 @@ func NewFetcher() (*Fetcher, error) {
 }
 
 func (f *Fetcher) FetchHTML(targetUrl string) ([]byte, error) {
+	var lastErr error
+	for attempt := 1; attempt <= fetchAttempts; attempt++ {
+		body, err := f.fetchOnce(targetUrl)
+		if err == nil {
+			return body, nil
+		}
+		lastErr = err
+		if attempt == fetchAttempts || !retryable(err) {
+			break
+		}
+		delay := fetchRetryBase * time.Duration(1<<uint(attempt-1))
+		delay += time.Duration(rand.Int63n(int64(fetchRetryBase)))
+		log.Printf("fetch %s: %v (próba %d/%d, ponawiam za %v)", targetUrl, err, attempt, fetchAttempts, delay.Round(time.Millisecond))
+		time.Sleep(delay)
+	}
+	return nil, lastErr
+}
+
+type statusError struct {
+	status int
+}
+
+func (e *statusError) Error() string {
+	return fmt.Sprintf("status code error: %d", e.status)
+}
+
+func retryable(err error) bool {
+	var se *statusError
+	if errors.As(err, &se) {
+		switch se.status {
+		case http.StatusForbidden, http.StatusRequestTimeout, http.StatusTooManyRequests,
+			http.StatusInternalServerError, http.StatusBadGateway,
+			http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+			return true
+		}
+		return false
+	}
+	return true
+}
+
+func (f *Fetcher) fetchOnce(targetUrl string) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, targetUrl, nil)
 	if err != nil {
 		return nil, err
@@ -72,7 +117,7 @@ func (f *Fetcher) FetchHTML(targetUrl string) ([]byte, error) {
 			resp.Header.Get("Content-Type"),
 			snippet,
 		)
-		return nil, fmt.Errorf("status code error: %d", resp.StatusCode)
+		return nil, &statusError{status: resp.StatusCode}
 	}
 
 	body, err := charset.NewReader(io.LimitReader(resp.Body, maxBodyBytes), resp.Header.Get("Content-Type"))

@@ -26,16 +26,16 @@ var webFS embed.FS
 const refreshCooldown = 2 * time.Minute
 
 type Server struct {
-	plans       []config.PlanConfig
+	registry    *config.Registry
 	store       *store.Store
 	updater     *updater.Updater
 	mu          sync.Mutex
 	lastRefresh map[string]time.Time
 }
 
-func NewServer(plans []config.PlanConfig, store *store.Store, updater *updater.Updater) *Server {
+func NewServer(registry *config.Registry, store *store.Store, updater *updater.Updater) *Server {
 	return &Server{
-		plans:       plans,
+		registry:    registry,
 		store:       store,
 		updater:     updater,
 		lastRefresh: make(map[string]time.Time),
@@ -73,12 +73,15 @@ func (s *Server) handlePlans(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type item struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
+		ID      string `json:"id"`
+		Name    string `json:"name"`
+		Faculty string `json:"faculty,omitempty"`
 	}
-	items := make([]item, 0, len(s.plans))
-	for _, p := range s.plans {
-		items = append(items, item{ID: p.ID, Name: p.Name})
+
+	plans := s.registry.List()
+	items := make([]item, 0, len(plans))
+	for _, p := range plans {
+		items = append(items, item{ID: p.ID, Name: p.Name, Faculty: p.Faculty})
 	}
 	writeJSON(w, http.StatusOK, items)
 }
@@ -90,7 +93,7 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := strings.TrimPrefix(r.URL.Path, "/api/plan/")
-	if !s.hasPlan(id) {
+	if _, ok := s.registry.Get(id); !ok {
 		writeError(w, http.StatusNotFound, "nie znaleziono planu")
 		return
 	}
@@ -122,7 +125,7 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	plan, ok := s.getPlan(planID)
+	plan, ok := s.registry.Get(planID)
 	if !ok {
 		writeError(w, http.StatusNotFound, "nie znaleziono planu")
 		return
@@ -157,20 +160,6 @@ func (s *Server) reserveRefresh(planID string) time.Duration {
 	}
 	s.lastRefresh[planID] = time.Now()
 	return 0
-}
-
-func (s *Server) hasPlan(id string) bool {
-	_, ok := s.getPlan(id)
-	return ok
-}
-
-func (s *Server) getPlan(id string) (config.PlanConfig, bool) {
-	for _, p := range s.plans {
-		if p.ID == id {
-			return p, true
-		}
-	}
-	return config.PlanConfig{}, false
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

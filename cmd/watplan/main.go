@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -20,15 +21,30 @@ import (
 const (
 	defaultAddr     = "127.0.0.1:8080"
 	defaultConfig   = "plans.json"
+	defaultSources  = "sources.json"
 	defaultDataDir  = "data"
 	refreshInterval = time.Hour
 )
 
 func main() {
-	plans, err := config.LoadConfig(envOr("PLANWAT_CONFIG", defaultConfig))
+	plansFile := envOr("PLANWAT_CONFIG", defaultConfig)
+	sourcesFile := envOr("PLANWAT_SOURCES", defaultSources)
+
+	static, err := config.LoadConfig(plansFile)
+	if err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			log.Fatal(err)
+		}
+		log.Printf("brak %s, startuję z pustą listą planów", plansFile)
+		static = nil
+	}
+
+	sources, err := config.LoadSources(sourcesFile)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	reg := config.NewRegistry(static)
 
 	st, err := store.NewStore(envOr("PLANWAT_DATA", defaultDataDir))
 	if err != nil {
@@ -41,7 +57,8 @@ func main() {
 	}
 
 	upd := updater.NewUpdater(st, fetcher)
-	handler, err := server.NewServer(plans, st, upd).Handler()
+
+	handler, err := server.NewServer(reg, st, upd).Handler()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,7 +66,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	go upd.Run(ctx, plans, refreshInterval)
+	go upd.RunWithDiscovery(ctx, sources, static, reg, plansFile, refreshInterval)
 
 	srv := &http.Server{
 		Addr:              envOr("PLANWAT_ADDR", defaultAddr),

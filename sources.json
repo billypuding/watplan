@@ -1,0 +1,33 @@
+[
+  {
+    "faculty": "WML",
+    "index_url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/",
+    "start_year": 2026
+  },
+  {
+    "faculty": "WEL",
+    "index_url": "https://wel.wat.edu.pl/planyzajec/zima/index.xml",
+    "start_year": 2026
+  },
+  {
+    "faculty": "WLO",
+    "index_url": "https://wlo.wat.edu.pl/planzajec/zima/index.xml",
+    "start_year": 2026
+  },
+  {
+    "faculty": "WIM",
+    "index_url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/index.xml",
+    "start_year": 2026
+  },
+  {
+    "faculty": "IOE",
+    "index_url": "https://ioe.wat.edu.pl/plany/lato/index.xml",
+    "start_year": 2026
+  },
+  {
+    "faculty": "WTC",
+    "index_url": "https://wtc.wat.edu.pl/Plany/index.xml",
+    "start_year": 2026,
+    "pdf_links": true
+  }
+]

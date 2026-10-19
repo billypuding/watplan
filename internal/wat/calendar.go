@@ -22,6 +22,7 @@ type timeSlot struct {
 type dayBlock struct {
 	Weekday   time.Weekday
 	HeaderRow int
+	EndRow    int
 	Dates     map[int]time.Time
 }
 
@@ -89,7 +90,9 @@ func findDays(grid [][]Cell, legendCol, startYear int) ([]dayBlock, error) {
 
 			day, month, err := parseDayMonth(cell.Text)
 			if err != nil {
-				log.Printf("błąd daty %q w wierszu %d: %v", cell.Text, row[0].Row, err)
+				if looksLikeDate(cell.Text) {
+					log.Printf("błąd daty %q w wierszu %d: %v", cell.Text, row[0].Row, err)
+				}
 				continue
 			}
 			if month < prevMonth {
@@ -105,7 +108,19 @@ func findDays(grid [][]Cell, legendCol, startYear int) ([]dayBlock, error) {
 			block.Dates[cell.Col] = date
 		}
 
+		if len(block.Dates) == 0 {
+			continue
+		}
+
 		blocks = append(blocks, block)
+	}
+
+	for i := range blocks {
+		end := blocks[i].HeaderRow + slotsPerDay + 1
+		if i+1 < len(blocks) {
+			end = blocks[i+1].HeaderRow
+		}
+		blocks[i].EndRow = end
 	}
 
 	return blocks, nil
@@ -130,6 +145,15 @@ func parseDayMonth(s string) (int, time.Month, error) {
 	return day, month, nil
 }
 
+func looksLikeDate(s string) bool {
+	parts := strings.Fields(s)
+	if len(parts) != 2 {
+		return false
+	}
+	_, err := strconv.Atoi(parts[0])
+	return err == nil
+}
+
 func cellTimes(cell Cell, block dayBlock) (start, end string, err error) {
 	first := cell.Row - block.HeaderRow - 1
 	last := first + cell.RowSpan - 1
@@ -141,7 +165,7 @@ func cellTimes(cell Cell, block dayBlock) (start, end string, err error) {
 
 func blockForRow(blocks []dayBlock, row int) (dayBlock, bool) {
 	for _, b := range blocks {
-		if row > b.HeaderRow && row <= b.HeaderRow+slotsPerDay {
+		if row > b.HeaderRow && row < b.EndRow {
 			return b, true
 		}
 	}

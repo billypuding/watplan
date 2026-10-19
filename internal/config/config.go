@@ -14,6 +14,7 @@ type PlanConfig struct {
 	Name      string `json:"name"`
 	URL       string `json:"url"`
 	StartYear int    `json:"start_year"`
+	Faculty   string `json:"faculty,omitempty"`
 }
 
 func LoadConfig(path string) ([]PlanConfig, error) {
@@ -27,7 +28,7 @@ func LoadConfig(path string) ([]PlanConfig, error) {
 		return nil, fmt.Errorf("config %s: %w", path, err)
 	}
 	if len(plans) == 0 {
-		return nil, fmt.Errorf("config %s: brak zdefiniowanych planów", path)
+		return nil, nil
 	}
 
 	seen := make(map[string]bool)

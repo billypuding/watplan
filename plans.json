@@ -1,212 +1,4111 @@
 [
   {
-    "id": "WMT26AE2S6",
-    "name": "WMT26AE2S6",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AE2S6.htm",
-    "start_year": 2026
+    "id": "IOE23HX1S0",
+    "name": "IOE23HX1S0",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE23HX1S0.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AV1S0",
-    "name": "WMT26AV1S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AV1S0.htm",
-    "start_year": 2026
+    "id": "IOE23VX1S1",
+    "name": "IOE23VX1S1",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE23VX1S1.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AV2S0",
-    "name": "WMT26AV2S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AV2S0.htm",
-    "start_year": 2026
+    "id": "IOE23WX1S1",
+    "name": "IOE23WX1S1",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE23WX1S1.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AW1S0",
-    "name": "WMT26AW1S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW1S0.htm",
-    "start_year": 2026
+    "id": "IOE24HX1S0",
+    "name": "IOE24HX1S0",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE24HX1S0.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AW2S0",
-    "name": "WMT26AW2S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW2S0.htm",
-    "start_year": 2026
+    "id": "IOE24VX1S1",
+    "name": "IOE24VX1S1",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE24VX1S1.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AW3S0",
-    "name": "WMT26AW3S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW3S0.htm",
-    "start_year": 2026
+    "id": "IOE24WX1S1",
+    "name": "IOE24WX1S1",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE24WX1S1.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AW4S0",
-    "name": "WMT26AW4S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW4S0.htm",
-    "start_year": 2026
+    "id": "IOE25HX1S0",
+    "name": "IOE25HX1S0",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE25HX1S0.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AW5S0",
-    "name": "WMT26AW5S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW5S0.htm",
-    "start_year": 2026
+    "id": "IOE25VX1S1",
+    "name": "IOE25VX1S1",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE25VX1S1.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AW6S0",
-    "name": "WMT26AW6S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW6S0.htm",
-    "start_year": 2026
+    "id": "IOE25VX1S4",
+    "name": "IOE25VX1S4",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE25VX1S4.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AW7S0",
-    "name": "WMT26AW7S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW7S0.htm",
-    "start_year": 2026
+    "id": "IOE25WA1S4",
+    "name": "IOE25WA1S4",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE25WA1S4.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AW8S0",
-    "name": "WMT26AW8S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW8S0.htm",
-    "start_year": 2026
+    "id": "IOE25WT1S4",
+    "name": "IOE25WT1S4",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE25WT1S4.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AW9S0",
-    "name": "WMT26AW9S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW9S0.htm",
-    "start_year": 2026
+    "id": "IOE25WX1S1",
+    "name": "IOE25WX1S1",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE25WX1S1.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AX1S1",
-    "name": "WMT26AX1S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AX1S1.htm",
-    "start_year": 2026
+    "id": "IOE26HX1S0",
+    "name": "IOE26HX1S0",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE26HX1S0.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AX2S1",
-    "name": "WMT26AX2S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AX2S1.htm",
-    "start_year": 2026
+    "id": "IOE26VX1S1",
+    "name": "IOE26VX1S1",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE26VX1S1.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AX3S1",
-    "name": "WMT26AX3S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AX3S1.htm",
-    "start_year": 2026
+    "id": "IOE26WX1S1",
+    "name": "IOE26WX1S1",
+    "url": "https://ioe.wat.edu.pl/plany/lato/IOE26WX1S1.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26AY1S1",
-    "name": "WMT26AY1S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AY1S1.htm",
-    "start_year": 2026
+    "id": "WME24BO1S1",
+    "name": "WME24BO1S1",
+    "url": "https://ioe.wat.edu.pl/plany/lato/WME24BO1S1.htm",
+    "start_year": 2026,
+    "faculty": "IOE"
   },
   {
-    "id": "WMT26IX1S1",
-    "name": "WMT26IX1S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26IX1S1.htm",
-    "start_year": 2026
+    "id": "WEL22EA1S0",
+    "name": "WEL22EA1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL22EA1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26IX2S1",
-    "name": "WMT26IX2S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26IX2S1.htm",
-    "start_year": 2026
+    "id": "WEL22EE1S0",
+    "name": "WEL22EE1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL22EE1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26LW1S0",
-    "name": "WMT26LW1S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW1S0.htm",
-    "start_year": 2026
+    "id": "WEL22EL1S0",
+    "name": "WEL22EL1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL22EL1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26LW2S0",
-    "name": "WMT26LW2S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW2S0.htm",
-    "start_year": 2026
+    "id": "WEL22EL2S0",
+    "name": "WEL22EL2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL22EL2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26LW3S0",
-    "name": "WMT26LW3S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW3S0.htm",
-    "start_year": 2026
+    "id": "WEL22EL3S0",
+    "name": "WEL22EL3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL22EL3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26LW4S0",
-    "name": "WMT26LW4S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW4S0.htm",
-    "start_year": 2026
+    "id": "WEL22EL4S0",
+    "name": "WEL22EL4S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL22EL4S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26LW5S0",
-    "name": "WMT26LW5S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW5S0.htm",
-    "start_year": 2026
+    "id": "WEL22EN1S0",
+    "name": "WEL22EN1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL22EN1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26LW6S0",
-    "name": "WMT26LW6S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW6S0.htm",
-    "start_year": 2026
+    "id": "WEL22EV1S0",
+    "name": "WEL22EV1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL22EV1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26LW7S0",
-    "name": "WMT26LW7S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW7S0.htm",
-    "start_year": 2026
+    "id": "WEL23DE1N1",
+    "name": "WEL23DE1N1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23DE1N1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26LW8S0",
-    "name": "WMT26LW8S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW8S0.htm",
-    "start_year": 2026
+    "id": "WEL23DE1S1",
+    "name": "WEL23DE1S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23DE1S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26LX1S1",
-    "name": "WMT26LX1S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LX1S1.htm",
-    "start_year": 2026
+    "id": "WEL23EA1S0",
+    "name": "WEL23EA1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23EA1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26LX2S1",
-    "name": "WMT26LX2S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LX2S1.htm",
-    "start_year": 2026
+    "id": "WEL23EB1N1",
+    "name": "WEL23EB1N1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23EB1N1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26LX3S1",
-    "name": "WMT26LX3S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LX3S1.htm",
-    "start_year": 2026
+    "id": "WEL23EB1S1",
+    "name": "WEL23EB1S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23EB1S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26LY1S1",
-    "name": "WMT26LY1S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LY1S1.htm",
-    "start_year": 2026
+    "id": "WEL23EC1S1",
+    "name": "WEL23EC1S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23EC1S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26SW1S0",
-    "name": "WMT26SW1S0",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26SW1S0.htm",
-    "start_year": 2026
+    "id": "WEL23EE1S0",
+    "name": "WEL23EE1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23EE1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26SX1S1",
-    "name": "WMT26SX1S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26SX1S1.htm",
-    "start_year": 2026
+    "id": "WEL23EL1S0",
+    "name": "WEL23EL1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23EL1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WMT26SX2S1",
-    "name": "WMT26SX2S1",
-    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26SX2S1.htm",
-    "start_year": 2026
+    "id": "WEL23EL2S0",
+    "name": "WEL23EL2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23EL2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
-    "id": "WEL26DX2S1",
-    "name": "WEL26DX2S1",
-    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26DX2S1.htm",
-    "start_year": 2026
+    "id": "WEL23EL3S0",
+    "name": "WEL23EL3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23EL3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL23EN1S0",
+    "name": "WEL23EN1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23EN1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL23EU1S1",
+    "name": "WEL23EU1S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23EU1S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL23EV1S0",
+    "name": "WEL23EV1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23EV1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL23TX1S0",
+    "name": "WEL23TX1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23TX1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL23TX2S0",
+    "name": "WEL23TX2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL23TX2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24DE1N1",
+    "name": "WEL24DE1N1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24DE1N1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24DE1S1",
+    "name": "WEL24DE1S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24DE1S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EA1S0",
+    "name": "WEL24EA1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EA1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EB1S1",
+    "name": "WEL24EB1S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EB1S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EB2S1",
+    "name": "WEL24EB2S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EB2S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EC1S1",
+    "name": "WEL24EC1S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EC1S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EE1S0",
+    "name": "WEL24EE1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EE1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EI1S0",
+    "name": "WEL24EI1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EI1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EL1S0",
+    "name": "WEL24EL1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EL1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EL2S0",
+    "name": "WEL24EL2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EL2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EL3S0",
+    "name": "WEL24EL3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EL3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EL4S0",
+    "name": "WEL24EL4S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EL4S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EN1S0",
+    "name": "WEL24EN1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EN1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EV1S0",
+    "name": "WEL24EV1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EV1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EV2S0",
+    "name": "WEL24EV2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EV2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EX1S0",
+    "name": "WEL24EX1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EX1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EX2S0",
+    "name": "WEL24EX2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EX2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EX3S0",
+    "name": "WEL24EX3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EX3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24EZ1N1",
+    "name": "WEL24EZ1N1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24EZ1N1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24TL1S0",
+    "name": "WEL24TL1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24TL1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24TL2S0",
+    "name": "WEL24TL2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24TL2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL24TV1S0",
+    "name": "WEL24TV1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL24TV1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25CX1N5",
+    "name": "WEL25CX1N5",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25CX1N5.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25DE1N4",
+    "name": "WEL25DE1N4",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25DE1N4.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25DX1N1",
+    "name": "WEL25DX1N1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25DX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25DX1S1",
+    "name": "WEL25DX1S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25DX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25DX2N1",
+    "name": "WEL25DX2N1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25DX2N1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25DX2S1",
+    "name": "WEL25DX2S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25DX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EB1N4",
+    "name": "WEL25EB1N4",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EB1N4.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EB1S4",
+    "name": "WEL25EB1S4",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EB1S4.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25ELTS6",
+    "name": "WEL25ELTS6",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25ELTS6.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EQ1S0",
+    "name": "WEL25EQ1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EQ1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EQ1S1",
+    "name": "WEL25EQ1S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EQ1S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EQ2S0",
+    "name": "WEL25EQ2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EQ2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EQ2S1",
+    "name": "WEL25EQ2S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EQ2S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EQ3S0",
+    "name": "WEL25EQ3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EQ3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EQ3S1",
+    "name": "WEL25EQ3S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EQ3S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EQ4S0",
+    "name": "WEL25EQ4S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EQ4S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EQ4S1",
+    "name": "WEL25EQ4S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EQ4S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EU1N4",
+    "name": "WEL25EU1N4",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EU1N4.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EX1N1",
+    "name": "WEL25EX1N1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EX1S0",
+    "name": "WEL25EX1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EX1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EX2N1",
+    "name": "WEL25EX2N1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EX2N1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EX2S0",
+    "name": "WEL25EX2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EX2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EX3S0",
+    "name": "WEL25EX3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EX3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EX4S0",
+    "name": "WEL25EX4S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EX4S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EX5S0",
+    "name": "WEL25EX5S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EX5S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EX6S0",
+    "name": "WEL25EX6S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EX6S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EX7S0",
+    "name": "WEL25EX7S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EX7S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EX8S0",
+    "name": "WEL25EX8S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EX8S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EY1S0",
+    "name": "WEL25EY1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EY1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EY2S0",
+    "name": "WEL25EY2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EY2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EY3S0",
+    "name": "WEL25EY3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EY3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EY4S0",
+    "name": "WEL25EY4S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EY4S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EY5S0",
+    "name": "WEL25EY5S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EY5S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EY6S0",
+    "name": "WEL25EY6S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EY6S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EY7S0",
+    "name": "WEL25EY7S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EY7S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EY8S0",
+    "name": "WEL25EY8S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EY8S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EZ1N4",
+    "name": "WEL25EZ1N4",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EZ1N4.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25EZ1S4",
+    "name": "WEL25EZ1S4",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25EZ1S4.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25MX1S4",
+    "name": "WEL25MX1S4",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25MX1S4.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TL1S0",
+    "name": "WEL25TL1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TL1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TL2S0",
+    "name": "WEL25TL2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TL2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TL3S0",
+    "name": "WEL25TL3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TL3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TL4S0",
+    "name": "WEL25TL4S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TL4S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TV1S0",
+    "name": "WEL25TV1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TV1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TX1S0",
+    "name": "WEL25TX1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TX1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TX2S0",
+    "name": "WEL25TX2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TX2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TX3S0",
+    "name": "WEL25TX3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TX3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TX4S0",
+    "name": "WEL25TX4S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TX4S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TX5S0",
+    "name": "WEL25TX5S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TX5S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TX6S0",
+    "name": "WEL25TX6S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TX6S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TY1S0",
+    "name": "WEL25TY1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TY1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TY2S0",
+    "name": "WEL25TY2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TY2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TY3S0",
+    "name": "WEL25TY3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TY3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL25TY4S0",
+    "name": "WEL25TY4S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL25TY4S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26DX1N1",
+    "name": "WEL26DX1N1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26DX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
   },
   {
     "id": "WEL26DX1S1",
     "name": "WEL26DX1S1",
     "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26DX1S1.htm",
-    "start_year": 2026
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26DX2N1",
+    "name": "WEL26DX2N1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26DX2N1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26DX2S1",
+    "name": "WEL26DX2S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26DX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26E39S6",
+    "name": "WEL26E39S6",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26E39S6.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26E68S6",
+    "name": "WEL26E68S6",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26E68S6.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26E73N5",
+    "name": "WEL26E73N5",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26E73N5.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EL2S6",
+    "name": "WEL26EL2S6",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EL2S6.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26ELTS6",
+    "name": "WEL26ELTS6",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26ELTS6.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EQ1S1",
+    "name": "WEL26EQ1S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EQ1S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EQ2S1",
+    "name": "WEL26EQ2S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EQ2S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EQ3S1",
+    "name": "WEL26EQ3S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EQ3S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EQ4S1",
+    "name": "WEL26EQ4S1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EQ4S1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EX1N1",
+    "name": "WEL26EX1N1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EX1N5",
+    "name": "WEL26EX1N5",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EX1N5.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EX1S0",
+    "name": "WEL26EX1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EX1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EX2N1",
+    "name": "WEL26EX2N1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EX2N1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EX2S0",
+    "name": "WEL26EX2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EX2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EX3S0",
+    "name": "WEL26EX3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EX3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EX4S0",
+    "name": "WEL26EX4S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EX4S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EX5S0",
+    "name": "WEL26EX5S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EX5S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EX6S0",
+    "name": "WEL26EX6S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EX6S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EX7S0",
+    "name": "WEL26EX7S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EX7S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EX8S0",
+    "name": "WEL26EX8S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EX8S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EX9S0",
+    "name": "WEL26EX9S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EX9S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EY1S0",
+    "name": "WEL26EY1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EY1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EY2S0",
+    "name": "WEL26EY2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EY2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EY3S0",
+    "name": "WEL26EY3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EY3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EY4S0",
+    "name": "WEL26EY4S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EY4S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EY5S0",
+    "name": "WEL26EY5S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EY5S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EY6S0",
+    "name": "WEL26EY6S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EY6S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EY7S0",
+    "name": "WEL26EY7S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EY7S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EY8S0",
+    "name": "WEL26EY8S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EY8S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26EY9S0",
+    "name": "WEL26EY9S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26EY9S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26M1",
+    "name": "WEL26M1",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26M1.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26M2",
+    "name": "WEL26M2",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26M2.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26TX1S0",
+    "name": "WEL26TX1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26TX1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26TX2S0",
+    "name": "WEL26TX2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26TX2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26TX3S0",
+    "name": "WEL26TX3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26TX3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26TX4S0",
+    "name": "WEL26TX4S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26TX4S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26TX5S0",
+    "name": "WEL26TX5S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26TX5S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26TX6S0",
+    "name": "WEL26TX6S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26TX6S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26TX7S0",
+    "name": "WEL26TX7S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26TX7S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26TX8S0",
+    "name": "WEL26TX8S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26TX8S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WEL26TX9S0",
+    "name": "WEL26TX9S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WEL26TX9S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WIG26BW1S0",
+    "name": "WIG26BW1S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WIG26BW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WIG26BW2S0",
+    "name": "WIG26BW2S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WIG26BW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WIG26BW3S0",
+    "name": "WIG26BW3S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WIG26BW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WIG26BW4S0",
+    "name": "WIG26BW4S0",
+    "url": "https://wel.wat.edu.pl/planyzajec/zima/WIG26BW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WEL"
+  },
+  {
+    "id": "WME22MC1S0",
+    "name": "WME22MC1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME22MC1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME22MI1S0",
+    "name": "WME22MI1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME22MI1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME22MN1S0",
+    "name": "WME22MN1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME22MN1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME22MT1S0",
+    "name": "WME22MT1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME22MT1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23BE1S1",
+    "name": "WME23BE1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23BE1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23BM1S1",
+    "name": "WME23BM1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23BM1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23MC1S0",
+    "name": "WME23MC1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23MC1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23MD1N1",
+    "name": "WME23MD1N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23MD1N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23MD1S1",
+    "name": "WME23MD1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23MD1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23MI1S0",
+    "name": "WME23MI1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23MI1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23MN1S0",
+    "name": "WME23MN1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23MN1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23MR1N1",
+    "name": "WME23MR1N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23MR1N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23MR1S1",
+    "name": "WME23MR1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23MR1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23MS1S1",
+    "name": "WME23MS1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23MS1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23MT1S0",
+    "name": "WME23MT1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23MT1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23MT2S0",
+    "name": "WME23MT2S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23MT2S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23MW1S1",
+    "name": "WME23MW1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23MW1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23TA1S1",
+    "name": "WME23TA1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23TA1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23TB1N1",
+    "name": "WME23TB1N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23TB1N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23TB1S1",
+    "name": "WME23TB1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23TB1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME23TC1S1",
+    "name": "WME23TC1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME23TC1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME24BM1S1",
+    "name": "WME24BM1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME24BM1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME24MC1S0",
+    "name": "WME24MC1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME24MC1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME24MD1N1",
+    "name": "WME24MD1N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME24MD1N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME24MI1S0",
+    "name": "WME24MI1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME24MI1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME24MN1S0",
+    "name": "WME24MN1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME24MN1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME24MR1S1",
+    "name": "WME24MR1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME24MR1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME24MS1S1",
+    "name": "WME24MS1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME24MS1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME24MT1S0",
+    "name": "WME24MT1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME24MT1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME24MW1S1",
+    "name": "WME24MW1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME24MW1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME24TA1S1",
+    "name": "WME24TA1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME24TA1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME24TB1S1",
+    "name": "WME24TB1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME24TB1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME24TC1S1",
+    "name": "WME24TC1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME24TC1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25BM1S4",
+    "name": "WME25BM1S4",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25BM1S4.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25BX1S1",
+    "name": "WME25BX1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25BX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25BX2S1",
+    "name": "WME25BX2S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25BX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25DX1N1",
+    "name": "WME25DX1N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25DX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25DX1S1",
+    "name": "WME25DX1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25DX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25MC1S0",
+    "name": "WME25MC1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25MC1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25MI1S0",
+    "name": "WME25MI1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25MI1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25MN1S0",
+    "name": "WME25MN1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25MN1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25MR1N4",
+    "name": "WME25MR1N4",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25MR1N4.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25MR1S4",
+    "name": "WME25MR1S4",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25MR1S4.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25MT1S0",
+    "name": "WME25MT1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25MT1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25MW1N4",
+    "name": "WME25MW1N4",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25MW1N4.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25MX1N1",
+    "name": "WME25MX1N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25MX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25MX1S1",
+    "name": "WME25MX1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25MX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25MX2S1",
+    "name": "WME25MX2S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25MX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25TC1S4",
+    "name": "WME25TC1S4",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25TC1S4.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25TX1N1",
+    "name": "WME25TX1N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25TX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25TX1S1",
+    "name": "WME25TX1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25TX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME25TX2S1",
+    "name": "WME25TX2S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME25TX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26BX1S1",
+    "name": "WME26BX1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26BX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26BX2S1",
+    "name": "WME26BX2S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26BX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26BX3S1",
+    "name": "WME26BX3S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26BX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26BX4S1",
+    "name": "WME26BX4S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26BX4S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26DX1N1",
+    "name": "WME26DX1N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26DX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26DX1S1",
+    "name": "WME26DX1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26DX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26DX2S1",
+    "name": "WME26DX2S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26DX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26DX3S1",
+    "name": "WME26DX3S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26DX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26DX4S1",
+    "name": "WME26DX4S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26DX4S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX1N1",
+    "name": "WME26MX1N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX1S0",
+    "name": "WME26MX1S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX1S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX1S1",
+    "name": "WME26MX1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX1S7",
+    "name": "WME26MX1S7",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX1S7.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX2N1",
+    "name": "WME26MX2N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX2N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX2S0",
+    "name": "WME26MX2S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX2S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX2S1",
+    "name": "WME26MX2S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX2S7",
+    "name": "WME26MX2S7",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX2S7.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX3N1",
+    "name": "WME26MX3N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX3N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX3S0",
+    "name": "WME26MX3S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX3S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX3S1",
+    "name": "WME26MX3S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX3S7",
+    "name": "WME26MX3S7",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX3S7.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX4S0",
+    "name": "WME26MX4S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX4S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX4S1",
+    "name": "WME26MX4S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX4S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX4S7",
+    "name": "WME26MX4S7",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX4S7.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX5S0",
+    "name": "WME26MX5S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX5S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX5S1",
+    "name": "WME26MX5S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX5S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX5S7",
+    "name": "WME26MX5S7",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX5S7.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MX6S0",
+    "name": "WME26MX6S0",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26MX6S0.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26TX1N1",
+    "name": "WME26TX1N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26TX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26TX1S1",
+    "name": "WME26TX1S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26TX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26TX2N1",
+    "name": "WME26TX2N1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26TX2N1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26TX2S1",
+    "name": "WME26TX2S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26TX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26TX3S1",
+    "name": "WME26TX3S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26TX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26TX4S1",
+    "name": "WME26TX4S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26TX4S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26TX5S1",
+    "name": "WME26TX5S1",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26TX5S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WLO22FO1S0",
+    "name": "WLO22FO1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO22FO1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO22FO2S0",
+    "name": "WLO22FO2S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO22FO2S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO22FO3S0",
+    "name": "WLO22FO3S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO22FO3S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO22FU1S0",
+    "name": "WLO22FU1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO22FU1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO22FZ1S0",
+    "name": "WLO22FZ1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO22FZ1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO23EW1S0",
+    "name": "WLO23EW1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO23EW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO23FO1S0",
+    "name": "WLO23FO1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO23FO1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO23FO2S0",
+    "name": "WLO23FO2S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO23FO2S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO23FO3S0",
+    "name": "WLO23FO3S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO23FO3S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO23FP1N1",
+    "name": "WLO23FP1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO23FP1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO23FP1S1",
+    "name": "WLO23FP1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO23FP1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO23FP2S1",
+    "name": "WLO23FP2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO23FP2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO23FU1S0",
+    "name": "WLO23FU1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO23FU1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO23FZ1S0",
+    "name": "WLO23FZ1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO23FZ1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24AB1S1",
+    "name": "WLO24AB1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24AB1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24AB2S1",
+    "name": "WLO24AB2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24AB2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24AM1N1",
+    "name": "WLO24AM1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24AM1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24AZ1S1",
+    "name": "WLO24AZ1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24AZ1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24EW1S0",
+    "name": "WLO24EW1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24EW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24FE1S1",
+    "name": "WLO24FE1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24FE1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24FO1S0",
+    "name": "WLO24FO1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24FO1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24FO2S0",
+    "name": "WLO24FO2S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24FO2S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24FP1N1",
+    "name": "WLO24FP1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24FP1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24FP1S1",
+    "name": "WLO24FP1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24FP1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24FP2S1",
+    "name": "WLO24FP2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24FP2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24FU1S0",
+    "name": "WLO24FU1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24FU1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24FW1S0",
+    "name": "WLO24FW1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24FW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24FW2S0",
+    "name": "WLO24FW2S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24FW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24FZ1S0",
+    "name": "WLO24FZ1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24FZ1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24PL1S1",
+    "name": "WLO24PL1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24PL1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24PW1N1",
+    "name": "WLO24PW1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24PW1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24PW1S1",
+    "name": "WLO24PW1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24PW1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24RK1N1",
+    "name": "WLO24RK1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24RK1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24RO1S1",
+    "name": "WLO24RO1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24RO1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24RO2S1",
+    "name": "WLO24RO2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24RO2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24RS1N1",
+    "name": "WLO24RS1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24RS1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24RS1S1",
+    "name": "WLO24RS1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24RS1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24ZI1S1",
+    "name": "WLO24ZI1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24ZI1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24ZZ1N1",
+    "name": "WLO24ZZ1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24ZZ1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO24ZZ1S1",
+    "name": "WLO24ZZ1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO24ZZ1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25AX1N1",
+    "name": "WLO25AX1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25AX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25AX1S1",
+    "name": "WLO25AX1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25AX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25AX2S1",
+    "name": "WLO25AX2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25AX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25AX3S1",
+    "name": "WLO25AX3S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25AX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25EW1S0",
+    "name": "WLO25EW1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25EW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25FR1N4",
+    "name": "WLO25FR1N4",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25FR1N4.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25FR1S4",
+    "name": "WLO25FR1S4",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25FR1S4.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25FR2N4",
+    "name": "WLO25FR2N4",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25FR2N4.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25FW1S0",
+    "name": "WLO25FW1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25FW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25FW2S0",
+    "name": "WLO25FW2S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25FW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25FW3S0",
+    "name": "WLO25FW3S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25FW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25FW4S0",
+    "name": "WLO25FW4S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25FW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25FWTS6",
+    "name": "WLO25FWTS6",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25FWTS6.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25FX1N1",
+    "name": "WLO25FX1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25FX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25FX1S1",
+    "name": "WLO25FX1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25FX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25FX2S1",
+    "name": "WLO25FX2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25FX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25PC1N2",
+    "name": "WLO25PC1N2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25PC1N2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25PO1N2",
+    "name": "WLO25PO1N2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25PO1N2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25PO1S2",
+    "name": "WLO25PO1S2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25PO1S2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25PX1N1",
+    "name": "WLO25PX1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25PX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25PX1S1",
+    "name": "WLO25PX1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25PX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25PX2S1",
+    "name": "WLO25PX2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25PX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25PX3S1",
+    "name": "WLO25PX3S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25PX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25RD1N2",
+    "name": "WLO25RD1N2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25RD1N2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25RD1S2",
+    "name": "WLO25RD1S2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25RD1S2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25RX1N1",
+    "name": "WLO25RX1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25RX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25RX1S1",
+    "name": "WLO25RX1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25RX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25RX2N1",
+    "name": "WLO25RX2N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25RX2N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25RX2S1",
+    "name": "WLO25RX2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25RX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25RZ1S2",
+    "name": "WLO25RZ1S2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25RZ1S2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25ZB1N2",
+    "name": "WLO25ZB1N2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25ZB1N2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25ZK1S2",
+    "name": "WLO25ZK1S2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25ZK1S2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25ZX1N1",
+    "name": "WLO25ZX1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25ZX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25ZX1S1",
+    "name": "WLO25ZX1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25ZX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25ZX2S1",
+    "name": "WLO25ZX2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25ZX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO25ZX3S1",
+    "name": "WLO25ZX3S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO25ZX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26AX1N1",
+    "name": "WLO26AX1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26AX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26AX1S1",
+    "name": "WLO26AX1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26AX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26AX2N1",
+    "name": "WLO26AX2N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26AX2N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26AX2S1",
+    "name": "WLO26AX2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26AX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26AX3S1",
+    "name": "WLO26AX3S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26AX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26AX4S1",
+    "name": "WLO26AX4S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26AX4S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26EW1S0",
+    "name": "WLO26EW1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26EW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26EW2S0",
+    "name": "WLO26EW2S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26EW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26EW3S0",
+    "name": "WLO26EW3S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26EW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FW0S0",
+    "name": "WLO26FW0S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FW0S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FW1S0",
+    "name": "WLO26FW1S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FW2S0",
+    "name": "WLO26FW2S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FW3S0",
+    "name": "WLO26FW3S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FW4S0",
+    "name": "WLO26FW4S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FW5S0",
+    "name": "WLO26FW5S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FW5S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FW6S0",
+    "name": "WLO26FW6S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FW6S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FW7S0",
+    "name": "WLO26FW7S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FW7S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FW8S0",
+    "name": "WLO26FW8S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FW8S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FW9S0",
+    "name": "WLO26FW9S0",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FW9S0.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FWTS6",
+    "name": "WLO26FWTS6",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FWTS6.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FX1N1",
+    "name": "WLO26FX1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FX1S1",
+    "name": "WLO26FX1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FX2N1",
+    "name": "WLO26FX2N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FX2N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FX2S1",
+    "name": "WLO26FX2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FX3N1",
+    "name": "WLO26FX3N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FX3N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FX3S1",
+    "name": "WLO26FX3S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FX4N1",
+    "name": "WLO26FX4N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FX4N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26FX4S1",
+    "name": "WLO26FX4S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26FX4S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26PX1N1",
+    "name": "WLO26PX1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26PX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26PX1N2",
+    "name": "WLO26PX1N2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26PX1N2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26PX1S1",
+    "name": "WLO26PX1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26PX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26PX1S2",
+    "name": "WLO26PX1S2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26PX1S2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26PX2S1",
+    "name": "WLO26PX2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26PX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26PX3S1",
+    "name": "WLO26PX3S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26PX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26PX4S1",
+    "name": "WLO26PX4S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26PX4S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26RX1N1",
+    "name": "WLO26RX1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26RX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26RX1N2",
+    "name": "WLO26RX1N2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26RX1N2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26RX1S1",
+    "name": "WLO26RX1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26RX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26RX1S2",
+    "name": "WLO26RX1S2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26RX1S2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26RX2N1",
+    "name": "WLO26RX2N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26RX2N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26RX2N2",
+    "name": "WLO26RX2N2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26RX2N2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26RX2S1",
+    "name": "WLO26RX2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26RX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26RX2S2",
+    "name": "WLO26RX2S2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26RX2S2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26RX3N1",
+    "name": "WLO26RX3N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26RX3N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26RX3S1",
+    "name": "WLO26RX3S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26RX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26RX4S1",
+    "name": "WLO26RX4S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26RX4S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26WX1N2",
+    "name": "WLO26WX1N2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26WX1N2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26WX1S2",
+    "name": "WLO26WX1S2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26WX1S2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26ZX1N1",
+    "name": "WLO26ZX1N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26ZX1N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26ZX1N2",
+    "name": "WLO26ZX1N2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26ZX1N2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26ZX1S1",
+    "name": "WLO26ZX1S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26ZX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26ZX1S2",
+    "name": "WLO26ZX1S2",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26ZX1S2.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26ZX2N1",
+    "name": "WLO26ZX2N1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26ZX2N1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26ZX2S1",
+    "name": "WLO26ZX2S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26ZX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WLO26ZX3S1",
+    "name": "WLO26ZX3S1",
+    "url": "https://wlo.wat.edu.pl/planzajec/zima/WLO26ZX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WLO"
+  },
+  {
+    "id": "WMT22AC1S0",
+    "name": "WMT22AC1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22AC1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22AE1S0",
+    "name": "WMT22AE1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22AE1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22AE2S0",
+    "name": "WMT22AE2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22AE2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22AG1S0",
+    "name": "WMT22AG1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22AG1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22AS1S0",
+    "name": "WMT22AS1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22AS1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22AW1S0",
+    "name": "WMT22AW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22AW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22AW2S0",
+    "name": "WMT22AW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22AW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22AW3S0",
+    "name": "WMT22AW3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22AW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22AW4S0",
+    "name": "WMT22AW4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22AW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22AW5S0",
+    "name": "WMT22AW5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22AW5S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22AW6S0",
+    "name": "WMT22AW6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22AW6S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22AZ1S0",
+    "name": "WMT22AZ1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22AZ1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22LL1S0",
+    "name": "WMT22LL1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22LL1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22LL2S0",
+    "name": "WMT22LL2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22LL2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22LL3S0",
+    "name": "WMT22LL3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22LL3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22LW1S0",
+    "name": "WMT22LW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22LW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22LW2S0",
+    "name": "WMT22LW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22LW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22LW3S0",
+    "name": "WMT22LW3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22LW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22LW4S0",
+    "name": "WMT22LW4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22LW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22LW5S0",
+    "name": "WMT22LW5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22LW5S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT22SW1S0",
+    "name": "WMT22SW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT22SW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AC1S0",
+    "name": "WMT23AC1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AC1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AE1S0",
+    "name": "WMT23AE1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AE1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AG1S0",
+    "name": "WMT23AG1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AG1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AH1S0",
+    "name": "WMT23AH1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AH1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AK1S1",
+    "name": "WMT23AK1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AK1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AO1S0",
+    "name": "WMT23AO1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AO1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AP1S1",
+    "name": "WMT23AP1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AP1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AS1S0",
+    "name": "WMT23AS1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AS1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AW1S0",
+    "name": "WMT23AW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AW2S0",
+    "name": "WMT23AW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AW3S0",
+    "name": "WMT23AW3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AW4S0",
+    "name": "WMT23AW4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AW5S0",
+    "name": "WMT23AW5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AW5S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AW6S0",
+    "name": "WMT23AW6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AW6S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AW7S0",
+    "name": "WMT23AW7S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AW7S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AW8S0",
+    "name": "WMT23AW8S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AW8S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23AZ1S0",
+    "name": "WMT23AZ1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23AZ1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23IP1S1",
+    "name": "WMT23IP1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23IP1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LA1S1",
+    "name": "WMT23LA1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LA1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LL1S0",
+    "name": "WMT23LL1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LL1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LL2S0",
+    "name": "WMT23LL2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LL2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LL3S0",
+    "name": "WMT23LL3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LL3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LL4S0",
+    "name": "WMT23LL4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LL4S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LL5S0",
+    "name": "WMT23LL5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LL5S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LL6S0",
+    "name": "WMT23LL6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LL6S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LP1S1",
+    "name": "WMT23LP1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LP1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LW1S0",
+    "name": "WMT23LW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LW2S0",
+    "name": "WMT23LW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LW3S0",
+    "name": "WMT23LW3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LW4S0",
+    "name": "WMT23LW4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LW5S0",
+    "name": "WMT23LW5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LW5S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LW6S0",
+    "name": "WMT23LW6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LW6S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LW7S0",
+    "name": "WMT23LW7S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LW7S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23LY1S1",
+    "name": "WMT23LY1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23LY1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23ST1S1",
+    "name": "WMT23ST1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23ST1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT23SW1S0",
+    "name": "WMT23SW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT23SW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24A1S1",
+    "name": "WMT24A1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24A1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AB1S1",
+    "name": "WMT24AB1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AB1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AC1S0",
+    "name": "WMT24AC1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AC1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AE1S0",
+    "name": "WMT24AE1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AE1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AG1S0",
+    "name": "WMT24AG1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AG1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AH1S0",
+    "name": "WMT24AH1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AH1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AK1S1",
+    "name": "WMT24AK1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AK1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AO1S0",
+    "name": "WMT24AO1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AO1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AO2S0",
+    "name": "WMT24AO2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AO2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AP1S1",
+    "name": "WMT24AP1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AP1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AS1S0",
+    "name": "WMT24AS1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AS1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AW1S0",
+    "name": "WMT24AW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AW2S0",
+    "name": "WMT24AW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AW3S0",
+    "name": "WMT24AW3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AW4S0",
+    "name": "WMT24AW4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AW5S0",
+    "name": "WMT24AW5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AW5S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AW6S0",
+    "name": "WMT24AW6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AW6S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AW7S0",
+    "name": "WMT24AW7S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AW7S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AW8S0",
+    "name": "WMT24AW8S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AW8S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AW9S0",
+    "name": "WMT24AW9S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AW9S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AX1S1",
+    "name": "WMT24AX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AX2S1",
+    "name": "WMT24AX2S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AY1S1",
+    "name": "WMT24AY1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AY1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24AZ1S0",
+    "name": "WMT24AZ1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24AZ1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24IP1S1",
+    "name": "WMT24IP1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24IP1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LA1S1",
+    "name": "WMT24LA1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LA1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LL1S0",
+    "name": "WMT24LL1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LL1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LL2S0",
+    "name": "WMT24LL2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LL2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LL3S0",
+    "name": "WMT24LL3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LL3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LL4S0",
+    "name": "WMT24LL4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LL4S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LL5S0",
+    "name": "WMT24LL5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LL5S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LL6S0",
+    "name": "WMT24LL6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LL6S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LP1S1",
+    "name": "WMT24LP1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LP1s1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LP2S1",
+    "name": "WMT24LP2S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LP2S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LW1S0",
+    "name": "WMT24LW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LW2S0",
+    "name": "WMT24LW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LW3S0",
+    "name": "WMT24LW3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LW4S0",
+    "name": "WMT24LW4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LW5S0",
+    "name": "WMT24LW5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LW5S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LW6S0",
+    "name": "WMT24LW6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LW6S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LW7S0",
+    "name": "WMT24LW7S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LW7S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LW8S0",
+    "name": "WMT24LW8S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LW8S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24LW9S0",
+    "name": "WMT24LW9S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24LW9S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24ST1S1",
+    "name": "WMT24ST1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24ST1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24SW1S0",
+    "name": "WMT24SW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24SW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT24SW2S0",
+    "name": "WMT24SW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT24SW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AC1S0",
+    "name": "WMT25AC1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AC1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AE1S0",
+    "name": "WMT25AE1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AE1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AE2S0",
+    "name": "WMT25AE2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AE2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AG1S0",
+    "name": "WMT25AG1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AG1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AH1S0",
+    "name": "WMT25AH1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AH1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AH2S0",
+    "name": "WMT25AH2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AH2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AK1S4",
+    "name": "WMT25AK1S4",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AK1S4.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AL1S4",
+    "name": "WMT25AL1S4",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AL1S4.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AO1S0",
+    "name": "WMT25AO1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AO1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AO2S0",
+    "name": "WMT25AO2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AO2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AP1S4",
+    "name": "WMT25AP1S4",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AP1S4.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AS1S0",
+    "name": "WMT25AS1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AS1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AS2S0",
+    "name": "WMT25AS2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AS2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AW1S0",
+    "name": "WMT25AW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AW2S0",
+    "name": "WMT25AW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AW3S0",
+    "name": "WMT25AW3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AW4S0",
+    "name": "WMT25AW4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AW5S0",
+    "name": "WMT25AW5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AW5S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AW6S0",
+    "name": "WMT25AW6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AW6S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AW7S0",
+    "name": "WMT25AW7S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AW7S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AW8S0",
+    "name": "WMT25AW8S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AW8S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AW9S0",
+    "name": "WMT25AW9S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AW9S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AX1S1",
+    "name": "WMT25AX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AX2S1",
+    "name": "WMT25AX2S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AY1S1",
+    "name": "WMT25AY1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AY1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25AZ1S0",
+    "name": "WMT25AZ1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25AZ1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25IX1S1",
+    "name": "WMT25IX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25IX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25IX2S1",
+    "name": "WMT25IX2S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25IX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LB1S4",
+    "name": "WMT25LB1S4",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LB1S4.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LC1S4",
+    "name": "WMT25LC1S4",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LC1S4.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LW1S0",
+    "name": "WMT25LW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LW2S0",
+    "name": "WMT25LW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LW3S0",
+    "name": "WMT25LW3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LW4S0",
+    "name": "WMT25LW4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LW5S0",
+    "name": "WMT25LW5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LW5S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LW6S0",
+    "name": "WMT25LW6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LW6S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LW7S0",
+    "name": "WMT25LW7S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LW7S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LW8S0",
+    "name": "WMT25LW8S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LW8S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LX1S1",
+    "name": "WMT25LX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LX2S1",
+    "name": "WMT25LX2S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LX3S1",
+    "name": "WMT25LX3S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25LY1S1",
+    "name": "WMT25LY1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25LY1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25SW1S0",
+    "name": "WMT25SW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25SW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT25SX1S1",
+    "name": "WMT25SX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT25SX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AE2S6",
+    "name": "WMT26AE2S6",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AE2S6.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AV1S0",
+    "name": "WMT26AV1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AV1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AV2S0",
+    "name": "WMT26AV2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AV2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AW1S0",
+    "name": "WMT26AW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AW2S0",
+    "name": "WMT26AW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AW3S0",
+    "name": "WMT26AW3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AW4S0",
+    "name": "WMT26AW4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AW5S0",
+    "name": "WMT26AW5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW5S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AW6S0",
+    "name": "WMT26AW6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW6S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AW7S0",
+    "name": "WMT26AW7S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW7S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AW8S0",
+    "name": "WMT26AW8S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW8S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AW9S0",
+    "name": "WMT26AW9S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AW9S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AX1E1",
+    "name": "WMT26AX1E1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AX1E1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AX1S1",
+    "name": "WMT26AX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AX2S1",
+    "name": "WMT26AX2S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AX3S1",
+    "name": "WMT26AX3S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26AY1S1",
+    "name": "WMT26AY1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26AY1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26IX1S1",
+    "name": "WMT26IX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26IX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26IX2S1",
+    "name": "WMT26IX2S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26IX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LW1S0",
+    "name": "WMT26LW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LW2S0",
+    "name": "WMT26LW2S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW2S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LW3S0",
+    "name": "WMT26LW3S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW3S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LW4S0",
+    "name": "WMT26LW4S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW4S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LW5S0",
+    "name": "WMT26LW5S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW5S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LW6S0",
+    "name": "WMT26LW6S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW6S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LW7S0",
+    "name": "WMT26LW7S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW7S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LW8S0",
+    "name": "WMT26LW8S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LW8S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LX1E1",
+    "name": "WMT26LX1E1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LX1E1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LX1S1",
+    "name": "WMT26LX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LX2S1",
+    "name": "WMT26LX2S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LX3S1",
+    "name": "WMT26LX3S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26LY1S1",
+    "name": "WMT26LY1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26LY1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26SW1S0",
+    "name": "WMT26SW1S0",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26SW1S0.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26SX1S1",
+    "name": "WMT26SX1S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26SX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WMT26SX2S1",
+    "name": "WMT26SX2S1",
+    "url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_zima_2/WMT26SX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WML"
+  },
+  {
+    "id": "WTC22CO1S0",
+    "name": "WTC22CO1S0",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC22CO1S0.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC23CN1S1",
+    "name": "WTC23CN1S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC23CN1S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC23CO1S0",
+    "name": "WTC23CO1S0",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC23CO1S0.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC23CW1S1",
+    "name": "WTC23CW1S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC23CW1S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC23NI1S1",
+    "name": "WTC23NI1S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC23NI1S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC24CN1S1",
+    "name": "WTC24CN1S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC24CN1S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC24CO1S0",
+    "name": "WTC24CO1S0",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC24CO1S0.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC24CW1S1",
+    "name": "WTC24CW1S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC24CW1S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC24NI1S1",
+    "name": "WTC24NI1S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC24NI1S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC25AE1S4",
+    "name": "WTC25AE1S4",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC25AE1S4.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC25AS1S4",
+    "name": "WTC25AS1S4",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC25AS1S4.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC25CR1S0",
+    "name": "WTC25CR1S0",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC25CR1S0.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC25CX1S1",
+    "name": "WTC25CX1S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC25CX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC25NK1S4",
+    "name": "WTC25NK1S4",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC25NK1S4.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC25NX1S1",
+    "name": "WTC25NX1S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC25NX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC26CR1S0",
+    "name": "WTC26CR1S0",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC26CR1S0.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC26CX1S1",
+    "name": "WTC26CX1S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC26CX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC26CX2S1",
+    "name": "WTC26CX2S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC26CX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC26M1",
+    "name": "WTC26M1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC26M1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC26M2",
+    "name": "WTC26M2",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC26M2.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC26NX1S1",
+    "name": "WTC26NX1S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC26NX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC26NX2S1",
+    "name": "WTC26NX2S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC26NX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
+  },
+  {
+    "id": "WTC26TX1S1",
+    "name": "WTC26TX1S1",
+    "url": "https://wtc.wat.edu.pl/Plany/WTC26TX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WTC"
   }
 ]

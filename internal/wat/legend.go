@@ -1,14 +1,9 @@
 package wat
 
 import (
-	"regexp"
 	"strings"
 	"unicode"
-
-	"github.com/PuerkitoBio/goquery"
 )
-
-var trailingDigitsRe = regexp.MustCompile(`\d+$`)
 
 type abbrEvidence struct {
 	leading int
@@ -47,10 +42,11 @@ func collectEvidence(grid [][]Cell, legendCol int) map[string]*abbrEvidence {
 	return out
 }
 
-func buildLegend(grid [][]Cell, legendCol int, evidence map[string]*abbrEvidence) (map[string]string, map[string]string, map[string]map[string]string) {
+func buildLegend(grid [][]Cell, legendCol int, evidence map[string]*abbrEvidence) (map[string]string, map[string]string, map[string]map[string]string, map[string][]string) {
 	subjects := make(map[string]string)
 	teachers := make(map[string]string)
 	subjectTeachers := make(map[string]map[string]string)
+	legendTeachers := make(map[string][]string)
 
 	var currentSubject string
 
@@ -58,26 +54,17 @@ func buildLegend(grid [][]Cell, legendCol int, evidence map[string]*abbrEvidence
 		var abbr, name string
 
 		for _, cell := range row {
-			if mergeAttr, exists := cell.Node.Attr("mergeWith"); exists {
+			if cell.Col == legendCol {
 				abbr = cleanText(cell.Text)
-				name = extractTextFromHTMLString(mergeAttr)
-				if abbr != "" && name != "" {
-					break
-				}
-			}
-		}
-
-		if abbr == "" || name == "" {
-			for _, cell := range row {
-				if cell.Col == legendCol {
-					abbr = cleanText(cell.Text)
-				} else if cell.Col == legendCol+1 {
-					name = cleanText(cell.Text)
-				}
+			} else if cell.Col == legendCol+1 {
+				name = cleanText(cell.Text)
 			}
 		}
 
 		if abbr == "" || name == "" || abbr == "&nbsp" {
+			if abbr == "" && name != "" && currentSubject != "" && (isTeacherName(name) || looksLikePersonName(name)) {
+				legendTeachers[currentSubject] = appendUnique(legendTeachers[currentSubject], name)
+			}
 			continue
 		}
 
@@ -102,7 +89,7 @@ func buildLegend(grid [][]Cell, legendCol int, evidence map[string]*abbrEvidence
 		}
 	}
 
-	return subjects, teachers, subjectTeachers
+	return subjects, teachers, subjectTeachers, legendTeachers
 }
 
 func isTypeToken(s string) bool {
@@ -117,12 +104,4 @@ func isNumeric(s string) bool {
 		}
 	}
 	return true
-}
-
-func extractTextFromHTMLString(htmlStr string) string {
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlStr))
-	if err != nil {
-		return ""
-	}
-	return cleanText(trailingDigitsRe.ReplaceAllString(doc.Text(), ""))
 }

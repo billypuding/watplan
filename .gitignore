@@ -1,4 +1,7 @@
 
 *.tmp
-/internal/wat/testdata/
 .DS_Store
+
+# build artifacts
+/main
+/watplan
