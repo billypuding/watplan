@@ -62,7 +62,10 @@ func (u *Updater) Run(ctx context.Context, plans []config.PlanConfig, interval t
 
 func (u *Updater) UpdateAll(plans []config.PlanConfig) error {
 	var errs []error
-	for _, p := range plans {
+	for i, p := range plans {
+		if i > 0 {
+			time.Sleep(delayBetweenPlans)
+		}
 		if err := u.Update(p); err != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", p.ID, err))
 		}
@@ -107,8 +110,6 @@ func (u *Updater) Update(cfg config.PlanConfig) error {
 		modifiedAt = now
 		log.Printf("plan %s: zmiany (dodane %d, usunięte %d, zmienione %d)",
 			cfg.ID, len(diff.Added), len(diff.Removed), len(diff.Modified))
-	} else {
-		log.Printf("plan %s: bez zmian", cfg.ID)
 	}
 
 	plan := model.Plan{Events: events, FetchedAt: now, ModifiedAt: modifiedAt}

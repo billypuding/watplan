@@ -1,30 +1,30 @@
 :root {
-    --bg: #eceae1;
-    --surface: #f8f6ef;
-    --surface-2: #efece1;
-    --line: #d6d2c3;
-    --text: #1b2116;
-    --muted: #6b705f;
-    --accent: #3d4f33;
+    --bg: #e9edf3;
+    --surface: #f7f9fc;
+    --surface-2: #edf1f6;
+    --line: #d3dbe6;
+    --text: #151b26;
+    --muted: #5f6b7d;
+    --accent: #2d5bd6;
     --accent-ink: #ffffff;
     --now: #d98e04;
     --error: #b42318;
     --ok: #2f6b3a;
     --radius: 14px;
     --radius-sm: 9px;
-    --shadow: 0 1px 2px rgba(20, 26, 16, .06), 0 8px 24px rgba(20, 26, 16, .06);
+    --shadow: 0 1px 2px rgba(15, 25, 45, .06), 0 8px 24px rgba(15, 25, 45, .06);
     color-scheme: light;
 }
 
 [data-theme="dark"] {
-    --bg: #12160f;
-    --surface: #1a2015;
-    --surface-2: #222a1c;
-    --line: #313a28;
-    --text: #eeeadb;
-    --muted: #9aa186;
-    --accent: #8a9a6b;
-    --accent-ink: #12160f;
+    --bg: #0f141c;
+    --surface: #161d28;
+    --surface-2: #1e2733;
+    --line: #2a3646;
+    --text: #e8edf4;
+    --muted: #8c9bb0;
+    --accent: #6f9bff;
+    --accent-ink: #0f141c;
     --now: #f2b233;
     --error: #ff8a7a;
     --ok: #8fcf9a;
@@ -94,6 +94,8 @@ button:disabled { opacity: .4; cursor: not-allowed; }
 
 .icon-btn { background: var(--surface-2); border-color: var(--line); padding: 8px 13px; line-height: 1; font-size: 17px; }
 .icon-btn:hover:not(:disabled) { border-color: var(--accent); }
+
+.material-symbols-outlined { display: block; font-size: 20px; }
 
 .period-nav { display: flex; align-items: center; gap: 6px; }
 .month-label { min-width: 150px; text-align: center; font-weight: 700; text-transform: capitalize; }
@@ -259,7 +261,7 @@ dialog.settings {
     border-radius: var(--radius);
     box-shadow: var(--shadow);
 }
-dialog.settings::backdrop { background: rgba(10, 12, 8, .55); }
+dialog.settings::backdrop { background: rgba(6, 9, 16, .55); }
 
 .settings-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .settings-head h2 { margin: 0; font-size: 20px; }
