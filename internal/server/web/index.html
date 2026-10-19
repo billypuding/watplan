@@ -1,55 +1,96 @@
 <!DOCTYPE html>
 <html lang="pl" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WATplan</title>
-    <meta name="description" content="WATplan to szybki i czytelny plan zajęć dla studentów Wojskowej Akademii Technicznej. Pozwala na błyskawiczne wyszukiwanie grup i nawigację po tygodniach.">
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <link rel="stylesheet" href="style.css">
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="7243e5ff-b868-43e2-819c-6f42ffe95547"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WATplan – Darmowy i ultra szybki plan zajęć WAT</title>
+<meta name="description" content="Darmowy, ultra szybki plan zajęć dla studentów Wojskowej Akademii Technicznej. Widok tygodnia i miesiąca, pasek postępu na żywo i eksport do kalendarza.">
+<meta name="theme-color" content="#12160f">
+<meta property="og:title" content="WATplan – Darmowy i ultra szybki plan zajęć WAT">
+<meta property="og:description" content="Plan zajęć WAT. Wyszukaj swoją grupę, sprawdzaj zajęcia z dowolnego urządzenia i pobierz plan do swojego kalendarza.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<script defer src="https://cloud.umami.is/script.js" data-website-id="7243e5ff-b868-43e2-819c-6f42ffe95547"></script>
 </head>
 <body>
-    <div class="top-bar">
-        <div class="controls-wrapper">
-            <div class="control-group search-group">
-                <label for="planSearch">Grupa:</label>
-                <div class="search-container">
-                    <input type="text" id="planSearch" placeholder="Szukaj (np. WEL...)" autocomplete="off">
-                    <div id="searchResults" class="search-results hidden"></div>
-                </div>
-            </div>
+<header class="top-bar">
+  <a class="brand" href="/" aria-label="WATplan">
+    <img src="/favicon.svg" alt="" width="36" height="36">
+    <span class="brand-text"><b>WATplan</b><small>Plan zajęć WAT</small></span>
+  </a>
 
-            <div class="control-group week-nav">
-                <label for="weekSelector">Tydzień:</label>
-                <div class="nav-buttons">
-                    <button id="prevWeekBtn" class="icon-btn" disabled>‹</button>
-                    <select id="weekSelector"></select>
-                    <button id="nextWeekBtn" class="icon-btn" disabled>›</button>
-                </div>
-            </div>
-        </div>
+  <div class="search-container">
+    <input type="text" id="planSearch" placeholder="Wpisz grupę, np. WMT26AX3S1" autocomplete="off" aria-label="Grupa">
+    <div id="searchResults" class="search-results hidden"></div>
+  </div>
 
-        <div class="actions-wrapper">
-            <button id="refreshButton" class="primary-btn" type="button">Odśwież z serwera</button>
-            <button id="themeToggle" class="theme-btn" type="button">☀️</button>
-        </div>
+  <div class="period-nav">
+    <button id="prevWeekBtn" class="icon-btn" aria-label="Poprzedni okres" disabled>‹</button>
+    <select id="weekSelector" aria-label="Tydzień"></select>
+    <span id="monthLabel" class="month-label hidden"></span>
+    <button id="nextWeekBtn" class="icon-btn" aria-label="Następny okres" disabled>›</button>
+  </div>
 
-        <div class="status">
-            Pobrano: <b id="fetched">-</b><br>
-            Zmodyfikowano: <b id="modified">-</b>
-            <div id="notice" class="notice" role="status"></div>
-        </div>
+  <div class="actions-wrapper">
+    <button id="refreshButton" class="ghost-btn" type="button">Odśwież z serwera</button>
+   <button id="settingsBtn" class="icon-btn" type="button" aria-label="Ustawienia" aria-haspopup="dialog">
+    <span class="material-symbols-outlined">settings</span>
+  </button>
+</header>
+
+<main class="calendar-container">
+  <div class="calendar-grid" id="calendar-grid"></div>
+</main>
+
+<div id="notice" class="notice" role="status"></div>
+
+<dialog id="settingsModal" class="settings">
+  <form method="dialog" class="settings-head">
+    <h2>Ustawienia</h2>
+    <button class="icon-btn" aria-label="Zamknij">✕</button>
+  </form>
+
+  <section class="setting">
+    <h3>Motyw</h3>
+    <div class="segmented" data-setting="theme">
+      <button type="button" data-value="auto">Auto</button>
+      <button type="button" data-value="light">Jasny</button>
+      <button type="button" data-value="dark">Ciemny</button>
     </div>
+  </section>
 
-    <div class="calendar-container">
-        <div class="calendar-grid" id="calendar-grid"></div>
+  <section class="setting">
+    <h3>Widok planu</h3>
+    <div class="segmented" data-setting="view">
+      <button type="button" data-value="week">Tydzień</button>
+      <button type="button" data-value="month">Miesiąc</button>
     </div>
+  </section>
 
-    <footer class="app-footer">
-        Made by: <a href="https://github.com/billypuding/watplan" target="_blank" rel="noopener noreferrer">billypuding</a> | Kontakt: <a href="mailto:awalczak@duck.com">awalczak@duck.com</a>
-    </footer>
+  <section class="setting">
+    <label class="switch"><input type="checkbox" id="optLive"><span>Pasek postępu bieżących zajęć</span></label>
+    <label class="switch"><input type="checkbox" id="optDimPast"><span>Przyciemnij zajęcia, które już się skończyły</span></label>
+  </section>
 
-    <script src="app.js"></script>
+  <section class="setting">
+    <h3>Plan w kalendarzu</h3>
+    <p class="hint">Plik .ics zaimportujesz do Google Calendar, Apple Calendar i Outlooka.</p>
+    <button id="downloadIcs" class="primary-btn" type="button">Pobierz plan (.ics)</button>
+  </section>
+
+  <section class="setting status">
+    <span>Pobrano: <b id="fetched">-</b></span>
+    <span>Zmodyfikowano: <b id="modified">-</b></span>
+  </section>
+</dialog>
+
+<footer class="app-footer">
+  Autor: <a href="https://github.com/billypuding/watplan" target="_blank" rel="noopener noreferrer">billypuding</a>
+  &nbsp;|&nbsp; Kontakt: <a href="mailto:awalczak@duck.com">awalczak@duck.com</a>
+</footer>
+
+<script src="app.js"></script>
 </body>
 </html>
