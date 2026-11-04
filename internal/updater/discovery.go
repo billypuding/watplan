@@ -2,14 +2,23 @@ package updater
 
 import (
 	"context"
+	"errors"
 	"log"
 	"sort"
 	"time"
 
 	"github.com/billypuding/watplan/internal/config"
+	"github.com/billypuding/watplan/internal/wat"
 )
 
 func (u *Updater) Discover(sources []config.Source, static, prev []config.PlanConfig) []config.PlanConfig {
+	plans, _ := u.discover(sources, static, prev)
+	return plans
+}
+
+// discover zwraca też informację, czy WAF zablokował zapytania - wtedy
+// pozostałe wydziały nie są już odpytywane (zostają ich poprzednie plany).
+func (u *Updater) discover(sources []config.Source, static, prev []config.PlanConfig) ([]config.PlanConfig, bool) {
 	configured := make(map[string]bool, len(sources))
 	for _, s := range sources {
 		configured[s.Faculty] = true
@@ -22,8 +31,18 @@ func (u *Updater) Discover(sources []config.Source, static, prev []config.PlanCo
 		}
 	}
 
+	blocked := false
 	for _, src := range sources {
-		plans, err := u.fetcher.DiscoverPlans(src)
+		var plans []config.PlanConfig
+		var err error
+		if blocked {
+			err = wat.ErrBlocked
+		} else {
+			plans, err = u.fetcher.DiscoverPlans(src)
+			if errors.Is(err, wat.ErrBlocked) {
+				blocked = true
+			}
+		}
 		if err != nil || len(plans) == 0 {
 			if err != nil {
 				log.Printf("discover %q: błąd: %v (zostawiam poprzednie plany tego wydziału)", src.Faculty, err)
@@ -56,19 +75,23 @@ func (u *Updater) Discover(sources []config.Source, static, prev []config.PlanCo
 		}
 		return merged[i].ID < merged[j].ID
 	})
-	return merged
+	return merged, blocked
 }
 
 func (u *Updater) RunWithDiscovery(ctx context.Context, sources []config.Source,
 	static []config.PlanConfig, reg *config.Registry, plansPath string, interval time.Duration) {
 
 	cycle := func() {
-		plans := u.Discover(sources, static, reg.List())
+		plans, blocked := u.discover(sources, static, reg.List())
 		reg.Set(plans)
 		if plansPath != "" {
 			if err := config.SavePlans(plansPath, plans); err != nil {
 				log.Printf("zapis %s: %v", plansPath, err)
 			}
+		}
+		if blocked {
+			log.Printf("odświeżanie: WAF blokuje zapytania już przy wyszukiwaniu planów, pomijam ten cykl")
+			return
 		}
 		if err := u.UpdateAll(ctx, plans); err != nil {
 			log.Printf("odświeżanie planów: %v", err)

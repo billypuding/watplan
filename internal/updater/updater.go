@@ -21,8 +21,11 @@ import (
 )
 
 const (
-	timeLayout           = "2006-01-02 15:04:05"
-	maxConcurrentUpdates = 16
+	timeLayout = "2006-01-02 15:04:05"
+	// Mała równoległość celowo: serwery WAT stoją za Incapsulą, która przy
+	// 16 równoległych zapytaniach (v1.0.2) zablokowała IP. Tempo i tak
+	// ogranicza Fetcher (PLANWAT_FETCH_INTERVAL).
+	maxConcurrentUpdates = 2
 	dropConfirmations    = 3
 )
 
@@ -104,6 +107,12 @@ func (u *Updater) UpdateAll(ctx context.Context, plans []config.PlanConfig) erro
 
 	log.Printf("odświeżanie: start, %d planów, %d równolegle", total, workers)
 
+	// Po wykryciu blokady WAF przerywamy cały cykl - każde kolejne zapytanie
+	// tylko przedłuża blokadę.
+	ctx, abort := context.WithCancel(ctx)
+	defer abort()
+	var blocked atomic.Bool
+
 	jobs := make(chan config.PlanConfig)
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
@@ -121,6 +130,10 @@ func (u *Updater) UpdateAll(ctx context.Context, plans []config.PlanConfig) erro
 				case err != nil:
 					failN.Add(1)
 					log.Printf("[%d/%d] %s: błąd: %v", n, total, p.ID, err)
+					if errors.Is(err, wat.ErrBlocked) && blocked.CompareAndSwap(false, true) {
+						log.Printf("odświeżanie: WAF blokuje zapytania, przerywam cykl (spróbuję przy następnym)")
+						abort()
+					}
 				case res.skipped:
 					skipN.Add(1)
 					log.Printf("[%d/%d] %s: pominięto (plan bez zajęć)", n, total, p.ID)
@@ -147,6 +160,9 @@ dispatch:
 	close(jobs)
 	wg.Wait()
 
+	if blocked.Load() {
+		return fmt.Errorf("cykl przerwany: %w", wat.ErrBlocked)
+	}
 	fail := failN.Load()
 	log.Printf("odświeżanie: gotowe - %d ok, %d pominiętych, %d wstrzymanych, %d błędów, %d/%d planów",
 		okN.Load(), skipN.Load(), pendN.Load(), fail, done.Load(), total)

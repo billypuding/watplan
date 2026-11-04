@@ -2,6 +2,7 @@ package updater
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -94,6 +95,7 @@ func newTestUpdater(t *testing.T, body *atomic.Value) (*Updater, *store.Store, c
 	if err != nil {
 		t.Fatalf("NewStore: %v", err)
 	}
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
 	fetcher, err := wat.NewFetcher()
 	if err != nil {
 		t.Fatalf("NewFetcher: %v", err)
@@ -175,5 +177,41 @@ func TestSuspiciousDropResetsOnRecovery(t *testing.T) {
 	}
 	if plan.DropStreak != 0 || plan.DropCount != 0 {
 		t.Fatalf("licznik spadku = %d/%d, chcę wyczyszczonego", plan.DropStreak, plan.DropCount)
+	}
+}
+
+func TestUpdateAllStopsOnWAFBlock(t *testing.T) {
+	var hits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits.Add(1)
+		w.Header().Set("X-Iinfo", "62-966453-0 0NNN")
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = fmt.Fprint(w, "Request unsuccessful. Incapsula incident ID: 1")
+	}))
+	t.Cleanup(srv.Close)
+
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatalf("NewStore: %v", err)
+	}
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	t.Setenv("PLANWAT_WORKERS", "1")
+	fetcher, err := wat.NewFetcher()
+	if err != nil {
+		t.Fatalf("NewFetcher: %v", err)
+	}
+	u := NewUpdater(st, fetcher)
+
+	plans := make([]config.PlanConfig, 20)
+	for i := range plans {
+		plans[i] = config.PlanConfig{ID: fmt.Sprintf("TST26XX%dS0", i), URL: srv.URL, StartYear: 2026}
+	}
+
+	err = u.UpdateAll(context.Background(), plans)
+	if !errors.Is(err, wat.ErrBlocked) {
+		t.Fatalf("UpdateAll = %v, chcę ErrBlocked", err)
+	}
+	if got := hits.Load(); got > 2 {
+		t.Fatalf("zapytań = %d, chcę przerwania po pierwszej blokadzie (bez ponowień)", got)
 	}
 }

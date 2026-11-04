@@ -2,6 +2,7 @@ package wat
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -85,6 +86,9 @@ func (f *Fetcher) crawl(root, page *url.URL, src config.Source, depth int,
 
 	for _, sub := range subpages {
 		if err := f.crawl(root, sub, src, depth-1, visited, found); err != nil {
+			if errors.Is(err, ErrBlocked) {
+				return err
+			}
 			log.Printf("discover %s: %v", src.Faculty, err)
 		}
 	}
