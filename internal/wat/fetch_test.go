@@ -1,0 +1,86 @@
+package wat
+
+import (
+	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
+	"testing"
+)
+
+func TestFetchHTMLDetectsWAFBlock(t *testing.T) {
+	cases := []struct {
+		name       string
+		status     int
+		body       string
+		xInfo      bool
+		shouldStop bool
+	}{
+		{
+			name:       "403 z nagłówkiem Incapsuli",
+			status:     http.StatusForbidden,
+			body:       "Request unsuccessful. Incapsula incident ID: 1",
+			xInfo:      true,
+			shouldStop: true,
+		},
+		{
+			name:       "403 Error 17 bez nagłówka",
+			status:     http.StatusForbidden,
+			body:       "<title>Access denied</title>Error 17",
+			shouldStop: true,
+		},
+		{
+			name:       "strona blokady ze statusem 200",
+			status:     http.StatusOK,
+			body:       "Access denied Error 17. Incapsula incident ID: 1",
+			shouldStop: true,
+		},
+		{
+			name:       "zwykłe 403 bez strony blokady",
+			status:     http.StatusForbidden,
+			body:       "Forbidden",
+			shouldStop: false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var hits atomic.Int64
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				hits.Add(1)
+				if tc.xInfo {
+					w.Header().Set("X-Iinfo", "62-966453-0 0NNN")
+				}
+				w.WriteHeader(tc.status)
+				_, _ = fmt.Fprint(w, tc.body)
+			}))
+			t.Cleanup(srv.Close)
+
+			t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+			fetcher, err := NewFetcher()
+			if err != nil {
+				t.Fatalf("NewFetcher: %v", err)
+			}
+
+			_, err = fetcher.FetchHTML(srv.URL)
+			if tc.shouldStop {
+				if !errors.Is(err, ErrBlocked) {
+					t.Fatalf("FetchHTML = %v, chcę ErrBlocked", err)
+				}
+				if got := hits.Load(); got != 1 {
+					t.Fatalf("zapytań = %d, chcę 1 (bez ponowień przy blokadzie)", got)
+				}
+				return
+			}
+
+			if errors.Is(err, ErrBlocked) {
+				t.Fatalf("FetchHTML = %v, nie chcę ErrBlocked", err)
+			}
+			var se *statusError
+			if !errors.As(err, &se) || se.status != tc.status {
+				t.Fatalf("FetchHTML = %v, chcę statusError(%d)", err, tc.status)
+			}
+		})
+	}
+}

@@ -18,6 +18,7 @@ import (
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/store"
 	"github.com/billypuding/watplan/internal/updater"
+	"github.com/billypuding/watplan/internal/wat"
 )
 
 //go:embed web
@@ -25,19 +26,29 @@ var webFS embed.FS
 
 const refreshCooldown = 2 * time.Minute
 
+type Options struct {
+	// Offline wyłącza wszystkie zapytania do WAT.
+	Offline bool
+	// OnDemand pobiera plan z WAT dopiero przy pierwszym żądaniu, zamiast
+	// odświeżać wszystkie plany w tle.
+	OnDemand bool
+}
+
 type Server struct {
 	registry    *config.Registry
 	store       *store.Store
 	updater     *updater.Updater
+	options     Options
 	mu          sync.Mutex
 	lastRefresh map[string]time.Time
 }
 
-func NewServer(registry *config.Registry, store *store.Store, updater *updater.Updater) *Server {
+func NewServer(registry *config.Registry, store *store.Store, updater *updater.Updater, options Options) *Server {
 	return &Server{
 		registry:    registry,
 		store:       store,
 		updater:     updater,
+		options:     options,
 		lastRefresh: make(map[string]time.Time),
 	}
 }
@@ -93,12 +104,22 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := strings.TrimPrefix(r.URL.Path, "/api/plan/")
-	if _, ok := s.registry.Get(id); !ok {
+	plan, ok := s.registry.Get(id)
+	if !ok {
 		writeError(w, http.StatusNotFound, "nie znaleziono planu")
 		return
 	}
 
 	data, err := s.store.Raw(id)
+	if errors.Is(err, fs.ErrNotExist) && s.options.OnDemand && s.updater != nil {
+		log.Printf("plan %s: brak w cache, pobieram na żądanie", id)
+		if updateErr := s.updater.Ensure(plan); updateErr != nil {
+			log.Printf("pobieranie planu %s na żądanie: %v", id, updateErr)
+			s.writeUpdateError(w, updateErr)
+			return
+		}
+		data, err = s.store.Raw(id)
+	}
 	if errors.Is(err, fs.ErrNotExist) {
 		writeError(w, http.StatusServiceUnavailable, "plan nie został jeszcze pobrany")
 		return
@@ -116,6 +137,11 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "wymagana metoda POST")
+		return
+	}
+
+	if s.options.Offline {
+		writeError(w, http.StatusServiceUnavailable, "tryb offline: pobieranie z WAT jest wyłączone, wyświetlany jest zapisany plan")
 		return
 	}
 
@@ -139,11 +165,20 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.updater.Update(plan); err != nil {
 		log.Printf("ręczne odświeżanie planu %s: %v", plan.ID, err)
-		writeError(w, http.StatusBadGateway, "nie udało się pobrać planu ze strony WAT")
+		s.writeUpdateError(w, err)
 		return
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (s *Server) writeUpdateError(w http.ResponseWriter, err error) {
+	if errors.Is(err, wat.ErrBlocked) {
+		writeError(w, http.StatusServiceUnavailable,
+			"WAT zablokował dostęp z tego IP (WAF/Incapsula). Odczekaj lub użyj innego łącza; zapisany plan nadal jest dostępny")
+		return
+	}
+	writeError(w, http.StatusBadGateway, "nie udało się pobrać planu ze strony WAT")
 }
 
 func (s *Server) reserveRefresh(planID string) time.Duration {

@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -27,6 +30,23 @@ const (
 )
 
 func main() {
+	offlineFlag := flag.Bool("offline", false, "nie kontaktuj się z WAT, serwuj tylko zapisane plany")
+	onDemandFlag := flag.Bool("on-demand", false, "pobieraj plan z WAT dopiero przy pierwszym żądaniu, bez odświeżania wszystkich w tle")
+	var imports []string
+	flag.Func("import", "zaimportuj plan z pliku HTML w formacie ID=ścieżka (można powtórzyć)", func(value string) error {
+		imports = append(imports, value)
+		return nil
+	})
+	flag.Parse()
+
+	offline := *offlineFlag || envBool("PLANWAT_OFFLINE")
+	onDemand := !offline && (*onDemandFlag || envBool("PLANWAT_ON_DEMAND"))
+	if offline {
+		log.Printf("tryb offline: nie będę łączyć się z WAT, używam planów z katalogu danych")
+	} else if onDemand {
+		log.Printf("tryb on-demand: plany pobieram tylko przy pierwszym żądaniu, bez masowego odświeżania")
+	}
+
 	plansFile := envOr("PLANWAT_CONFIG", defaultConfig)
 	sourcesFile := envOr("PLANWAT_SOURCES", defaultSources)
 
@@ -39,9 +59,12 @@ func main() {
 		static = nil
 	}
 
-	sources, err := config.LoadSources(sourcesFile)
-	if err != nil {
-		log.Fatal(err)
+	var sources []config.Source
+	if !offline && !onDemand {
+		sources, err = config.LoadSources(sourcesFile)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	reg := config.NewRegistry(static)
@@ -51,14 +74,25 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fetcher, err := wat.NewFetcher()
-	if err != nil {
-		log.Fatal(err)
+	var upd *updater.Updater
+	if !offline || len(imports) > 0 {
+		fetcher, err := wat.NewFetcher()
+		if err != nil {
+			log.Fatal(err)
+		}
+		upd = updater.NewUpdater(st, fetcher)
 	}
 
-	upd := updater.NewUpdater(st, fetcher)
+	for _, spec := range imports {
+		if err := importFile(upd, reg, spec); err != nil {
+			log.Fatal(err)
+		}
+	}
 
-	handler, err := server.NewServer(reg, st, upd).Handler()
+	handler, err := server.NewServer(reg, st, upd, server.Options{
+		Offline:  offline,
+		OnDemand: onDemand,
+	}).Handler()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,7 +100,9 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	go upd.RunWithDiscovery(ctx, sources, static, reg, plansFile, refreshInterval)
+	if !offline && !onDemand {
+		go upd.RunWithDiscovery(ctx, sources, static, reg, plansFile, refreshInterval)
+	}
 
 	srv := &http.Server{
 		Addr:              envOr("PLANWAT_ADDR", defaultAddr),
@@ -90,9 +126,42 @@ func main() {
 	}
 }
 
+func importFile(upd *updater.Updater, reg *config.Registry, spec string) error {
+	id, path, ok := strings.Cut(spec, "=")
+	if !ok || strings.TrimSpace(id) == "" || strings.TrimSpace(path) == "" {
+		return fmt.Errorf("zły format -import %q, oczekuję ID=ścieżka", spec)
+	}
+
+	plan, ok := reg.Get(strings.TrimSpace(id))
+	if !ok {
+		return fmt.Errorf("plan %q nie występuje w %s", id, envOr("PLANWAT_CONFIG", defaultConfig))
+	}
+
+	f, err := os.Open(strings.TrimSpace(path))
+	if err != nil {
+		return fmt.Errorf("otwarcie %s: %w", path, err)
+	}
+	defer f.Close()
+
+	n, err := upd.Import(plan, f)
+	if err != nil {
+		return err
+	}
+	log.Printf("zaimportowano plan %s: %d zajęć", plan.ID, n)
+	return nil
+}
+
 func envOr(key, fallback string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
 	}
 	return fallback
+}
+
+func envBool(key string) bool {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv(key))) {
+	case "1", "true", "yes", "tak", "on":
+		return true
+	}
+	return false
 }

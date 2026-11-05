@@ -170,19 +170,44 @@ func (f *Fetcher) fetchOnce(targetUrl string) ([]byte, error) {
 		return nil, &statusError{status: resp.StatusCode}
 	}
 
-	body, err := charset.NewReader(io.LimitReader(resp.Body, maxBodyBytes), resp.Header.Get("Content-Type"))
+	reader, err := charset.NewReader(io.LimitReader(resp.Body, maxBodyBytes), resp.Header.Get("Content-Type"))
 	if err != nil {
 		return nil, err
 	}
-	return io.ReadAll(body)
+	body, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	// Incapsula potrafi zwrócić stronę blokady również ze statusem 200.
+	// Wtedy bez tej kontroli parser zobaczyłby pusty plan i uznał go za
+	// poprawny odczyt.
+	if isWAFBlockBody(body) {
+		log.Printf("fetch %s: strona blokady WAF (status %d)", targetUrl, resp.StatusCode)
+		return nil, fmt.Errorf("%w (status %d)", ErrBlocked, resp.StatusCode)
+	}
+	return body, nil
 }
 
 func isWAFBlock(resp *http.Response, snippet []byte) bool {
-	if resp.StatusCode != http.StatusForbidden {
+	switch resp.StatusCode {
+	case http.StatusForbidden, http.StatusTooManyRequests, http.StatusServiceUnavailable:
+	default:
 		return false
 	}
 	if resp.Header.Get("X-Iinfo") != "" {
 		return true
 	}
-	return strings.Contains(string(snippet), "Incapsula")
+	return isWAFBlockBody(snippet)
+}
+
+func isWAFBlockBody(body []byte) bool {
+	const maxInspect = 64 << 10
+	if len(body) > maxInspect {
+		body = body[:maxInspect]
+	}
+	text := strings.ToLower(string(body))
+	return strings.Contains(text, "incapsula incident id") ||
+		strings.Contains(text, "request unsuccessful. incapsula") ||
+		(strings.Contains(text, "access denied") && strings.Contains(text, "error 17"))
 }

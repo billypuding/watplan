@@ -177,11 +177,31 @@ func (u *Updater) Update(cfg config.PlanConfig) error {
 	return err
 }
 
-func (u *Updater) update(cfg config.PlanConfig) (updateResult, error) {
+// Ensure pobiera plan tylko wtedy, gdy nie ma go jeszcze w cache. Dzięki temu
+// serwer hostowany w chmurze nie pobiera wszystkich planów w tle.
+func (u *Updater) Ensure(cfg config.PlanConfig) error {
 	lock := u.planLock(cfg.ID)
 	lock.Lock()
 	defer lock.Unlock()
 
+	if _, err := u.store.Load(cfg.ID); err == nil {
+		return nil
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+
+	_, err := u.updateLocked(cfg)
+	return err
+}
+
+func (u *Updater) update(cfg config.PlanConfig) (updateResult, error) {
+	lock := u.planLock(cfg.ID)
+	lock.Lock()
+	defer lock.Unlock()
+	return u.updateLocked(cfg)
+}
+
+func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 	body, err := u.fetcher.FetchHTML(cfg.URL)
 	if err != nil {
 		return updateResult{}, fmt.Errorf("pobieranie: %w", err)
