@@ -39,6 +39,8 @@ const seriesBack = $('seriesBack');
 const seriesSubject = $('seriesSubject');
 const seriesSub = $('seriesSub');
 const seriesBody = $('seriesBody');
+const staleBanner = $('staleBanner');
+const STALE_AFTER_MS = 24 * 3600 * 1000;
 
 let allPlans = [];
 let currentPlanId = '';
@@ -411,18 +413,32 @@ async function loadPlan() {
         if (requestId !== loadCounter) return;
         fetchedLabel.textContent = data.fetched_at || 'Brak';
         modifiedLabel.textContent = data.modified_at || 'Brak';
+        updateStaleBanner(data.fetched_at);
         indexEvents(data.events || []);
         if (!selectedDate) selectedDate = pickInitialDate();
         status = 'ready';
     } catch (err) {
         if (requestId !== loadCounter) return;
         indexEvents([]);
+        updateStaleBanner('');
         fetchedLabel.textContent = '-';
         modifiedLabel.textContent = '-';
         status = 'error';
         statusMessage = err.message;
     }
     render();
+}
+
+// fetched_at to czas warszawski "YYYY-MM-DD HH:MM:SS"; warsawNow() jest w tej samej skali.
+function updateStaleBanner(fetchedAt) {
+    const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(fetchedAt || '');
+    if (!m) { staleBanner.classList.add('hidden'); return; }
+    const fetched = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+    const stale = warsawNow() - fetched > STALE_AFTER_MS;
+    staleBanner.classList.toggle('hidden', !stale);
+    if (stale) {
+        staleBanner.textContent = `Plan pobrany ${fetched.getDate()} ${MONTHS_GEN[fetched.getMonth()]} o ${m[4]}:${m[5]} – może być nieaktualny. W razie wątpliwości sprawdź oficjalny plan WAT.`;
+    }
 }
 
 /* ---------- Rendering ---------- */

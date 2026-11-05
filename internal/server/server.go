@@ -24,7 +24,22 @@ import (
 //go:embed web
 var webFS embed.FS
 
-const refreshCooldown = 2 * time.Minute
+const (
+	refreshCooldown = 2 * time.Minute
+	// W trybie on-demand plan starszy niż staleAfter jest odświeżany w tle
+	// przy otwarciu, ale nie częściej niż co staleRetry (także po błędzie).
+	staleAfter = time.Hour
+	staleRetry = 30 * time.Minute
+	timeLayout = "2006-01-02 15:04:05"
+)
+
+var warsawLoc = func() *time.Location {
+	loc, err := time.LoadLocation("Europe/Warsaw")
+	if err != nil {
+		return time.Local
+	}
+	return loc
+}()
 
 type Options struct {
 	// Offline wyłącza wszystkie zapytania do WAT.
@@ -41,6 +56,7 @@ type Server struct {
 	options     Options
 	mu          sync.Mutex
 	lastRefresh map[string]time.Time
+	lastStale   map[string]time.Time
 }
 
 func NewServer(registry *config.Registry, store *store.Store, updater *updater.Updater, options Options) *Server {
@@ -50,6 +66,7 @@ func NewServer(registry *config.Registry, store *store.Store, updater *updater.U
 		updater:     updater,
 		options:     options,
 		lastRefresh: make(map[string]time.Time),
+		lastStale:   make(map[string]time.Time),
 	}
 }
 
@@ -71,6 +88,7 @@ func (s *Server) Handler() (http.Handler, error) {
 	mux.HandleFunc("/api/plans", withGzip(s.handlePlans))
 	mux.HandleFunc("/api/plan/", withGzip(s.handlePlan))
 	mux.HandleFunc("/api/refresh", s.handleRefresh)
+	mux.HandleFunc("/api/status", s.handleStatus)
 
 	mux.Handle("/", withCache(http.FileServer(http.FS(static))))
 
@@ -124,6 +142,9 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusServiceUnavailable, "plan nie został jeszcze pobrany")
 		return
 	}
+	if err == nil && s.options.OnDemand && s.updater != nil {
+		s.refreshIfStale(plan)
+	}
 	if err != nil {
 		log.Printf("odczyt planu %s: %v", id, err)
 		writeError(w, http.StatusInternalServerError, "błąd odczytu planu")
@@ -172,10 +193,58 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+// refreshIfStale odświeża w tle plan, który był pobrany dawno temu. Bieżące
+// żądanie dostaje dane z cache, kolejne - już świeże.
+func (s *Server) refreshIfStale(plan config.PlanConfig) {
+	cached, err := s.store.Load(plan.ID)
+	if err != nil {
+		return
+	}
+	fetched, err := time.ParseInLocation(timeLayout, cached.FetchedAt, warsawLoc)
+	if err == nil && time.Since(fetched) < staleAfter {
+		return
+	}
+
+	s.mu.Lock()
+	if time.Since(s.lastStale[plan.ID]) < staleRetry {
+		s.mu.Unlock()
+		return
+	}
+	s.lastStale[plan.ID] = time.Now()
+	s.mu.Unlock()
+
+	go func() {
+		if err := s.updater.Update(plan); err != nil {
+			log.Printf("odświeżanie nieaktualnego planu %s: %v", plan.ID, err)
+			return
+		}
+		log.Printf("plan %s: odświeżony na żądanie (poprzednio %s)", plan.ID, cached.FetchedAt)
+	}()
+}
+
+func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
+	mode := "background"
+	switch {
+	case s.options.Offline:
+		mode = "offline"
+	case s.options.OnDemand:
+		mode = "on-demand"
+	}
+	blocked := map[string]string{}
+	for host, until := range s.updater.BlockedHosts() {
+		blocked[host] = until.In(warsawLoc).Format(timeLayout)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"mode":          mode,
+		"blocked_hosts": blocked,
+		"now":           time.Now().In(warsawLoc).Format(timeLayout),
+	})
+}
+
 func (s *Server) writeUpdateError(w http.ResponseWriter, err error) {
 	if errors.Is(err, wat.ErrBlocked) {
 		writeError(w, http.StatusServiceUnavailable,
-			"WAT zablokował dostęp z tego IP (WAF/Incapsula). Odczekaj lub użyj innego łącza; zapisany plan nadal jest dostępny")
+			"WAT (Incapsula) blokuje pobieranie z serwera PlanWat. Pokazuję ostatni zapisany plan")
 		return
 	}
 	writeError(w, http.StatusBadGateway, "nie udało się pobrać planu ze strony WAT")

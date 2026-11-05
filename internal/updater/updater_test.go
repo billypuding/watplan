@@ -215,3 +215,59 @@ func TestUpdateAllStopsOnWAFBlock(t *testing.T) {
 		t.Fatalf("zapytań = %d, chcę przerwania po pierwszej blokadzie (bez ponowień)", got)
 	}
 }
+
+func TestWAFBlockIsPerHost(t *testing.T) {
+	var blockedHits, okHits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Ten sam serwer pod dwiema nazwami: 127.0.0.1 blokuje, localhost działa.
+		if strings.HasPrefix(r.Host, "127.0.0.1") {
+			blockedHits.Add(1)
+			w.Header().Set("X-Iinfo", "62-966453-0 0NNN")
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = fmt.Fprint(w, "Request unsuccessful. Incapsula incident ID: 1")
+			return
+		}
+		okHits.Add(1)
+		_, _ = fmt.Fprint(w, planHTML(3))
+	}))
+	t.Cleanup(srv.Close)
+	okURL := strings.Replace(srv.URL, "127.0.0.1", "localhost", 1)
+
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatalf("NewStore: %v", err)
+	}
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	t.Setenv("PLANWAT_WORKERS", "1")
+	fetcher, err := wat.NewFetcher()
+	if err != nil {
+		t.Fatalf("NewFetcher: %v", err)
+	}
+	u := NewUpdater(st, fetcher)
+
+	var plans []config.PlanConfig
+	for i := 0; i < 5; i++ {
+		plans = append(plans, config.PlanConfig{ID: fmt.Sprintf("BLK26XX%dS0", i), URL: srv.URL, StartYear: 2026})
+	}
+	for i := 0; i < 3; i++ {
+		plans = append(plans, config.PlanConfig{ID: fmt.Sprintf("OKK26XX%dS0", i), URL: okURL, StartYear: 2026})
+	}
+
+	if err := u.UpdateAll(context.Background(), plans); !errors.Is(err, wat.ErrBlocked) {
+		t.Fatalf("UpdateAll = %v, chcę ErrBlocked", err)
+	}
+	if got := blockedHits.Load(); got != 1 {
+		t.Errorf("zapytań do zablokowanej domeny = %d, chcę 1", got)
+	}
+	if got := okHits.Load(); got != 3 {
+		t.Errorf("zapytań do działającej domeny = %d, chcę 3", got)
+	}
+	if _, ok := u.BlockedHosts()["127.0.0.1"]; !ok {
+		t.Errorf("BlockedHosts = %v, chcę 127.0.0.1", u.BlockedHosts())
+	}
+	for i := 0; i < 3; i++ {
+		if got := len(loadPlan(t, st, fmt.Sprintf("OKK26XX%dS0", i)).Events); got != 3 {
+			t.Errorf("plan OKK %d: zdarzeń = %d, chcę 3", i, got)
+		}
+	}
+}

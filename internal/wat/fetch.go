@@ -30,8 +30,8 @@ const (
 )
 
 // ErrBlocked oznacza, że WAF (Incapsula) zablokował zapytanie. Ponawianie
-// nic nie da i tylko przedłuża blokadę, więc wywołujący powinien przerwać
-// bieżący cykl odświeżania.
+// nic nie da i tylko przedłuża blokadę, więc Fetcher wstrzymuje wszystkie
+// zapytania do tej domeny na blockBackoff (inne domeny pobierają się dalej).
 var ErrBlocked = errors.New("zapytanie zablokowane przez WAF (Incapsula) - wstrzymuję pobieranie")
 
 type Fetcher struct {
@@ -40,7 +40,13 @@ type Fetcher struct {
 	minInterval time.Duration
 	paceMu      sync.Mutex
 	nextAt      time.Time
+
+	blockBackoff time.Duration
+	blockMu      sync.Mutex
+	blockedUntil map[string]time.Time
 }
+
+const defaultBlockBackoff = time.Hour
 
 func NewFetcher() (*Fetcher, error) {
 	jar, err := cookiejar.New(nil)
@@ -73,7 +79,69 @@ func NewFetcher() (*Fetcher, error) {
 		minInterval = d
 	}
 
-	return &Fetcher{client: client, minInterval: minInterval}, nil
+	blockBackoff := defaultBlockBackoff
+	if v := os.Getenv("PLANWAT_BLOCK_BACKOFF"); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil || d < 0 {
+			return nil, fmt.Errorf("zły PLANWAT_BLOCK_BACKOFF %q (np. 1h, 30m)", v)
+		}
+		blockBackoff = d
+	}
+
+	return &Fetcher{
+		client:       client,
+		minInterval:  minInterval,
+		blockBackoff: blockBackoff,
+		blockedUntil: make(map[string]time.Time),
+	}, nil
+}
+
+func hostOf(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+	return strings.ToLower(u.Hostname())
+}
+
+// hostBlocked zwraca czas, do którego domena jest wstrzymana po blokadzie WAF.
+func (f *Fetcher) hostBlocked(host string) (time.Time, bool) {
+	f.blockMu.Lock()
+	defer f.blockMu.Unlock()
+	until, ok := f.blockedUntil[host]
+	if !ok {
+		return time.Time{}, false
+	}
+	if time.Now().After(until) {
+		delete(f.blockedUntil, host)
+		return time.Time{}, false
+	}
+	return until, true
+}
+
+func (f *Fetcher) markBlocked(host string) {
+	if host == "" || f.blockBackoff <= 0 {
+		return
+	}
+	until := time.Now().Add(f.blockBackoff)
+	f.blockMu.Lock()
+	f.blockedUntil[host] = until
+	f.blockMu.Unlock()
+	log.Printf("WAF blokuje %s - wstrzymuję zapytania do tej domeny do %s", host, until.Format("15:04"))
+}
+
+// BlockedHosts zwraca domeny wstrzymane po blokadzie WAF i czas wstrzymania.
+func (f *Fetcher) BlockedHosts() map[string]time.Time {
+	f.blockMu.Lock()
+	defer f.blockMu.Unlock()
+	out := make(map[string]time.Time, len(f.blockedUntil))
+	now := time.Now()
+	for h, until := range f.blockedUntil {
+		if now.Before(until) {
+			out[h] = until
+		}
+	}
+	return out
 }
 
 // pace czeka, aż minie minInterval od poprzedniego zapytania (globalnie dla
@@ -96,6 +164,11 @@ func (f *Fetcher) pace() {
 }
 
 func (f *Fetcher) FetchHTML(targetUrl string) ([]byte, error) {
+	host := hostOf(targetUrl)
+	if until, blocked := f.hostBlocked(host); blocked {
+		return nil, fmt.Errorf("%w (%s wstrzymane do %s)", ErrBlocked, host, until.Format("15:04"))
+	}
+
 	var lastErr error
 	for attempt := 1; attempt <= fetchAttempts; attempt++ {
 		body, err := f.fetchOnce(targetUrl)
@@ -103,6 +176,10 @@ func (f *Fetcher) FetchHTML(targetUrl string) ([]byte, error) {
 			return body, nil
 		}
 		lastErr = err
+		if errors.Is(err, ErrBlocked) {
+			f.markBlocked(host)
+			break
+		}
 		if attempt == fetchAttempts || !retryable(err) {
 			break
 		}

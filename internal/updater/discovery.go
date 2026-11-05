@@ -16,8 +16,8 @@ func (u *Updater) Discover(sources []config.Source, static, prev []config.PlanCo
 	return plans
 }
 
-// discover zwraca też informację, czy WAF zablokował zapytania - wtedy
-// pozostałe wydziały nie są już odpytywane (zostają ich poprzednie plany).
+// discover zwraca też informację, czy WAF zablokował którąś domenę. Wydział
+// z zablokowanej domeny zachowuje poprzednią listę planów.
 func (u *Updater) discover(sources []config.Source, static, prev []config.PlanConfig) ([]config.PlanConfig, bool) {
 	configured := make(map[string]bool, len(sources))
 	for _, s := range sources {
@@ -33,15 +33,9 @@ func (u *Updater) discover(sources []config.Source, static, prev []config.PlanCo
 
 	blocked := false
 	for _, src := range sources {
-		var plans []config.PlanConfig
-		var err error
-		if blocked {
-			err = wat.ErrBlocked
-		} else {
-			plans, err = u.fetcher.DiscoverPlans(src)
-			if errors.Is(err, wat.ErrBlocked) {
-				blocked = true
-			}
+		plans, err := u.fetcher.DiscoverPlans(src)
+		if errors.Is(err, wat.ErrBlocked) {
+			blocked = true
 		}
 		if err != nil || len(plans) == 0 {
 			if err != nil {
@@ -82,16 +76,12 @@ func (u *Updater) RunWithDiscovery(ctx context.Context, sources []config.Source,
 	static []config.PlanConfig, reg *config.Registry, plansPath string, interval time.Duration) {
 
 	cycle := func() {
-		plans, blocked := u.discover(sources, static, reg.List())
+		plans, _ := u.discover(sources, static, reg.List())
 		reg.Set(plans)
 		if plansPath != "" {
 			if err := config.SavePlans(plansPath, plans); err != nil {
 				log.Printf("zapis %s: %v", plansPath, err)
 			}
-		}
-		if blocked {
-			log.Printf("odświeżanie: WAF blokuje zapytania już przy wyszukiwaniu planów, pomijam ten cykl")
-			return
 		}
 		if err := u.UpdateAll(ctx, plans); err != nil {
 			log.Printf("odświeżanie planów: %v", err)

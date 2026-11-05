@@ -91,6 +91,12 @@ button:disabled { cursor: default; opacity: .35; }
     background: var(--surface); border: 1px solid var(--line);
 }
 
+.stale-banner {
+    margin: 14px 0 0; padding: 10px 14px; border-radius: 14px;
+    background: #fff4e0; color: #6b3d00; font-size: 14px; font-weight: 600;
+}
+[data-theme="dark"] .stale-banner { background: #3a2a10; color: #ffd9a0; }
+
 /* ---------- Day title, nav, strip ---------- */
 
 .day-title { margin: 18px 0 14px; }

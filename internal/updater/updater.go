@@ -107,11 +107,9 @@ func (u *Updater) UpdateAll(ctx context.Context, plans []config.PlanConfig) erro
 
 	log.Printf("odświeżanie: start, %d planów, %d równolegle", total, workers)
 
-	// Po wykryciu blokady WAF przerywamy cały cykl - każde kolejne zapytanie
-	// tylko przedłuża blokadę.
-	ctx, abort := context.WithCancel(ctx)
-	defer abort()
-	var blocked atomic.Bool
+	// Blokada WAF dotyczy jednej domeny: Fetcher wstrzymuje tylko ją, więc
+	// plany z pozostałych wydziałów pobierają się dalej.
+	var blockedN atomic.Int64
 
 	jobs := make(chan config.PlanConfig)
 	for i := 0; i < workers; i++ {
@@ -127,13 +125,13 @@ func (u *Updater) UpdateAll(ctx context.Context, plans []config.PlanConfig) erro
 				res, err := u.update(p)
 				n := done.Add(1)
 				switch {
+				case errors.Is(err, wat.ErrBlocked):
+					// Pierwsza blokada domeny jest logowana przez Fetcher,
+					// kolejne plany z niej odpadają od razu, bez zapytań.
+					blockedN.Add(1)
 				case err != nil:
 					failN.Add(1)
 					log.Printf("[%d/%d] %s: błąd: %v", n, total, p.ID, err)
-					if errors.Is(err, wat.ErrBlocked) && blocked.CompareAndSwap(false, true) {
-						log.Printf("odświeżanie: WAF blokuje zapytania, przerywam cykl (spróbuję przy następnym)")
-						abort()
-					}
 				case res.skipped:
 					skipN.Add(1)
 					log.Printf("[%d/%d] %s: pominięto (plan bez zajęć)", n, total, p.ID)
@@ -160,12 +158,13 @@ dispatch:
 	close(jobs)
 	wg.Wait()
 
-	if blocked.Load() {
-		return fmt.Errorf("cykl przerwany: %w", wat.ErrBlocked)
-	}
 	fail := failN.Load()
-	log.Printf("odświeżanie: gotowe - %d ok, %d pominiętych, %d wstrzymanych, %d błędów, %d/%d planów",
-		okN.Load(), skipN.Load(), pendN.Load(), fail, done.Load(), total)
+	blocked := blockedN.Load()
+	log.Printf("odświeżanie: gotowe - %d ok, %d pominiętych, %d wstrzymanych, %d zablokowanych przez WAF, %d błędów, %d/%d planów",
+		okN.Load(), skipN.Load(), pendN.Load(), blocked, fail, done.Load(), total)
+	if blocked > 0 {
+		return fmt.Errorf("%d z %d planów niedostępnych: %w", blocked, total, wat.ErrBlocked)
+	}
 	if fail > 0 {
 		return fmt.Errorf("%d z %d planów nie udało się odświeżyć", fail, total)
 	}
@@ -269,4 +268,12 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 func suspiciousDrop(oldCount, newCount int) bool {
 	const minGuardEvents = 8
 	return oldCount >= minGuardEvents && newCount*2 < oldCount
+}
+
+// BlockedHosts zwraca domeny WAT wstrzymane po blokadzie WAF.
+func (u *Updater) BlockedHosts() map[string]time.Time {
+	if u == nil || u.fetcher == nil {
+		return nil
+	}
+	return u.fetcher.BlockedHosts()
 }
