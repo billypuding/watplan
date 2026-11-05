@@ -1,66 +1,85 @@
+'use strict';
+
 const DAY_NAMES = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
-const SLOT_LABELS = [
-    '08:00 - 09:35', '09:50 - 11:25', '11:40 - 13:15', '13:30 - 15:05',
-    '16:00 - 17:35', '17:50 - 19:25', '19:40 - 21:15',
+const DAY_SHORT = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'];
+const DAY_ABBR = ['pon.', 'wt.', 'śr.', 'czw.', 'pt.', 'sob.', 'niedz.'];
+const MONTHS_GEN = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+const MONTHS_NOM = ['styczeń', 'luty', 'marzec', 'kwiecień', 'maj', 'czerwiec', 'lipiec', 'sierpień', 'wrzesień', 'październik', 'listopad', 'grudzień'];
+const MONTHS_SHORT = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
+const SLOTS = [
+    ['08:00', '09:35'], ['09:50', '11:25'], ['11:40', '13:15'], ['13:30', '15:05'],
+    ['16:00', '17:35'], ['17:50', '19:25'], ['19:40', '21:15'],
 ];
-const START_ROW = { '08:00': 2, '09:50': 3, '11:40': 4, '13:30': 5, '16:00': 6, '17:50': 7, '19:40': 8 };
-const END_ROW_LINE = { '09:35': 3, '11:25': 4, '13:15': 5, '15:05': 6, '17:35': 7, '19:25': 8, '21:15': 9 };
-const WORKDAYS = 5;
-const WEEKDAYS = 7;
-const NOTICE_MS = 6000;
+const LONG_GAP_MIN = 30;
+const NOTICE_MS = 5000;
 const TICK_MS = 15000;
 const SETTINGS_KEY = 'settings';
+const SETTINGS_VERSION = 2;
 
-const planSearch = document.getElementById('planSearch');
-const searchResults = document.getElementById('searchResults');
-const weekSelector = document.getElementById('weekSelector');
-const monthLabel = document.getElementById('monthLabel');
-const prevWeekBtn = document.getElementById('prevWeekBtn');
-const nextWeekBtn = document.getElementById('nextWeekBtn');
-const refreshButton = document.getElementById('refreshButton');
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsModal = document.getElementById('settingsModal');
-const optLive = document.getElementById('optLive');
-const optDimPast = document.getElementById('optDimPast');
-const downloadIcsBtn = document.getElementById('downloadIcs');
-const grid = document.getElementById('calendar-grid');
-const fetchedLabel = document.getElementById('fetched');
-const modifiedLabel = document.getElementById('modified');
-const notice = document.getElementById('notice');
+const $ = (id) => document.getElementById(id);
+const app = $('app');
+const view = $('view');
+const groupBtn = $('groupBtn');
+const groupLabel = $('groupLabel');
+const groupModal = $('groupModal');
+const planSearch = $('planSearch');
+const searchResults = $('searchResults');
+const todayBtn = $('todayBtn');
+const settingsBtn = $('settingsBtn');
+const settingsModal = $('settingsModal');
+const optLive = $('optLive');
+const optDimPast = $('optDimPast');
+const downloadIcsBtn = $('downloadIcs');
+const refreshButton = $('refreshButton');
+const fetchedLabel = $('fetched');
+const modifiedLabel = $('modified');
+const notice = $('notice');
+const seriesModal = $('seriesModal');
+const seriesBack = $('seriesBack');
+const seriesSubject = $('seriesSubject');
+const seriesSub = $('seriesSub');
+const seriesBody = $('seriesBody');
 
-let eventsByWeek = {};
-let allEvents = [];
-let loadCounter = 0;
-let noticeTimer = null;
 let allPlans = [];
 let currentPlanId = '';
-let monthCursor = ''; // 'YYYY-MM'
+let allEvents = [];
+let eventsByDate = {};
+let seriesByKey = {};
+let selectedDate = '';
+let loadCounter = 0;
+let noticeTimer = null;
+let status = 'idle'; // idle | loading | ready | error
+let statusMessage = '';
 
 /* ---------- Settings ---------- */
 
-const defaults = {
-    theme: localStorage.getItem('theme') || 'auto', // migrates the old key
-    view: 'week',
-    live: true,
-    dimPast: true,
-};
+const defaults = { v: SETTINGS_VERSION, theme: 'auto', view: 'agenda', live: true, dimPast: true };
 
 function loadSettings() {
-    try {
-        return { ...defaults, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') };
-    } catch (_) {
-        return { ...defaults };
+    let stored = {};
+    try { stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch (_) { stored = {}; }
+    const legacyTheme = safeGet('theme');
+    const merged = { ...defaults, ...(legacyTheme ? { theme: legacyTheme } : {}), ...stored };
+    // v1 miało domyślnie widok tygodnia - przenosimy wszystkich na nową agendę.
+    if (merged.v !== SETTINGS_VERSION) {
+        merged.v = SETTINGS_VERSION;
+        merged.view = 'agenda';
     }
+    if (!['agenda', 'week', 'month'].includes(merged.view)) merged.view = 'agenda';
+    return merged;
 }
+
+function safeGet(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
+function safeSet(key, value) { try { localStorage.setItem(key, value); } catch (_) { /* tryb prywatny */ } }
 
 const settings = loadSettings();
+const saveSettings = () => safeSet(SETTINGS_KEY, JSON.stringify(settings));
 
-function saveSettings() {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-}
+// ?view=week w linku nadpisuje widok na tę wizytę (bez zapisywania).
+const urlView = new URLSearchParams(window.location.search).get('view');
+if (['agenda', 'week', 'month'].includes(urlView)) settings.view = urlView;
 
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
 function applyTheme() {
     const theme = settings.theme === 'auto' ? (darkQuery.matches ? 'dark' : 'light') : settings.theme;
     document.documentElement.setAttribute('data-theme', theme);
@@ -85,444 +104,662 @@ document.querySelectorAll('.segmented button').forEach(btn => {
         saveSettings();
         syncSettingsUI();
         if (key === 'theme') applyTheme();
-        if (key === 'view') renderCurrent();
+        if (key === 'view') render();
     });
 });
 
 optLive.addEventListener('change', () => { settings.live = optLive.checked; saveSettings(); tickLive(); });
 optDimPast.addEventListener('change', () => { settings.dimPast = optDimPast.checked; saveSettings(); tickLive(); });
-settingsBtn.addEventListener('click', () => settingsModal.showModal());
-settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.close(); });
 
 applyTheme();
 syncSettingsUI();
 
-/* ---------- Date helpers ---------- */
+/* ---------- Helpers ---------- */
 
-function pad(n) { return String(n).padStart(2, '0'); }
-
-function toISO(date) {
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+function h(tag, attrs, ...children) {
+    const node = document.createElement(tag);
+    if (attrs) {
+        for (const [k, v] of Object.entries(attrs)) {
+            if (v === undefined || v === null || v === false) continue;
+            if (k === 'class') node.className = v;
+            else if (k === 'style') node.style.cssText = v;
+            else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
+            else node.setAttribute(k, v === true ? '' : v);
+        }
+    }
+    for (const c of children.flat()) {
+        if (c === null || c === undefined || c === false) continue;
+        node.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    }
+    return node;
 }
 
-function parseISO(str) {
-    const [y, m, d] = str.split('-').map(Number);
-    return new Date(y, m - 1, d);
+function svg(paths, size = 14) {
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    s.setAttribute('width', size);
+    s.setAttribute('height', size);
+    s.setAttribute('viewBox', '0 0 24 24');
+    s.setAttribute('fill', 'none');
+    s.setAttribute('stroke', 'currentColor');
+    s.setAttribute('stroke-width', '2');
+    s.setAttribute('stroke-linecap', 'round');
+    s.setAttribute('stroke-linejoin', 'round');
+    s.setAttribute('aria-hidden', 'true');
+    s.innerHTML = paths;
+    return s;
+}
+const ICON_PIN = '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>';
+const ICON_USER = '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>';
+const ICON_LEFT = '<path d="m15 18-6-6 6-6"/>';
+const ICON_RIGHT = '<path d="m9 18 6-6-6-6"/>';
+const ICON_CHECK = '<path d="M20 6 9 17l-5-5"/>';
+
+const pad = (n) => String(n).padStart(2, '0');
+const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+function parseISO(str) { const [y, m, d] = str.split('-').map(Number); return new Date(y, m - 1, d); }
+function addDays(date, n) { const r = new Date(date); r.setDate(r.getDate() + n); return r; }
+const addDaysISO = (iso, n) => toISO(addDays(parseISO(iso), n));
+const dayIndex = (date) => (date.getDay() + 6) % 7;
+const mondayOf = (iso) => { const d = parseISO(iso); return toISO(addDays(d, -dayIndex(d))); };
+const toMin = (t) => { const [hh, mm] = t.split(':').map(Number); return hh * 60 + mm; };
+
+function isoWeek(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const day = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - day);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
 }
 
-function addDays(date, n) {
-    const result = new Date(date);
-    result.setDate(result.getDate() + n);
-    return result;
-}
-
-function dayIndex(date) { return (date.getDay() + 6) % 7; }
-
-function getMonday(str) {
-    const date = parseISO(str);
-    return toISO(addDays(date, -dayIndex(date)));
-}
-
-// "Now" in Warsaw, as a Date whose local fields show Warsaw wall-clock time.
-// Event times below are built the same way, so the two can be compared directly.
+// "Teraz" w Warszawie, jako Date z lokalnymi polami = czas warszawski.
 function warsawNow() {
     return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
 }
+const todayISO = () => toISO(warsawNow());
 
-function eventRange(event) {
-    const [y, m, d] = event.date.split('-').map(Number);
-    const [sh, sm] = event.start.split(':').map(Number);
-    const [eh, em] = event.end.split(':').map(Number);
+function eventRange(e) {
+    const [y, m, d] = e.date.split('-').map(Number);
+    const [sh, sm] = e.start.split(':').map(Number);
+    const [eh, em] = e.end.split(':').map(Number);
     return [new Date(y, m - 1, d, sh, sm).getTime(), new Date(y, m - 1, d, eh, em).getTime()];
 }
 
 function formatMinutes(mins) {
     if (mins < 60) return `${mins} min`;
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return m ? `${h} h ${m} min` : `${h} h`;
+    const hh = Math.floor(mins / 60);
+    const mm = mins % 60;
+    return mm ? `${hh} h ${mm} min` : `${hh} h`;
 }
 
-function textColorFor(hex) {
-    const match = /^#([0-9a-f]{6})$/i.exec(hex || '');
-    if (!match) return '#1e293b';
-    const n = parseInt(match[1], 16);
-    const brightness = 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
-    return brightness > 150 ? '#1e293b' : '#ffffff';
+function longDate(iso) {
+    const d = parseISO(iso);
+    return `${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`;
+}
+function shortDate(iso) {
+    const d = parseISO(iso);
+    return `${DAY_ABBR[dayIndex(d)]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
-/* ---------- UI helpers ---------- */
+function plural(n, one, few, many) {
+    if (n === 1) return one;
+    const d = n % 10, dd = n % 100;
+    return d >= 2 && d <= 4 && (dd < 12 || dd > 14) ? few : many;
+}
+const classesWord = (n) => `${n} ${plural(n, 'zajęcia', 'zajęcia', 'zajęć')}`;
+
+// Kolor WAT -> barwa (--h) i czy w ogóle jest kolorowy (--s); resztę robi CSS per motyw.
+const hueCache = {};
+function hueOf(hex) {
+    if (hueCache[hex]) return hueCache[hex];
+    const m = /^#([0-9a-f]{6})$/i.exec(hex || '');
+    let res = { h: 220, s: 0 };
+    if (m) {
+        const n = parseInt(m[1], 16);
+        const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+        const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+        let hue = 0;
+        if (d) {
+            hue = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+            hue = Math.round(hue * 60);
+            if (hue < 0) hue += 360;
+        }
+        res = { h: hue, s: d > 0.08 ? 1 : 0 };
+    }
+    return (hueCache[hex] = res);
+}
+function tint(node, hex) {
+    const { h: hue, s } = hueOf(hex);
+    node.style.setProperty('--h', hue);
+    node.style.setProperty('--s', s);
+    return node;
+}
+
+const SMALL_WORDS = new Set(['i', 'w', 'z', 'do', 'na', 'we', 'ze', 'o', 'od', 'dla', 'oraz', 'a', '-']);
+function abbreviate(subject) {
+    const words = subject.split(/\s+/).filter(Boolean);
+    const big = words.filter(w => !SMALL_WORDS.has(w.toLowerCase()) && !/^\d+$/.test(w) && !/^[IVX]+$/.test(w));
+    const nums = words.filter(w => /^\d+$/.test(w) || /^[IVX]+$/.test(w));
+    let ab;
+    if (big.length <= 1) {
+        const w = big[0] || subject;
+        ab = w === w.toUpperCase() ? w.slice(0, 5) : w.slice(0, 3);
+    } else {
+        ab = words.filter(w => !/^\d+$/.test(w)).map(w => {
+            if (SMALL_WORDS.has(w.toLowerCase())) return w === '-' ? '' : w[0].toLowerCase();
+            return w[0].toUpperCase();
+        }).join('');
+    }
+    return nums.length ? `${ab} ${nums.join(' ')}` : ab;
+}
+
+function typeLabel(type) {
+    if (!type) return 'Zajęcia';
+    return type.charAt(0).toUpperCase() + type.slice(1);
+}
+function typeShort(type) {
+    const t = (type || '').toLowerCase();
+    if (t.startsWith('wykład')) return 'wykł.';
+    if (t.startsWith('ćwicz')) return 'ćw.';
+    if (t.startsWith('labor')) return 'lab.';
+    if (t.startsWith('semin')) return 'sem.';
+    if (t.startsWith('projekt')) return 'proj.';
+    return t;
+}
+function lastLabel(type) {
+    const t = (type || '').toLowerCase();
+    if (t.startsWith('wykład')) return 'Ostatni wykład';
+    if (t.startsWith('ćwicz')) return 'Ostatnie ćwiczenia';
+    if (t.startsWith('labor')) return 'Ostatnie laboratorium';
+    if (t.startsWith('semin')) return 'Ostatnie seminarium';
+    if (t.startsWith('projekt')) return 'Ostatni projekt';
+    if (t.startsWith('egzamin') || t.includes('(e')) return 'Egzamin';
+    return 'Ostatnie zajęcia';
+}
 
 function setNotice(text, isError) {
     clearTimeout(noticeTimer);
     notice.textContent = text;
     notice.classList.toggle('error', Boolean(isError));
-    if (text) noticeTimer = setTimeout(() => setNotice(''), NOTICE_MS);
-}
-
-function showGridMessage(text, isError) {
-    grid.classList.remove('month-grid');
-    const message = document.createElement('div');
-    message.className = isError ? 'grid-message error' : 'grid-message';
-    message.textContent = text;
-    grid.replaceChildren(message);
+    notice.classList.toggle('show', Boolean(text));
+    if (text) noticeTimer = setTimeout(() => notice.classList.remove('show'), NOTICE_MS);
 }
 
 async function fetchJSON(url, options) {
     const response = await fetch(url, options);
     let body = null;
     try { body = await response.json(); } catch (_) { body = null; }
-    if (!response.ok) {
-        throw new Error((body && body.error) || `Błąd serwera (${response.status})`);
-    }
+    if (!response.ok) throw new Error((body && body.error) || `Błąd serwera (${response.status})`);
     return body;
+}
+
+/* ---------- Data ---------- */
+
+const seriesKey = (e) => `${e.subject}\u0000${e.type || ''}`;
+
+function indexEvents(events) {
+    eventsByDate = {};
+    seriesByKey = {};
+    const sorted = events.slice().sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+    for (const e of sorted) {
+        (eventsByDate[e.date] ||= []).push(e);
+        (seriesByKey[seriesKey(e)] ||= []).push(e);
+    }
+    for (const list of Object.values(seriesByKey)) {
+        list.forEach((e, i) => { e._n = i + 1; e._total = list.length; });
+    }
+    allEvents = sorted;
+}
+
+function pickInitialDate() {
+    if (allEvents.length === 0) return todayISO();
+    const today = todayISO();
+    const first = allEvents[0].date;
+    const last = allEvents[allEvents.length - 1].date;
+    if (today < first) return first;
+    if (today > last) return last;
+    return today;
+}
+
+function nextDateWithEvents(fromISO, dir = 1) {
+    const dates = Object.keys(eventsByDate).sort();
+    if (dir > 0) return dates.find(d => d > fromISO) || '';
+    return dates.reverse().find(d => d < fromISO) || '';
 }
 
 /* ---------- Plans + search ---------- */
 
-// Groups are shown under a faculty. Uses plan.faculty from plans.json when present,
-// otherwise falls back to the first three letters of the id (WEL, WMT, ...).
-function facultyOf(plan) {
-    return plan.faculty || plan.id.slice(0, 3).toUpperCase();
-}
+const facultyOf = (plan) => plan.faculty || plan.id.slice(0, 3).toUpperCase();
 
 async function loadPlans() {
+    status = 'loading';
+    render();
     try {
         allPlans = await fetchJSON('/api/plans');
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetPlan = urlParams.get('plan') || localStorage.getItem('selectedPlan');
-
-        if (targetPlan) {
-            const found = allPlans.find(p => p.id === targetPlan);
-            if (found) {
-                currentPlanId = found.id;
-                planSearch.value = found.name;
-                localStorage.setItem('selectedPlan', currentPlanId);
-            }
-        }
-
-        if (currentPlanId) {
+        const params = new URLSearchParams(window.location.search);
+        const target = params.get('plan') || safeGet('selectedPlan');
+        const found = target && allPlans.find(p => p.id === target);
+        if (found) {
+            currentPlanId = found.id;
+            groupLabel.textContent = found.name;
+            safeSet('selectedPlan', currentPlanId);
             await loadPlan();
         } else {
-            showGridMessage('Wpisz nazwę grupy i wybierz ją z listy, aby zobaczyć plan', false);
+            status = 'idle';
+            render();
         }
     } catch (err) {
-        showGridMessage(err.message, true);
+        status = 'error';
+        statusMessage = err.message;
+        render();
     }
 }
 
 function renderSearchResults() {
     const query = planSearch.value.trim().toLowerCase();
-    searchResults.replaceChildren();
-
-    const filtered = allPlans.filter(p =>
-        !query || p.name.toLowerCase().includes(query) || p.id.toLowerCase().includes(query)
-    );
-
+    const filtered = allPlans.filter(p => !query || p.name.toLowerCase().includes(query) || p.id.toLowerCase().includes(query));
     if (filtered.length === 0) {
-        const div = document.createElement('div');
-        div.className = 'search-result-item';
-        div.textContent = 'Nie znaleziono grupy';
-        searchResults.appendChild(div);
-    } else {
-        const byFaculty = {};
-        for (const plan of filtered) (byFaculty[facultyOf(plan)] ||= []).push(plan);
-
-        for (const faculty of Object.keys(byFaculty).sort()) {
-            const title = document.createElement('div');
-            title.className = 'search-group-title';
-            title.textContent = faculty;
-            searchResults.appendChild(title);
-
-            for (const plan of byFaculty[faculty]) {
-                const item = document.createElement('div');
-                item.className = 'search-result-item';
-                item.textContent = plan.name;
-                item.addEventListener('click', () => selectPlan(plan.id, plan.name));
-                searchResults.appendChild(item);
-            }
+        searchResults.replaceChildren(h('div', { class: 'search-empty' }, allPlans.length ? 'Nie znaleziono grupy' : 'Ładowanie listy grup...'));
+        return;
+    }
+    const byFaculty = {};
+    for (const plan of filtered) (byFaculty[facultyOf(plan)] ||= []).push(plan);
+    const nodes = [];
+    for (const faculty of Object.keys(byFaculty).sort()) {
+        nodes.push(h('div', { class: 'search-group-title' }, faculty));
+        for (const plan of byFaculty[faculty]) {
+            nodes.push(h('button', {
+                type: 'button',
+                class: 'search-result-item' + (plan.id === currentPlanId ? ' current' : ''),
+                onclick: () => selectPlan(plan.id, plan.name),
+            }, plan.name));
         }
     }
-    searchResults.classList.remove('hidden');
+    searchResults.replaceChildren(...nodes);
+}
+
+function openGroupPicker() {
+    planSearch.value = '';
+    renderSearchResults();
+    groupModal.showModal();
+    // Na telefonie klawiatura od razu przysłania listę - fokus tylko na większym ekranie.
+    if (window.matchMedia('(min-width: 720px)').matches) planSearch.focus();
 }
 
 planSearch.addEventListener('input', renderSearchResults);
-planSearch.addEventListener('focus', renderSearchResults);
-
-document.addEventListener('click', (e) => {
-    if (!planSearch.contains(e.target) && !searchResults.contains(e.target)) {
-        searchResults.classList.add('hidden');
-    }
-});
+groupBtn.addEventListener('click', openGroupPicker);
 
 function selectPlan(id, name) {
+    groupModal.close();
+    if (id === currentPlanId) return;
     currentPlanId = id;
-    planSearch.value = name;
-    searchResults.classList.add('hidden');
-    localStorage.setItem('selectedPlan', currentPlanId);
-
+    groupLabel.textContent = name;
+    safeSet('selectedPlan', currentPlanId);
     const url = new URL(window.location);
     url.searchParams.set('plan', currentPlanId);
-    window.history.replaceState({}, '', url);
-
+    window.history.replaceState(window.history.state, '', url);
+    selectedDate = '';
     loadPlan();
 }
 
 async function loadPlan() {
     if (!currentPlanId) return;
     const requestId = ++loadCounter;
-    showGridMessage('Ładowanie...', false);
-
+    status = 'loading';
+    render();
     try {
         const data = await fetchJSON('/api/plan/' + encodeURIComponent(currentPlanId));
         if (requestId !== loadCounter) return;
-
         fetchedLabel.textContent = data.fetched_at || 'Brak';
         modifiedLabel.textContent = data.modified_at || 'Brak';
-        allEvents = data.events || [];
-        eventsByWeek = groupByWeek(allEvents);
-        monthCursor = pickInitialMonth();
-        populateWeekSelector();
+        indexEvents(data.events || []);
+        if (!selectedDate) selectedDate = pickInitialDate();
+        status = 'ready';
     } catch (err) {
         if (requestId !== loadCounter) return;
-        allEvents = [];
-        eventsByWeek = {};
+        indexEvents([]);
         fetchedLabel.textContent = '-';
         modifiedLabel.textContent = '-';
-        weekSelector.replaceChildren(new Option('Brak danych', ''));
-        updateNavButtons();
-        showGridMessage(err.message, true);
+        status = 'error';
+        statusMessage = err.message;
     }
+    render();
 }
 
-function groupByWeek(events) {
-    const grouped = {};
-    for (const event of events) {
-        const monday = getMonday(event.date);
-        (grouped[monday] ||= []).push(event);
-    }
-    return grouped;
-}
+/* ---------- Rendering ---------- */
 
-/* ---------- Week view ---------- */
-
-function populateWeekSelector() {
-    const mondays = Object.keys(eventsByWeek).sort();
-    if (mondays.length === 0) {
-        weekSelector.replaceChildren(new Option('Brak zajęć', ''));
-        updateNavButtons();
-        showGridMessage('Brak zajęć w planie', false);
+function render() {
+    app.classList.toggle('wide', settings.view === 'week' && status === 'ready');
+    if (status === 'loading') { view.replaceChildren(h('div', { class: 'message' }, 'Ładowanie...')); return; }
+    if (status === 'error') { view.replaceChildren(h('div', { class: 'message error' }, statusMessage)); return; }
+    if (!currentPlanId) {
+        view.replaceChildren(h('div', { class: 'empty-day' },
+            h('b', null, 'Wybierz swoją grupę'),
+            'Wpisz nazwę grupy, np. WEL26EY4S0, a plan zapamięta się na tym urządzeniu.',
+            h('br'),
+            h('button', { type: 'button', class: 'link-btn', onclick: openGroupPicker }, 'Wybierz grupę'),
+        ));
         return;
     }
+    if (allEvents.length === 0) { view.replaceChildren(h('div', { class: 'message' }, 'Brak zajęć w planie')); return; }
+    if (!selectedDate) selectedDate = pickInitialDate();
 
-    weekSelector.replaceChildren(...mondays.map((monday, i) => {
-        return new Option(`Tydzień ${i + 1}/${mondays.length}`, monday);
-    }));
-
-    weekSelector.value = pickInitialWeek(mondays);
-    renderCurrent();
-}
-
-function pickInitialWeek(mondays) {
-    const currentMonday = getMonday(toISO(warsawNow()));
-    return mondays.find(monday => monday >= currentMonday) || mondays[mondays.length - 1];
-}
-
-function renderCurrent() {
-    const isMonth = settings.view === 'month';
-    weekSelector.classList.toggle('hidden', isMonth);
-    monthLabel.classList.toggle('hidden', !isMonth);
-
-    if (allEvents.length === 0) { updateNavButtons(); return; }
-
-    if (isMonth) renderMonth();
-    else renderWeek(weekSelector.value);
-    updateNavButtons();
+    if (settings.view === 'week') renderWeek();
+    else if (settings.view === 'month') renderMonth();
+    else renderAgenda();
     tickLive();
 }
 
-function updateNavButtons() {
-    if (settings.view === 'month') {
-        const months = monthKeys();
-        const idx = months.indexOf(monthCursor);
-        prevWeekBtn.disabled = idx <= 0;
-        nextWeekBtn.disabled = idx === -1 || idx >= months.length - 1;
+/* Agenda */
+
+function renderAgenda() {
+    const d = parseISO(selectedDate);
+    const count = (eventsByDate[selectedDate] || []).length;
+    const sub = `${longDate(selectedDate)} · tydzień ${isoWeek(d)}` + (count ? ` · ${classesWord(count)}` : '');
+    view.replaceChildren(
+        h('div', { class: 'day-title' }, h('h1', null, DAY_NAMES[dayIndex(d)]), h('p', null, sub)),
+        weekStrip(),
+        dayList(selectedDate),
+    );
+}
+
+function weekStrip() {
+    const monday = parseISO(mondayOf(selectedDate));
+    const today = todayISO();
+    const pills = [];
+    for (let i = 0; i < 7; i++) {
+        const iso = toISO(addDays(monday, i));
+        const has = Boolean(eventsByDate[iso]);
+        const cls = ['day-pill', has ? 'has' : 'empty', iso === selectedDate && 'sel', iso === today && 'today'].filter(Boolean).join(' ');
+        pills.push(h('button', {
+            type: 'button', class: cls, 'aria-pressed': String(iso === selectedDate),
+            'aria-label': `${DAY_NAMES[i]}, ${longDate(iso)}${has ? '' : ', brak zajęć'}`,
+            onclick: () => { selectedDate = iso; render(); },
+        }, h('span', { class: 'dn' }, DAY_SHORT[i]), h('span', { class: 'dd' }, parseISO(iso).getDate()), h('span', { class: 'dot' })));
+    }
+    return h('div', { class: 'week-strip' },
+        h('button', { type: 'button', class: 'arrow', 'aria-label': 'Poprzedni tydzień', onclick: () => step(-7) }, svg(ICON_LEFT, 20)),
+        pills,
+        h('button', { type: 'button', class: 'arrow', 'aria-label': 'Następny tydzień', onclick: () => step(7) }, svg(ICON_RIGHT, 20)),
+    );
+}
+
+function dayList(iso) {
+    const events = eventsByDate[iso] || [];
+    if (events.length === 0) {
+        const next = nextDateWithEvents(iso, 1);
+        return h('div', { class: 'empty-day' },
+            h('b', null, 'Wolne'),
+            'Brak zajęć tego dnia.',
+            next ? h('br') : null,
+            next ? h('button', { type: 'button', class: 'link-btn', onclick: () => { selectedDate = next; render(); } },
+                `Następne zajęcia: ${shortDate(next)}`) : null,
+        );
+    }
+    const rows = [];
+    events.forEach((e, i) => {
+        if (i > 0) {
+            const gap = toMin(e.start) - toMin(events[i - 1].end);
+            if (gap >= LONG_GAP_MIN) rows.push(h('div', { class: 'gap-row' }, `przerwa ${formatMinutes(gap)}`));
+        }
+        rows.push(h('div', { class: 'ev-row' },
+            h('div', { class: 'ev-time' }, h('b', null, e.start), h('span', null, e.end)),
+            eventCard(e),
+        ));
+    });
+    return h('div', { class: 'day-list' }, rows);
+}
+
+function eventCard(e) {
+    const [start, end] = eventRange(e);
+    const card = h('button', {
+        type: 'button', class: 'ev-card tint', 'data-start': start, 'data-end': end,
+        'aria-label': `${e.subject}, ${typeLabel(e.type)}, ${e._n} z ${e._total}. Pokaż wszystkie`,
+        onclick: () => openSeries(e),
+    },
+        h('div', { class: 'ev-top sub' }, h('span', { class: 'dot' }), typeLabel(e.type), h('span', { class: 'count' }, `${e._n}/${e._total}`)),
+        h('div', { class: 'ev-subject' }, e.subject),
+        (e.room || e.teacher) ? h('div', { class: 'ev-meta sub' },
+            e.room ? h('span', null, svg(ICON_PIN), e.room) : null,
+            e.teacher ? h('span', null, svg(ICON_USER), e.teacher) : null,
+        ) : null,
+        h('div', { class: 'ev-live' },
+            h('div', { class: 'row' }, h('span', null, 'Trwa teraz'), h('span', { class: 'remaining' })),
+            h('div', { class: 'track' }, h('div', { class: 'fill' })),
+        ),
+    );
+    return tint(card, e.color);
+}
+
+/* Week */
+
+function slotStart(t) {
+    const m = toMin(t);
+    let idx = 0;
+    SLOTS.forEach(([s], i) => { if (toMin(s) <= m) idx = i; });
+    return idx;
+}
+function slotEnd(t) {
+    const m = toMin(t);
+    const idx = SLOTS.findIndex(([, e]) => toMin(e) >= m);
+    return idx === -1 ? SLOTS.length - 1 : idx;
+}
+
+function renderWeek() {
+    const mondayISO = mondayOf(selectedDate);
+    const monday = parseISO(mondayISO);
+    const sunday = addDays(monday, 6);
+    const dates = Array.from({ length: 7 }, (_, i) => toISO(addDays(monday, i)));
+    const events = dates.flatMap(d => eventsByDate[d] || []);
+    const days = events.some(e => dayIndex(parseISO(e.date)) >= 5) ? 7 : 5;
+
+    const range = monday.getMonth() === sunday.getMonth()
+        ? `${monday.getDate()}–${sunday.getDate()} ${MONTHS_GEN[sunday.getMonth()]}`
+        : `${monday.getDate()} ${MONTHS_SHORT[monday.getMonth()]} – ${sunday.getDate()} ${MONTHS_SHORT[sunday.getMonth()]}`;
+    const nav = navRow(range, `tydzień ${isoWeek(monday)} · ${classesWord(events.length)}`, -7, 7);
+
+    if (events.length === 0) {
+        view.replaceChildren(nav, emptyWeek(mondayISO));
         return;
     }
-    const idx = weekSelector.selectedIndex;
-    const maxIdx = weekSelector.options.length - 1;
-    prevWeekBtn.disabled = idx <= 0 || maxIdx < 0;
-    nextWeekBtn.disabled = idx >= maxIdx || maxIdx < 0;
-}
 
-function renderWeek(monday) {
-    grid.classList.remove('month-grid');
-    grid.replaceChildren();
-    if (!monday) return;
+    let minSlot = SLOTS.length - 1, maxSlot = 0;
+    for (const e of events) { minSlot = Math.min(minSlot, slotStart(e.start)); maxSlot = Math.max(maxSlot, slotEnd(e.end)); }
 
-    const events = eventsByWeek[monday] || [];
-    const days = events.some(e => dayIndex(parseISO(e.date)) >= WORKDAYS) ? WEEKDAYS : WORKDAYS;
-    grid.style.setProperty('--days', days);
-
-    for (let row = 2; row <= 8; row++) {
-        for (let col = 2; col <= days + 1; col++) {
-            grid.appendChild(createCell('cell-bg', row, col));
-        }
-    }
-
-    grid.appendChild(createCell('header-cell', 1, 1, 'Godzina'));
-    const start = parseISO(monday);
+    const grid = h('div', { class: 'week-grid', style: `--days:${days}` });
+    const today = todayISO();
     for (let i = 0; i < days; i++) {
-        grid.appendChild(createDayHeader(addDays(start, i), i));
+        const iso = dates[i];
+        grid.append(h('div', { class: 'wk-head' + (iso === today ? ' today' : ''), style: `grid-row:1;grid-column:${i + 2}` },
+            h('b', null, DAY_SHORT[i]), h('span', null, parseISO(iso).getDate())));
+    }
+    for (let s = minSlot; s <= maxSlot; s++) {
+        const [st] = SLOTS[s];
+        const [hh, mm] = st.split(':');
+        grid.append(h('div', { class: 'wk-time', style: `grid-row:${s - minSlot + 2};grid-column:1` }, h('span', null, hh), h('span', null, mm)));
     }
 
-    SLOT_LABELS.forEach((label, i) => {
-        grid.appendChild(createCell('time-cell', i + 2, 1, label));
-    });
-
-    for (const event of events) {
-        const card = createEventCard(event);
-        if (card) grid.appendChild(card);
+    // Zajęcia w tym samym dniu i slocie (np. podgrupy) lądują w jednej komórce, jedne pod drugimi.
+    const buckets = {};
+    for (const e of events) {
+        const key = `${e.date}|${slotStart(e.start)}`;
+        (buckets[key] ||= []).push(e);
     }
+    for (const list of Object.values(buckets)) {
+        const first = list[0];
+        const col = dayIndex(parseISO(first.date)) + 2;
+        const rowStart = slotStart(first.start) - minSlot + 2;
+        const rowEnd = Math.max(...list.map(e => slotEnd(e.end))) - minSlot + 3;
+        grid.append(h('div', { class: 'wk-slot', style: `grid-column:${col};grid-row:${rowStart} / ${rowEnd}` },
+            list.map(weekCell)));
+    }
+
+    view.replaceChildren(nav, grid);
 }
 
-function createCell(className, row, col, text = '') {
-    const cell = document.createElement('div');
-    cell.className = className;
-    cell.style.gridRow = row;
-    cell.style.gridColumn = col;
-    cell.textContent = text;
-    return cell;
+function emptyWeek(mondayISO) {
+    const next = nextDateWithEvents(addDaysISO(mondayISO, 6), 1);
+    return h('div', { class: 'empty-day' }, h('b', null, 'Wolny tydzień'), 'Brak zajęć w tym tygodniu.',
+        next ? h('br') : null,
+        next ? h('button', { type: 'button', class: 'link-btn', onclick: () => { selectedDate = next; render(); } }, `Następne zajęcia: ${shortDate(next)}`) : null);
 }
 
-function createSpan(className, text) {
-    const span = document.createElement('span');
-    if (className) span.className = className;
-    span.textContent = text;
-    return span;
+function weekCell(e) {
+    const [start, end] = eventRange(e);
+    const cell = h('button', {
+        type: 'button', class: 'wk-cell tint', 'data-start': start, 'data-end': end,
+        title: `${e.start}–${e.end} ${e.subject}${e.room ? ', sala ' + e.room : ''}${e.teacher ? ', ' + e.teacher : ''}`,
+        'aria-label': `${e.subject}, ${typeLabel(e.type)}, ${e.start}. Pokaż wszystkie`,
+        onclick: () => openSeries(e),
+    },
+        h('span', { class: 'ab' }, abbreviate(e.subject)),
+        h('span', { class: 'full' }, e.subject),
+        h('span', { class: 'meta sub' },
+            h('span', null, `${typeShort(e.type)} ${e._n}/${e._total}`),
+            e.room ? h('span', null, e.room) : null),
+    );
+    return tint(cell, e.color);
 }
 
-function createDayHeader(date, index) {
-    const cell = createCell('header-cell', 1, index + 2, DAY_NAMES[index]);
-    if (toISO(date) === toISO(warsawNow())) cell.classList.add('today');
-    const small = document.createElement('small');
-    small.textContent = `${pad(date.getDate())}.${pad(date.getMonth() + 1)}`;
-    cell.appendChild(small);
-    return cell;
-}
-
-function createEventCard(event) {
-    const rowStart = START_ROW[event.start];
-    const rowEnd = END_ROW_LINE[event.end];
-    if (!rowStart || !rowEnd) return null;
-
-    const column = dayIndex(parseISO(event.date)) + 2;
-    const card = createCell('event-card', `${rowStart} / ${rowEnd}`, column);
-
-    card.style.backgroundColor = event.color || '#e2e8f0';
-    card.style.color = textColorFor(event.color);
-
-    const [start, end] = eventRange(event);
-    card.dataset.start = start;
-    card.dataset.end = end;
-
-    const body = document.createElement('div');
-    body.className = 'event-body';
-    body.appendChild(createSpan('event-subject', event.subject));
-    if (event.type) body.appendChild(createSpan('event-type', event.type));
-    if (event.room) body.appendChild(createSpan('', `Sala: ${event.room}`));
-    if (event.teacher) body.appendChild(createSpan('event-teacher', event.teacher));
-    body.appendChild(createSpan('event-remaining', ''));
-    card.appendChild(body);
-    return card;
-}
-
-/* ---------- Month view ---------- */
-
-function monthKeys() {
-    const set = new Set(allEvents.map(e => e.date.slice(0, 7)));
-    return [...set].sort();
-}
-
-function pickInitialMonth() {
-    const months = monthKeys();
-    const current = toISO(warsawNow()).slice(0, 7);
-    return months.includes(current) ? current : (months.find(m => m > current) || months[months.length - 1] || current);
-}
+/* Month */
 
 function renderMonth() {
-    grid.replaceChildren();
-    grid.classList.add('month-grid');
+    const sel = parseISO(selectedDate);
+    const year = sel.getFullYear(), month = sel.getMonth();
+    const first = new Date(year, month, 1);
+    const start = addDays(first, -dayIndex(first));
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells = Math.ceil((dayIndex(first) + daysInMonth) / 7) * 7;
+    const monthCount = Object.keys(eventsByDate).filter(d => d.startsWith(`${year}-${pad(month + 1)}`))
+        .reduce((n, d) => n + eventsByDate[d].length, 0);
 
-    const [year, month] = monthCursor.split('-').map(Number);
-    monthLabel.textContent = new Date(year, month - 1, 1).toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
-
-    DAY_NAMES.forEach(name => {
-        const head = document.createElement('div');
-        head.className = 'header-cell';
-        head.textContent = name.slice(0, 3);
-        grid.appendChild(head);
-    });
-
-    const first = new Date(year, month - 1, 1);
-    const cursor = addDays(first, -dayIndex(first));
-    const todayISO = toISO(warsawNow());
-    const byDate = {};
-    for (const e of allEvents) (byDate[e.date] ||= []).push(e);
-
-    // 6 rows cover every possible month layout
-    for (let i = 0; i < 42; i++) {
-        const day = addDays(cursor, i);
+    const nav = navRow(`${MONTHS_NOM[month]} ${year}`, classesWord(monthCount), 'prevMonth', 'nextMonth');
+    const grid = h('div', { class: 'month-grid' }, DAY_SHORT.map(d => h('div', { class: 'mo-head' }, d)));
+    const today = todayISO();
+    for (let i = 0; i < cells; i++) {
+        const day = addDays(start, i);
         const iso = toISO(day);
-        const cell = document.createElement('div');
-        cell.className = 'month-cell';
-        if (day.getMonth() !== month - 1) cell.classList.add('outside');
-        if (iso === todayISO) cell.classList.add('today');
-        cell.appendChild(createSpan('month-num', String(day.getDate())));
-
-        const events = (byDate[iso] || []).slice().sort((a, b) => a.start.localeCompare(b.start));
-        for (const e of events) {
-            const pill = createSpan('month-pill', `${e.start} ${e.subject}`);
-            pill.style.backgroundColor = e.color || '#e2e8f0';
-            pill.style.color = textColorFor(e.color);
-            pill.title = `${e.start}-${e.end} ${e.subject}${e.room ? ', sala ' + e.room : ''}`;
-            const [s, en] = eventRange(e);
-            pill.dataset.start = s;
-            pill.dataset.end = en;
-            cell.appendChild(pill);
-        }
-        grid.appendChild(cell);
+        const evs = eventsByDate[iso] || [];
+        const cls = ['mo-day', day.getMonth() !== month && 'outside', iso === today && 'today', iso === selectedDate && 'sel'].filter(Boolean).join(' ');
+        const dots = h('span', { class: 'mo-dots' }, evs.slice(0, 6).map(e => tint(h('span', { class: 'dot tint-dot' }), e.color)));
+        grid.append(h('button', {
+            type: 'button', class: cls, 'aria-pressed': String(iso === selectedDate),
+            'aria-label': `${longDate(iso)}, ${evs.length ? classesWord(evs.length) : 'brak zajęć'}`,
+            onclick: () => { selectedDate = iso; render(); },
+        }, h('span', null, day.getDate()), dots));
     }
+
+    view.replaceChildren(nav, grid,
+        h('h2', { class: 'mo-day-title' }, `${DAY_NAMES[dayIndex(sel)]}, ${longDate(selectedDate)}`),
+        dayList(selectedDate));
+}
+
+function navRow(title, subtitle, prev, next) {
+    const go = (dir) => () => (typeof dir === 'number' ? step(dir) : stepMonth(dir === 'nextMonth' ? 1 : -1));
+    return h('div', { class: 'nav-row' },
+        h('button', { type: 'button', class: 'round-btn', 'aria-label': 'Wstecz', onclick: go(prev) }, svg(ICON_LEFT, 20)),
+        h('div', { class: 'nav-label' }, h('b', null, title), h('small', null, subtitle)),
+        h('button', { type: 'button', class: 'round-btn', 'aria-label': 'Dalej', onclick: go(next) }, svg(ICON_RIGHT, 20)),
+    );
+}
+
+/* ---------- Series: "Ile jeszcze" ---------- */
+
+let seriesSubjectName = '';
+let seriesType = '';
+let seriesPicked = null;
+
+function openSeries(e) {
+    seriesSubjectName = e.subject;
+    seriesType = e.type || '';
+    seriesPicked = e;
+    renderSeries();
+    if (!seriesModal.open) {
+        seriesModal.showModal();
+        history.pushState({ series: true }, '');
+    }
+    seriesModal.scrollTo(0, 0);
+}
+
+function closeSeries() {
+    if (!seriesModal.open) return;
+    if (history.state && history.state.series) history.back();
+    else seriesModal.close();
+}
+
+window.addEventListener('popstate', () => { if (seriesModal.open) seriesModal.close(); });
+seriesBack.addEventListener('click', closeSeries);
+seriesModal.addEventListener('cancel', (ev) => { ev.preventDefault(); closeSeries(); });
+
+function renderSeries() {
+    const list = seriesByKey[seriesKey({ subject: seriesSubjectName, type: seriesType })] || [];
+    const nowMs = warsawNow().getTime();
+    const done = list.filter(e => eventRange(e)[1] <= nowMs).length;
+    const left = list.length - done;
+    const next = list.find(e => eventRange(e)[1] > nowMs);
+    const last = list[list.length - 1];
+    const sample = list[0] || seriesPicked;
+
+    seriesSubject.textContent = seriesSubjectName;
+    seriesSub.textContent = typeLabel(seriesType) + (sample && sample.teacher ? ` · ${sample.teacher}` : '');
+
+    // Inne formy tego samego przedmiotu (wykład / ćwiczenia / lab).
+    const types = Object.keys(seriesByKey)
+        .map(k => k.split('\u0000'))
+        .filter(([subj]) => subj === seriesSubjectName)
+        .map(([, type]) => type);
+    const chips = types.length > 1 ? h('div', { class: 'type-chips' }, types.map(type => h('button', {
+        type: 'button', 'aria-pressed': String(type === seriesType),
+        onclick: () => { seriesType = type; seriesPicked = null; renderSeries(); seriesModal.scrollTo(0, 0); },
+    }, `${typeLabel(type)} · ${seriesByKey[seriesKey({ subject: seriesSubjectName, type })].length}`))) : h('div', { style: 'height:16px' });
+
+    const pct = list.length ? (done / list.length) * 100 : 0;
+    const summary = tint(h('div', { class: 'series-summary tint' },
+        h('div', { class: 'big' }, h('b', null, left), h('span', null, left === 0 ? 'wszystko za tobą' : `${plural(left, 'zostały', 'zostały', 'zostało')} z ${list.length}`)),
+        h('div', { class: 'track' }, h('div', { class: 'fill', style: `--progress:${pct.toFixed(1)}%` })),
+        h('div', { class: 'series-facts' },
+            h('div', null, h('small', { class: 'sub' }, 'Następne'), h('b', null, next ? `${shortDate(next.date)}, ${next.start}` : '—')),
+            h('div', null, h('small', { class: 'sub' }, lastLabel(seriesType)), h('b', null, last ? `${shortDate(last.date)}, ${last.start}` : '—')),
+        ),
+    ), sample ? sample.color : '');
+
+    const items = [];
+    let month = '';
+    for (const e of list) {
+        const m = e.date.slice(0, 7);
+        if (m !== month) {
+            month = m;
+            const d = parseISO(e.date);
+            items.push(h('li', { class: 'series-month' }, `${MONTHS_NOM[d.getMonth()]} ${d.getFullYear()}`));
+        }
+        const isDone = eventRange(e)[1] <= nowMs;
+        const isNext = e === next;
+        const cls = ['series-item', isDone && 'done', isNext && 'next', e === seriesPicked && 'picked'].filter(Boolean).join(' ');
+        const details = [`${e.start}–${e.end}`, e.room, e.teacher && e.teacher !== sample.teacher ? e.teacher : ''].filter(Boolean).join(' · ');
+        items.push(h('li', { class: cls },
+            h('span', { class: 'idx' }, e._n, h('small', null, `/${e._total}`)),
+            h('span', { class: 'when' }, h('b', null, shortDate(e.date)), h('span', null, details)),
+            h('span', { class: 'state' }, isDone ? svg(ICON_CHECK, 16) : isNext ? 'następne' : ''),
+        ));
+    }
+
+    seriesBody.replaceChildren(chips, summary, h('ul', { class: 'series-list' }, items));
 }
 
 /* ---------- Live progress ---------- */
 
 function tickLive() {
     const now = warsawNow().getTime();
-
-    document.querySelectorAll('.event-card[data-start]').forEach(card => {
+    document.querySelectorAll('[data-start]').forEach(card => {
         const start = Number(card.dataset.start);
         const end = Number(card.dataset.end);
         const live = settings.live && now >= start && now < end;
-        const past = settings.dimPast && now >= end;
-
         card.classList.toggle('live', live);
-        card.classList.toggle('past', past);
-
+        card.classList.toggle('past', settings.dimPast && now >= end);
         if (live) {
-            const progress = ((now - start) / (end - start)) * 100;
-            card.style.setProperty('--progress', progress.toFixed(2) + '%');
-            const mins = Math.ceil((end - now) / 60000);
-            card.querySelector('.event-remaining').textContent = `Zostało ${formatMinutes(mins)}`;
-        } else {
-            card.style.removeProperty('--progress');
+            card.style.setProperty('--progress', (((now - start) / (end - start)) * 100).toFixed(2) + '%');
+            const rem = card.querySelector('.remaining');
+            if (rem) rem.textContent = `zostało ${formatMinutes(Math.ceil((end - now) / 60000))}`;
         }
-    });
-
-    document.querySelectorAll('.month-pill[data-start]').forEach(pill => {
-        const now2 = now;
-        pill.classList.toggle('live', settings.live && now2 >= Number(pill.dataset.start) && now2 < Number(pill.dataset.end));
     });
 }
 
@@ -531,38 +768,66 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) tick
 
 /* ---------- Navigation ---------- */
 
-function stepPeriod(direction) {
-    if (settings.view === 'month') {
-        const months = monthKeys();
-        const next = months[months.indexOf(monthCursor) + direction];
-        if (!next) return;
-        monthCursor = next;
-    } else {
-        const next = weekSelector.selectedIndex + direction;
-        if (next < 0 || next >= weekSelector.options.length) return;
-        weekSelector.selectedIndex = next;
-    }
-    renderCurrent();
+function step(days) {
+    if (!selectedDate) return;
+    selectedDate = addDaysISO(selectedDate, days);
+    render();
 }
 
-weekSelector.addEventListener('change', renderCurrent);
-prevWeekBtn.addEventListener('click', () => stepPeriod(-1));
-nextWeekBtn.addEventListener('click', () => stepPeriod(1));
+function stepMonth(dir) {
+    const d = parseISO(selectedDate);
+    const target = new Date(d.getFullYear(), d.getMonth() + dir, 1);
+    const prefix = `${target.getFullYear()}-${pad(target.getMonth() + 1)}`;
+    // Zaznacz pierwszy dzień z zajęciami w nowym miesiącu (albo 1., jeśli pusty).
+    const firstWithEvents = Object.keys(eventsByDate).sort().find(x => x.startsWith(prefix));
+    selectedDate = firstWithEvents || toISO(target);
+    render();
+}
+
+function stepByView(dir) {
+    if (settings.view === 'month') stepMonth(dir);
+    else if (settings.view === 'week') step(7 * dir);
+    else step(dir);
+}
+
+todayBtn.addEventListener('click', () => { selectedDate = todayISO(); render(); });
 
 document.addEventListener('keydown', (e) => {
-    if (e.target.matches('input, select, textarea') || settingsModal.open) return;
-    if (e.key === 'ArrowLeft') stepPeriod(-1);
-    if (e.key === 'ArrowRight') stepPeriod(1);
+    if (e.target.matches('input, select, textarea') || document.querySelector('dialog[open]')) return;
+    if (status !== 'ready') return;
+    if (e.key === 'ArrowLeft') stepByView(-1);
+    if (e.key === 'ArrowRight') stepByView(1);
 });
+
+// Przesunięcie palcem w bok: dzień (agenda), tydzień, miesiąc.
+let touchX = null, touchY = null;
+view.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { touchX = null; return; }
+    touchX = e.touches[0].clientX;
+    touchY = e.touches[0].clientY;
+}, { passive: true });
+view.addEventListener('touchend', (e) => {
+    if (touchX === null || status !== 'ready') return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    const dy = e.changedTouches[0].clientY - touchY;
+    touchX = null;
+    if (Math.abs(dx) > 60 && Math.abs(dy) < 40) stepByView(dx < 0 ? 1 : -1);
+}, { passive: true });
+
+/* ---------- Dialogs ---------- */
+
+settingsBtn.addEventListener('click', () => settingsModal.showModal());
+for (const dlg of [settingsModal, groupModal]) {
+    dlg.addEventListener('click', (e) => { if (e.target === dlg || e.target.closest('[data-close]')) dlg.close(); });
+}
 
 /* ---------- Refresh ---------- */
 
 async function refreshServer() {
     if (!currentPlanId) return;
-    const originalText = refreshButton.textContent;
+    const original = refreshButton.textContent;
     refreshButton.textContent = 'Odświeżanie...';
     refreshButton.disabled = true;
-
     try {
         await fetchJSON('/api/refresh?plan=' + encodeURIComponent(currentPlanId), { method: 'POST' });
         await loadPlan();
@@ -570,7 +835,7 @@ async function refreshServer() {
     } catch (err) {
         setNotice(err.message, true);
     } finally {
-        refreshButton.textContent = originalText;
+        refreshButton.textContent = original;
         refreshButton.disabled = false;
     }
 }
@@ -581,38 +846,19 @@ refreshButton.addEventListener('click', refreshServer);
 function icsEscape(text) {
     return String(text).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
 }
-
-function icsTime(date, time) {
-    return date.replace(/-/g, '') + 'T' + time.replace(':', '') + '00';
-}
+const icsTime = (date, time) => date.replace(/-/g, '') + 'T' + time.replace(':', '') + '00';
 
 function buildICS() {
     const planName = (allPlans.find(p => p.id === currentPlanId) || {}).name || currentPlanId;
     const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
     const lines = [
-        'BEGIN:VCALENDAR',
-        'VERSION:2.0',
-        'PRODID:-//WATplan//PL',
-        'CALSCALE:GREGORIAN',
-        'X-WR-CALNAME:' + icsEscape('WAT ' + planName),
-        'X-WR-TIMEZONE:Europe/Warsaw',
-        'BEGIN:VTIMEZONE',
-        'TZID:Europe/Warsaw',
-        'BEGIN:STANDARD',
-        'DTSTART:19701025T030000',
-        'TZOFFSETFROM:+0200',
-        'TZOFFSETTO:+0100',
-        'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
-        'END:STANDARD',
-        'BEGIN:DAYLIGHT',
-        'DTSTART:19700329T020000',
-        'TZOFFSETFROM:+0100',
-        'TZOFFSETTO:+0200',
-        'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
-        'END:DAYLIGHT',
+        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//WATplan//PL', 'CALSCALE:GREGORIAN',
+        'X-WR-CALNAME:' + icsEscape('WAT ' + planName), 'X-WR-TIMEZONE:Europe/Warsaw',
+        'BEGIN:VTIMEZONE', 'TZID:Europe/Warsaw',
+        'BEGIN:STANDARD', 'DTSTART:19701025T030000', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
+        'BEGIN:DAYLIGHT', 'DTSTART:19700329T020000', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
         'END:VTIMEZONE',
     ];
-
     allEvents.forEach((e, i) => {
         lines.push(
             'BEGIN:VEVENT',
@@ -626,7 +872,6 @@ function buildICS() {
         if (e.teacher) lines.push('DESCRIPTION:' + icsEscape(e.teacher));
         lines.push('END:VEVENT');
     });
-
     lines.push('END:VCALENDAR');
     return lines.join('\r\n') + '\r\n';
 }

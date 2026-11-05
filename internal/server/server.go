@@ -198,7 +198,12 @@ func withGzip(next http.HandlerFunc) http.HandlerFunc {
 
 func withCache(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "public, max-age=86400")
+		// HTML zawsze świeży (wskazuje wersjonowane app.js/style.css), reszta na dobę.
+		if r.URL.Path == "/" || strings.HasSuffix(r.URL.Path, ".html") {
+			w.Header().Set("Cache-Control", "no-cache")
+		} else {
+			w.Header().Set("Cache-Control", "public, max-age=86400")
+		}
 		next.ServeHTTP(w, r)
 	})
 }
