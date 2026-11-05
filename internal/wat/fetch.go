@@ -34,8 +34,13 @@ const (
 // zapytania do tej domeny na blockBackoff (inne domeny pobierają się dalej).
 var ErrBlocked = errors.New("zapytanie zablokowane przez WAF (Incapsula) - wstrzymuję pobieranie")
 
+// ErrProxy oznacza, że skonfigurowany PLANWAT_PROXY odrzucił połączenie
+// (np. 402 Payment Required po wyczerpaniu abonamentu). Ponawianie nic nie da.
+var ErrProxy = errors.New("serwer proxy (PLANWAT_PROXY) odrzucił połączenie")
+
 type Fetcher struct {
-	client *http.Client
+	client   *http.Client
+	proxyURL *url.URL
 
 	minInterval time.Duration
 	paceMu      sync.Mutex
@@ -56,12 +61,15 @@ func NewFetcher() (*Fetcher, error) {
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 
+	var configuredProxy *url.URL
 	if proxyStr := os.Getenv("PLANWAT_PROXY"); proxyStr != "" {
 		proxyURL, err := url.Parse(proxyStr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid proxy url: %w", err)
 		}
 		transport.Proxy = http.ProxyURL(proxyURL)
+		configuredProxy = proxyURL
+		log.Printf("pobieranie przez proxy %s (PLANWAT_PROXY)", proxyURL.Host)
 	}
 
 	client := &http.Client{
@@ -90,6 +98,7 @@ func NewFetcher() (*Fetcher, error) {
 
 	return &Fetcher{
 		client:       client,
+		proxyURL:     configuredProxy,
 		minInterval:  minInterval,
 		blockBackoff: blockBackoff,
 		blockedUntil: make(map[string]time.Time),
@@ -199,8 +208,36 @@ func (e *statusError) Error() string {
 	return fmt.Sprintf("status code error: %d", e.status)
 }
 
+// ProxyHost zwraca host skonfigurowanego proxy (bez loginu i hasła) albo "".
+func (f *Fetcher) ProxyHost() string {
+	if f.proxyURL == nil {
+		return ""
+	}
+	return f.proxyURL.Host
+}
+
+// proxyRejection rozpoznaje błąd, w którym proxy odpowiedziało na CONNECT
+// statusem innym niż 200. net/http zwraca wtedy *url.Error z samym tekstem
+// statusu, np. "Payment Required" albo "Proxy Authentication Required".
+func (f *Fetcher) proxyRejection(err error) (string, bool) {
+	if f.proxyURL == nil {
+		return "", false
+	}
+	var ue *url.Error
+	if !errors.As(err, &ue) || ue.Err == nil {
+		return "", false
+	}
+	text := ue.Err.Error()
+	for code := 400; code < 600; code++ {
+		if st := http.StatusText(code); st != "" && st == text {
+			return fmt.Sprintf("%d %s", code, st), true
+		}
+	}
+	return "", false
+}
+
 func retryable(err error) bool {
-	if errors.Is(err, ErrBlocked) {
+	if errors.Is(err, ErrBlocked) || errors.Is(err, ErrProxy) {
 		return false
 	}
 	var se *statusError
@@ -228,6 +265,9 @@ func (f *Fetcher) fetchOnce(targetUrl string) ([]byte, error) {
 	f.pace()
 	resp, err := f.client.Do(req)
 	if err != nil {
+		if status, ok := f.proxyRejection(err); ok {
+			return nil, fmt.Errorf("%w: %s %s - sprawdź konto u dostawcy proxy albo usuń PLANWAT_PROXY", ErrProxy, f.proxyURL.Host, status)
+		}
 		return nil, err
 	}
 	defer resp.Body.Close()

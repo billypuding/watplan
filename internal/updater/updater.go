@@ -277,3 +277,11 @@ func (u *Updater) BlockedHosts() map[string]time.Time {
 	}
 	return u.fetcher.BlockedHosts()
 }
+
+// ProxyHost zwraca host skonfigurowanego proxy albo "".
+func (u *Updater) ProxyHost() string {
+	if u == nil || u.fetcher == nil {
+		return ""
+	}
+	return u.fetcher.ProxyHost()
+}

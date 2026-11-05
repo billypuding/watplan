@@ -237,11 +237,17 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"mode":          mode,
 		"blocked_hosts": blocked,
+		"proxy":         s.updater.ProxyHost(),
 		"now":           time.Now().In(warsawLoc).Format(timeLayout),
 	})
 }
 
 func (s *Server) writeUpdateError(w http.ResponseWriter, err error) {
+	if errors.Is(err, wat.ErrProxy) {
+		writeError(w, http.StatusBadGateway,
+			"serwer PlanWat nie może połączyć się przez skonfigurowane proxy. Pokazuję ostatni zapisany plan")
+		return
+	}
 	if errors.Is(err, wat.ErrBlocked) {
 		writeError(w, http.StatusServiceUnavailable,
 			"WAT (Incapsula) blokuje pobieranie z serwera PlanWat. Pokazuję ostatni zapisany plan")

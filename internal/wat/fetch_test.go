@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 )
@@ -82,5 +83,35 @@ func TestFetchHTMLDetectsWAFBlock(t *testing.T) {
 				t.Fatalf("FetchHTML = %v, chcę statusError(%d)", err, tc.status)
 			}
 		})
+	}
+}
+
+func TestProxyRejectionIsNotRetried(t *testing.T) {
+	var hits atomic.Int64
+	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.WriteHeader(http.StatusPaymentRequired)
+	}))
+	t.Cleanup(proxy.Close)
+
+	t.Setenv("PLANWAT_PROXY", proxy.URL)
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	f, err := NewFetcher()
+	if err != nil {
+		t.Fatalf("NewFetcher: %v", err)
+	}
+
+	_, err = f.FetchHTML("https://wml.wat.edu.pl/plan.htm")
+	if !errors.Is(err, ErrProxy) {
+		t.Fatalf("FetchHTML = %v, chcę ErrProxy", err)
+	}
+	if !strings.Contains(err.Error(), "402") {
+		t.Errorf("błąd %q powinien zawierać status 402", err)
+	}
+	if got := hits.Load(); got != 1 {
+		t.Errorf("zapytań do proxy = %d, chcę 1 (bez ponawiania)", got)
+	}
+	if f.ProxyHost() == "" {
+		t.Error("ProxyHost pusty mimo ustawionego PLANWAT_PROXY")
 	}
 }
