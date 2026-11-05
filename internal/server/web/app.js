@@ -75,9 +75,9 @@ function safeSet(key, value) { try { localStorage.setItem(key, value); } catch (
 const settings = loadSettings();
 const saveSettings = () => safeSet(SETTINGS_KEY, JSON.stringify(settings));
 
-// ?view=week w linku nadpisuje widok na tę wizytę (bez zapisywania).
-const urlView = new URLSearchParams(window.location.search).get('view');
-if (['agenda', 'week', 'month'].includes(urlView)) settings.view = urlView;
+// ?view=day|week|month w linku nadpisuje widok na tę wizytę (bez zapisywania).
+const urlView = { day: 'agenda', dzien: 'agenda', agenda: 'agenda', week: 'week', month: 'month' }[new URLSearchParams(window.location.search).get('view')];
+if (urlView) settings.view = urlView;
 
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
 function applyTheme() {
