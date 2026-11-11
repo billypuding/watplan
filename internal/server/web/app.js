@@ -445,6 +445,8 @@ function updateStaleBanner(fetchedAt) {
 
 function render() {
     app.classList.toggle('wide', settings.view === 'week' && status === 'ready');
+    todayBtn.classList.toggle('hidden', status !== 'ready' || !selectedDate || !todayOffScreen());
+    refreshButton.classList.toggle('hidden', !currentPlanId);
     if (status === 'loading') { view.replaceChildren(h('div', { class: 'message' }, 'Ładowanie...')); return; }
     if (status === 'error') { view.replaceChildren(h('div', { class: 'message error' }, statusMessage)); return; }
     if (!currentPlanId) {
@@ -463,6 +465,14 @@ function render() {
     else if (settings.view === 'month') renderMonth();
     else renderAgenda();
     tickLive();
+}
+
+// "Dziś" pokazujemy tylko wtedy, gdy nie patrzymy na dzisiejszy dzień
+// (w widoku tygodnia: na bieżący tydzień).
+function todayOffScreen() {
+    const today = todayISO();
+    if (settings.view === 'week') return mondayOf(selectedDate) !== mondayOf(today);
+    return selectedDate !== today;
 }
 
 /* Agenda */
@@ -525,18 +535,28 @@ function dayList(iso) {
     return h('div', { class: 'day-list' }, rows);
 }
 
+// "232 K ; 231 K ; 230 K" -> główna sala + ile jeszcze (lektoraty mają kilka sal naraz).
+function splitRooms(room) {
+    const rooms = (room || '').split(/\s*[;,]\s*/).map(r => r.trim()).filter(Boolean);
+    return { main: rooms[0] || '', more: Math.max(rooms.length - 1, 0) };
+}
+
 function eventCard(e) {
     const [start, end] = eventRange(e);
+    const { main: room, more } = splitRooms(e.room);
     const card = h('button', {
         type: 'button', class: 'ev-card tint', 'data-start': start, 'data-end': end,
-        'aria-label': `${e.subject}, ${typeLabel(e.type)}, ${e._n} z ${e._total}. Pokaż wszystkie`,
+        'aria-label': `${e.subject}, ${typeLabel(e.type)}${e.room ? ', sala ' + e.room : ''}, ${e._n} z ${e._total}. Pokaż wszystkie`,
         onclick: () => openSeries(e),
     },
-        h('div', { class: 'ev-top sub' }, h('span', { class: 'dot' }), typeLabel(e.type), h('span', { class: 'count' }, `${e._n}/${e._total}`)),
-        h('div', { class: 'ev-subject' }, e.subject),
-        (e.room || e.teacher) ? h('div', { class: 'ev-meta sub' },
-            e.room ? h('span', null, svg(ICON_PIN), e.room) : null,
-            e.teacher ? h('span', null, svg(ICON_USER), e.teacher) : null,
+        h('div', { class: 'ev-main' },
+            h('div', { class: 'ev-subject' }, e.subject),
+            h('div', { class: 'ev-type sub' }, h('span', { class: 'dot' }), typeLabel(e.type), h('span', { class: 'count' }, `${e._n}/${e._total}`)),
+            e.teacher ? h('div', { class: 'ev-teacher sub' }, e.teacher) : null,
+        ),
+        room ? h('div', { class: 'ev-room', title: e.room },
+            h('b', null, room),
+            more ? h('small', { class: 'sub' }, `+${more} ${plural(more, 'sala', 'sale', 'sal')}`) : null,
         ) : null,
         h('div', { class: 'ev-live' },
             h('div', { class: 'row' }, h('span', null, 'Trwa teraz'), h('span', { class: 'remaining' })),
@@ -840,19 +860,20 @@ for (const dlg of [settingsModal, groupModal]) {
 /* ---------- Refresh ---------- */
 
 async function refreshServer() {
-    if (!currentPlanId) return;
-    const original = refreshButton.textContent;
-    refreshButton.textContent = 'Odświeżanie...';
+    if (!currentPlanId || refreshButton.disabled) return;
     refreshButton.disabled = true;
+    refreshButton.classList.add('spinning');
+    refreshButton.setAttribute('aria-busy', 'true');
     try {
         await fetchJSON('/api/refresh?plan=' + encodeURIComponent(currentPlanId), { method: 'POST' });
         await loadPlan();
-        setNotice('Plan odświeżony', false);
+        setNotice('Plan odświeżony z WAT', false);
     } catch (err) {
         setNotice(err.message, true);
     } finally {
-        refreshButton.textContent = original;
         refreshButton.disabled = false;
+        refreshButton.classList.remove('spinning');
+        refreshButton.removeAttribute('aria-busy');
     }
 }
 refreshButton.addEventListener('click', refreshServer);
