@@ -5,3 +5,6 @@
 # build artifacts
 /main
 /watplan
+
+# impeccable (lokalne ustawienia)
+.impeccable/config.local.json
