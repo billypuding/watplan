@@ -22,6 +22,9 @@ const view = $('view');
 const groupBtn = $('groupBtn');
 const groupLabel = $('groupLabel');
 const groupModal = $('groupModal');
+const favBar = $('favBar');
+const favSection = $('favSection');
+const favList = $('favList');
 const planSearch = $('planSearch');
 const searchResults = $('searchResults');
 const todayBtn = $('todayBtn');
@@ -41,6 +44,8 @@ const seriesSub = $('seriesSub');
 const seriesBody = $('seriesBody');
 const staleBanner = $('staleBanner');
 const STALE_AFTER_MS = 24 * 3600 * 1000;
+const PLAN_CACHE_KEY = 'planCache';
+const PLAN_CACHE_SIZE = 5;
 
 let allPlans = [];
 let currentPlanId = '';
@@ -50,10 +55,8 @@ let seriesByKey = {};
 let selectedDate = '';
 let loadCounter = 0;
 let noticeTimer = null;
-let status = 'idle'; // idle | loading | ready | error
+let status = 'idle';
 let statusMessage = '';
-
-/* ---------- Settings ---------- */
 
 const defaults = { v: SETTINGS_VERSION, theme: 'auto', view: 'agenda', live: true, dimPast: true };
 
@@ -62,7 +65,6 @@ function loadSettings() {
     try { stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch (_) { stored = {}; }
     const legacyTheme = safeGet('theme');
     const merged = { ...defaults, ...(legacyTheme ? { theme: legacyTheme } : {}), ...stored };
-    // v1 miało domyślnie widok tygodnia - przenosimy wszystkich na nową agendę.
     if (merged.v !== SETTINGS_VERSION) {
         merged.v = SETTINGS_VERSION;
         merged.view = 'agenda';
@@ -72,12 +74,11 @@ function loadSettings() {
 }
 
 function safeGet(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
-function safeSet(key, value) { try { localStorage.setItem(key, value); } catch (_) { /* tryb prywatny */ } }
+function safeSet(key, value) { try { localStorage.setItem(key, value); } catch (_) { } }
 
 const settings = loadSettings();
 const saveSettings = () => safeSet(SETTINGS_KEY, JSON.stringify(settings));
 
-// ?view=day|week|month w linku nadpisuje widok na tę wizytę (bez zapisywania).
 const urlView = { day: 'agenda', dzien: 'agenda', agenda: 'agenda', week: 'week', month: 'month' }[new URLSearchParams(window.location.search).get('view')];
 if (urlView) settings.view = urlView;
 
@@ -116,8 +117,6 @@ optDimPast.addEventListener('change', () => { settings.dimPast = optDimPast.chec
 applyTheme();
 syncSettingsUI();
 
-/* ---------- Helpers ---------- */
-
 function h(tag, attrs, ...children) {
     const node = document.createElement(tag);
     if (attrs) {
@@ -150,7 +149,7 @@ function svg(paths, size = 14) {
     s.innerHTML = paths;
     return s;
 }
-const ICON_PIN = '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>';
+const ICON_BUILDING = '<path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M16 9h2a2 2 0 0 1 2 2v10"/><path d="M2 21h20"/><path d="M8 7h4M8 11h4M8 15h4"/>';
 const ICON_USER = '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>';
 const ICON_LEFT = '<path d="m15 18-6-6 6-6"/>';
 const ICON_RIGHT = '<path d="m9 18 6-6-6-6"/>';
@@ -173,7 +172,6 @@ function isoWeek(date) {
     return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
 }
 
-// "Teraz" w Warszawie, jako Date z lokalnymi polami = czas warszawski.
 function warsawNow() {
     return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
 }
@@ -209,7 +207,6 @@ function plural(n, one, few, many) {
 }
 const classesWord = (n) => `${n} ${plural(n, 'zajęcia', 'zajęcia', 'zajęć')}`;
 
-// Kolor WAT -> barwa (--h) i czy w ogóle jest kolorowy (--s); resztę robi CSS per motyw.
 const hueCache = {};
 function hueOf(hex) {
     if (hueCache[hex]) return hueCache[hex];
@@ -294,8 +291,6 @@ async function fetchJSON(url, options) {
     return body;
 }
 
-/* ---------- Data ---------- */
-
 const seriesKey = (e) => `${e.subject}\u0000${e.type || ''}`;
 
 function indexEvents(events) {
@@ -328,28 +323,36 @@ function nextDateWithEvents(fromISO, dir = 1) {
     return dates.reverse().find(d => d < fromISO) || '';
 }
 
-/* ---------- Plans + search ---------- */
-
-const facultyOf = (plan) => plan.faculty || plan.id.slice(0, 3).toUpperCase();
-
 async function loadPlans() {
-    status = 'loading';
-    render();
+    const params = new URLSearchParams(window.location.search);
+    const target = params.get('plan') || safeGet('selectedPlan');
+    if (target) {
+        currentPlanId = target;
+        groupLabel.textContent = target;
+        renderFavorites();
+        loadPlan();
+    } else {
+        status = 'loading';
+        render();
+    }
     try {
-        allPlans = await fetchJSON('/api/plans');
-        const params = new URLSearchParams(window.location.search);
-        const target = params.get('plan') || safeGet('selectedPlan');
+        allPlans = await WatGroups.load();
         const found = target && allPlans.find(p => p.id === target);
         if (found) {
-            currentPlanId = found.id;
-            groupLabel.textContent = found.name;
-            safeSet('selectedPlan', currentPlanId);
-            await loadPlan();
-        } else {
+            if (currentPlanId === found.id) {
+                groupLabel.textContent = found.name;
+                safeSet('selectedPlan', found.id);
+            }
+        } else if (currentPlanId === target) {
+            loadCounter++;
+            currentPlanId = '';
+            groupLabel.textContent = 'Wybierz grupę';
             status = 'idle';
             render();
         }
+        renderFavorites();
     } catch (err) {
+        if (currentPlanId) return;
         status = 'error';
         statusMessage = err.message;
         render();
@@ -357,37 +360,36 @@ async function loadPlans() {
 }
 
 function renderSearchResults() {
-    const query = planSearch.value.trim().toLowerCase();
-    const filtered = allPlans.filter(p => !query || p.name.toLowerCase().includes(query) || p.id.toLowerCase().includes(query));
-    if (filtered.length === 0) {
-        searchResults.replaceChildren(h('div', { class: 'search-empty' }, allPlans.length ? 'Nie znaleziono grupy' : 'Ładowanie listy grup...'));
-        return;
-    }
-    const byFaculty = {};
-    for (const plan of filtered) (byFaculty[facultyOf(plan)] ||= []).push(plan);
-    const nodes = [];
-    for (const faculty of Object.keys(byFaculty).sort()) {
-        nodes.push(h('div', { class: 'search-group-title' }, faculty));
-        for (const plan of byFaculty[faculty]) {
-            nodes.push(h('button', {
-                type: 'button',
-                class: 'search-result-item' + (plan.id === currentPlanId ? ' current' : ''),
-                onclick: () => selectPlan(plan.id, plan.name),
-            }, plan.name));
-        }
-    }
-    searchResults.replaceChildren(...nodes);
+    WatGroups.render(searchResults, planSearch.value, {
+        currentId: currentPlanId,
+        onSelect: (plan) => selectPlan(plan.id, plan.name),
+    });
 }
+
+function renderFavorites() {
+    const pick = (fav) => selectPlan(fav.id, fav.name);
+    const favs = WatGroups.favorites();
+    WatGroups.renderFavorites(favBar, { currentId: currentPlanId, onSelect: pick });
+    favBar.hidden = !favs.some(f => f.id !== currentPlanId);
+    favSection.hidden = WatGroups.renderFavorites(favList, { currentId: currentPlanId, onSelect: pick, removable: true }) === 0;
+}
+
+WatGroups.onFavoritesChange(renderFavorites);
 
 function openGroupPicker() {
     planSearch.value = '';
+    renderFavorites();
     renderSearchResults();
     groupModal.showModal();
-    // Na telefonie klawiatura od razu przysłania listę - fokus tylko na większym ekranie.
     if (window.matchMedia('(min-width: 720px)').matches) planSearch.focus();
 }
 
 planSearch.addEventListener('input', renderSearchResults);
+planSearch.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const plan = WatGroups.resolve(planSearch.value);
+    if (plan) selectPlan(plan.id, plan.name);
+});
 groupBtn.addEventListener('click', openGroupPicker);
 
 function selectPlan(id, name) {
@@ -400,25 +402,73 @@ function selectPlan(id, name) {
     url.searchParams.set('plan', currentPlanId);
     window.history.replaceState(window.history.state, '', url);
     selectedDate = '';
+    renderFavorites();
     loadPlan();
+}
+
+function readPlanCache() {
+    try {
+        const cache = JSON.parse(safeGet(PLAN_CACHE_KEY));
+        return Array.isArray(cache) ? cache.filter(c => c && c.id && typeof c.raw === 'string') : [];
+    } catch (_) {
+        return [];
+    }
+}
+
+function cachedPlan(id) {
+    const entry = readPlanCache().find(c => c.id === id);
+    if (!entry) return null;
+    try { return { raw: entry.raw, data: JSON.parse(entry.raw) }; } catch (_) { return null; }
+}
+
+function storePlan(id, raw) {
+    const cache = [{ id, raw }, ...readPlanCache().filter(c => c.id !== id)].slice(0, PLAN_CACHE_SIZE);
+    while (cache.length) {
+        try {
+            localStorage.setItem(PLAN_CACHE_KEY, JSON.stringify(cache));
+            return;
+        } catch (_) {
+            cache.pop();
+        }
+    }
+}
+
+function applyPlanData(data) {
+    fetchedLabel.textContent = data.fetched_at || 'Brak';
+    modifiedLabel.textContent = data.modified_at || 'Brak';
+    updateStaleBanner(data.fetched_at);
+    indexEvents(data.events || []);
+    if (!selectedDate) selectedDate = pickInitialDate();
+    status = 'ready';
 }
 
 async function loadPlan() {
     if (!currentPlanId) return;
     const requestId = ++loadCounter;
-    status = 'loading';
+    const planId = currentPlanId;
+    const cached = cachedPlan(planId);
+    if (cached) {
+        applyPlanData(cached.data);
+    } else {
+        status = 'loading';
+    }
     render();
     try {
-        const data = await fetchJSON('/api/plan/' + encodeURIComponent(currentPlanId));
+        const response = await fetch('/api/plan/' + encodeURIComponent(planId));
+        const text = await response.text();
+        let data = null;
+        try { data = JSON.parse(text); } catch (_) { data = null; }
+        if (!response.ok || !data) throw new Error((data && data.error) || `Błąd serwera (${response.status})`);
         if (requestId !== loadCounter) return;
-        fetchedLabel.textContent = data.fetched_at || 'Brak';
-        modifiedLabel.textContent = data.modified_at || 'Brak';
-        updateStaleBanner(data.fetched_at);
-        indexEvents(data.events || []);
-        if (!selectedDate) selectedDate = pickInitialDate();
-        status = 'ready';
+        storePlan(planId, text);
+        if (cached && cached.raw === text) return;
+        applyPlanData(data);
     } catch (err) {
         if (requestId !== loadCounter) return;
+        if (cached) {
+            setNotice('Nie udało się pobrać planu, pokazuję zapisaną wersję', true);
+            return;
+        }
         indexEvents([]);
         updateStaleBanner('');
         fetchedLabel.textContent = '-';
@@ -429,7 +479,6 @@ async function loadPlan() {
     render();
 }
 
-// fetched_at to czas warszawski "YYYY-MM-DD HH:MM:SS"; warsawNow() jest w tej samej skali.
 function updateStaleBanner(fetchedAt) {
     const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(fetchedAt || '');
     if (!m) { staleBanner.classList.add('hidden'); return; }
@@ -440,8 +489,6 @@ function updateStaleBanner(fetchedAt) {
         staleBanner.textContent = `Plan pobrany ${fetched.getDate()} ${MONTHS_GEN[fetched.getMonth()]} o ${m[4]}:${m[5]} – może być nieaktualny. W razie wątpliwości sprawdź oficjalny plan WAT.`;
     }
 }
-
-/* ---------- Rendering ---------- */
 
 function render() {
     app.classList.toggle('wide', settings.view === 'week' && status === 'ready');
@@ -467,15 +514,11 @@ function render() {
     tickLive();
 }
 
-// "Dziś" pokazujemy tylko wtedy, gdy nie patrzymy na dzisiejszy dzień
-// (w widoku tygodnia: na bieżący tydzień).
 function todayOffScreen() {
     const today = todayISO();
     if (settings.view === 'week') return mondayOf(selectedDate) !== mondayOf(today);
     return selectedDate !== today;
 }
-
-/* Agenda */
 
 function renderAgenda() {
     const d = parseISO(selectedDate);
@@ -535,7 +578,6 @@ function dayList(iso) {
     return h('div', { class: 'day-list' }, rows);
 }
 
-// "232 K ; 231 K ; 230 K" -> główna sala + ile jeszcze (lektoraty mają kilka sal naraz).
 function splitRooms(room) {
     const rooms = (room || '').split(/\s*[;,]\s*/).map(r => r.trim()).filter(Boolean);
     return { main: rooms[0] || '', more: Math.max(rooms.length - 1, 0) };
@@ -549,14 +591,12 @@ function eventCard(e) {
         'aria-label': `${e.subject}, ${typeLabel(e.type)}${e.room ? ', sala ' + e.room : ''}, ${e._n} z ${e._total}. Pokaż wszystkie`,
         onclick: () => openSeries(e),
     },
-        h('div', { class: 'ev-main' },
-            h('div', { class: 'ev-subject' }, e.subject),
-            h('div', { class: 'ev-type sub' }, h('span', { class: 'dot' }), typeLabel(e.type), h('span', { class: 'count' }, `${e._n}/${e._total}`)),
-            e.teacher ? h('div', { class: 'ev-teacher sub' }, e.teacher) : null,
-        ),
-        room ? h('div', { class: 'ev-room', title: e.room },
-            h('b', null, room),
-            more ? h('small', { class: 'sub' }, `+${more} ${plural(more, 'sala', 'sale', 'sal')}`) : null,
+        h('div', { class: 'ev-subject' }, e.subject),
+        h('div', { class: 'ev-type sub' }, h('span', { class: 'dot' }), typeLabel(e.type), h('span', { class: 'count' }, `${e._n}/${e._total}`)),
+        (room || e.teacher) ? h('div', { class: 'ev-meta sub' },
+            room ? h('span', { class: 'ev-place', title: e.room }, svg(ICON_BUILDING, 16), h('b', null, room),
+                more ? ` +${more} ${plural(more, 'sala', 'sale', 'sal')}` : null) : null,
+            e.teacher ? h('span', { class: 'ev-person' }, svg(ICON_USER, 16), e.teacher) : null,
         ) : null,
         h('div', { class: 'ev-live' },
             h('div', { class: 'row' }, h('span', null, 'Trwa teraz'), h('span', { class: 'remaining' })),
@@ -565,8 +605,6 @@ function eventCard(e) {
     );
     return tint(card, e.color);
 }
-
-/* Week */
 
 function slotStart(t) {
     const m = toMin(t);
@@ -614,7 +652,6 @@ function renderWeek() {
         grid.append(h('div', { class: 'wk-time', style: `grid-row:${s - minSlot + 2};grid-column:1` }, h('span', null, hh), h('span', null, mm)));
     }
 
-    // Zajęcia w tym samym dniu i slocie (np. podgrupy) lądują w jednej komórce, jedne pod drugimi.
     const buckets = {};
     for (const e of events) {
         const key = `${e.date}|${slotStart(e.start)}`;
@@ -656,8 +693,6 @@ function weekCell(e) {
     return tint(cell, e.color);
 }
 
-/* Month */
-
 function renderMonth() {
     const sel = parseISO(selectedDate);
     const year = sel.getFullYear(), month = sel.getMonth();
@@ -698,8 +733,6 @@ function navRow(title, subtitle, prev, next) {
     );
 }
 
-/* ---------- Series: "Ile jeszcze" ---------- */
-
 let seriesSubjectName = '';
 let seriesType = '';
 let seriesPicked = null;
@@ -738,7 +771,6 @@ function renderSeries() {
     seriesSubject.textContent = seriesSubjectName;
     seriesSub.textContent = typeLabel(seriesType) + (sample && sample.teacher ? ` · ${sample.teacher}` : '');
 
-    // Inne formy tego samego przedmiotu (wykład / ćwiczenia / lab).
     const types = Object.keys(seriesByKey)
         .map(k => k.split('\u0000'))
         .filter(([subj]) => subj === seriesSubjectName)
@@ -781,8 +813,6 @@ function renderSeries() {
     seriesBody.replaceChildren(chips, summary, h('ul', { class: 'series-list' }, items));
 }
 
-/* ---------- Live progress ---------- */
-
 function tickLive() {
     const now = warsawNow().getTime();
     document.querySelectorAll('[data-start]').forEach(card => {
@@ -802,8 +832,6 @@ function tickLive() {
 setInterval(tickLive, TICK_MS);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tickLive(); });
 
-/* ---------- Navigation ---------- */
-
 function step(days) {
     if (!selectedDate) return;
     selectedDate = addDaysISO(selectedDate, days);
@@ -814,7 +842,6 @@ function stepMonth(dir) {
     const d = parseISO(selectedDate);
     const target = new Date(d.getFullYear(), d.getMonth() + dir, 1);
     const prefix = `${target.getFullYear()}-${pad(target.getMonth() + 1)}`;
-    // Zaznacz pierwszy dzień z zajęciami w nowym miesiącu (albo 1., jeśli pusty).
     const firstWithEvents = Object.keys(eventsByDate).sort().find(x => x.startsWith(prefix));
     selectedDate = firstWithEvents || toISO(target);
     render();
@@ -835,7 +862,6 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') stepByView(1);
 });
 
-// Przesunięcie palcem w bok: dzień (agenda), tydzień, miesiąc.
 let touchX = null, touchY = null;
 view.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1) { touchX = null; return; }
@@ -850,14 +876,10 @@ view.addEventListener('touchend', (e) => {
     if (Math.abs(dx) > 60 && Math.abs(dy) < 40) stepByView(dx < 0 ? 1 : -1);
 }, { passive: true });
 
-/* ---------- Dialogs ---------- */
-
 settingsBtn.addEventListener('click', () => settingsModal.showModal());
 for (const dlg of [settingsModal, groupModal]) {
     dlg.addEventListener('click', (e) => { if (e.target === dlg || e.target.closest('[data-close]')) dlg.close(); });
 }
-
-/* ---------- Refresh ---------- */
 
 async function refreshServer() {
     if (!currentPlanId || refreshButton.disabled) return;
@@ -877,8 +899,6 @@ async function refreshServer() {
     }
 }
 refreshButton.addEventListener('click', refreshServer);
-
-/* ---------- iCalendar export ---------- */
 
 function icsEscape(text) {
     return String(text).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');

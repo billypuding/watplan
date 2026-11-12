@@ -26,8 +26,7 @@ var webFS embed.FS
 
 const (
 	refreshCooldown = 2 * time.Minute
-	// W trybie on-demand plan starszy niż staleAfter jest odświeżany w tle
-	// przy otwarciu, ale nie częściej niż co staleRetry (także po błędzie).
+
 	staleAfter = time.Hour
 	staleRetry = 30 * time.Minute
 	timeLayout = "2006-01-02 15:04:05"
@@ -42,10 +41,8 @@ var warsawLoc = func() *time.Location {
 }()
 
 type Options struct {
-	// Offline wyłącza wszystkie zapytania do WAT.
 	Offline bool
-	// OnDemand pobiera plan z WAT dopiero przy pierwszym żądaniu, zamiast
-	// odświeżać wszystkie plany w tle.
+
 	OnDemand bool
 }
 
@@ -90,9 +87,39 @@ func (s *Server) Handler() (http.Handler, error) {
 	mux.HandleFunc("/api/refresh", s.handleRefresh)
 	mux.HandleFunc("/api/status", s.handleStatus)
 
-	mux.Handle("/", withCache(http.FileServer(http.FS(static))))
+	appPage, err := fs.ReadFile(static, "app.html")
+	if err != nil {
+		return nil, err
+	}
+	mux.HandleFunc("/app", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Write(appPage)
+	})
+	mux.HandleFunc("/app/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, withQuery("/app", r), http.StatusMovedPermanently)
+	})
+
+	files := withCache(http.FileServer(http.FS(static)))
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			q := r.URL.Query()
+			if q.Has("plan") || q.Has("view") {
+				http.Redirect(w, r, withQuery("/app", r), http.StatusFound)
+				return
+			}
+		}
+		files.ServeHTTP(w, r)
+	})
 
 	return mux, nil
+}
+
+func withQuery(path string, r *http.Request) string {
+	if r.URL.RawQuery == "" {
+		return path
+	}
+	return path + "?" + r.URL.RawQuery
 }
 
 func (s *Server) handlePlans(w http.ResponseWriter, r *http.Request) {
@@ -193,8 +220,6 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-// refreshIfStale odświeża w tle plan, który był pobrany dawno temu. Bieżące
-// żądanie dostaje dane z cache, kolejne - już świeże.
 func (s *Server) refreshIfStale(plan config.PlanConfig) {
 	cached, err := s.store.Load(plan.ID)
 	if err != nil {
@@ -308,7 +333,6 @@ func withGzip(next http.HandlerFunc) http.HandlerFunc {
 
 func withCache(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// HTML zawsze świeży (wskazuje wersjonowane app.js/style.css), reszta na dobę.
 		if r.URL.Path == "/" || strings.HasSuffix(r.URL.Path, ".html") {
 			w.Header().Set("Cache-Control", "no-cache")
 		} else {

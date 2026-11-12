@@ -1,6 +1,6 @@
 ---
 name: WATplan
-description: Tablica przy sali w kieszeni – plan zajęć WAT na jedno zerknięcie
+description: Szybki i darmowy plan zajęć dla wydziałów WAT. Bez logowania, bez reklam.
 colors:
   paper: "#f2f4f7"
   surface: "#ffffff"
@@ -24,37 +24,45 @@ colors:
   night-alarm-red: "#ff8a7a"
   night-stale-amber-bg: "#3a2a10"
   night-stale-amber-ink: "#ffd9a0"
+  star-amber: "#b7791f"
+  night-star-amber: "#f5a524"
 typography:
   display:
-    fontFamily: "Manrope, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
     fontSize: "32px"
     fontWeight: 800
     lineHeight: 1.1
     letterSpacing: "-0.02em"
   headline:
-    fontFamily: "Manrope, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
     fontSize: "22px"
     fontWeight: 800
     lineHeight: 1.15
+  hero:
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "72px"
+    fontWeight: 800
+    lineHeight: 0.98
+    letterSpacing: "-0.045em"
   board:
-    fontFamily: "Manrope, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "20px"
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "17px"
     fontWeight: 800
     lineHeight: 1.1
     letterSpacing: "-0.01em"
     fontFeature: "tnum"
   title:
-    fontFamily: "Manrope, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
     fontSize: "16px"
     fontWeight: 800
     lineHeight: 1.25
   body:
-    fontFamily: "Manrope, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
     fontSize: "15px"
     fontWeight: 500
     lineHeight: 1.4
   label:
-    fontFamily: "Manrope, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
     fontSize: "13px"
     fontWeight: 700
     lineHeight: 1.3
@@ -134,12 +142,12 @@ components:
 
 WATplan czyta się jak tablica informacyjna przy sali wykładowej, tylko zmieszczona w telefonie i podana na jedno zerknięcie między zajęciami. Godzina i sala zawsze stoją na pierwszym planie, duże, pogrubione, z cyframi o stałej szerokości; nazwa przedmiotu, forma zajęć i prowadzący są drugą linią informacji. Wszystko inne (nawigacja, ustawienia, eksport) schodzi na dalszy plan i mieści się w trzech okrągłych przyciskach nagłówka.
 
-Nastrój jest konkretny i szybki: jeden krój (Manrope), jedna barwa akcentu (sygnałowy turkus) zarezerwowana na „tu jesteś” i „teraz”, oraz kolory przedmiotów z planów WAT, przefiltrowane do spokojnych odcieni, żeby nie krzyczały jak w Plansoft. Ciemny motyw jest wzorcem; jasny dorównuje mu kontrastem, a nie jest jego wyblakłą kopią. Oba wybiera system, użytkownik może to zmienić.
+Nastrój jest konkretny i szybki: jeden krój (Bricolage Grotesque), jedna barwa akcentu (sygnałowy turkus) zarezerwowana na „tu jesteś” i „teraz”, oraz kolory przedmiotów z planów WAT, przefiltrowane do spokojnych odcieni, żeby nie krzyczały jak w Plansoft. Ciemny motyw jest wzorcem; jasny dorównuje mu kontrastem, a nie jest jego wyblakłą kopią. Oba wybiera system, użytkownik może to zmienić.
 
 WATplan nie jest tabelą Plansoft (gęsta siatka semestru, jaskrawe tła, drobny tekst), nie udaje oficjalnej aplikacji uczelni (bez logo WAT, bez urzędowego granatu) i nie jest generycznym „AI dashboardem” (bez gradientów, świecących cieni, kart w kartach).
 
 **Key Characteristics:**
-- Godzina po lewej, sala po prawej, przedmiot pośrodku: układ wiersza tablicy.
+- Godzina po lewej, a w karcie przedmiot, forma z licznikiem oraz sala i prowadzący z ikonami: układ wiersza tablicy.
 - Jeden krój, skala o małych skokach, cyfry tabelaryczne wszędzie, gdzie stoi czas, sala lub licznik.
 - Akcent tylko dla stanu: wybrany dzień, „teraz”, „następne”, przycisk „Dziś”.
 - Kolor przedmiotu to tło karty, nigdy jedyny nośnik informacji.
@@ -182,15 +190,16 @@ Kolor przedmiotu z planu WAT zamieniany jest w JS na barwę (`--h`) i flagę nas
 
 ## Typography
 
-**Display Font:** Manrope (z ui-sans-serif, system-ui)
-**Body Font:** Manrope
+**Display Font:** Bricolage Grotesque (z ui-sans-serif, system-ui)
+**Body Font:** Bricolage Grotesque
 
-**Character:** Jeden geometryczno-humanistyczny grotesk w wagach 500–800. Hierarchię niesie waga i rozmiar, nie zmiana kroju.
+**Character:** Jeden grotesk z charakterem, z optycznymi rozmiarami (opsz 12–96), w wagach 500–800: przy dużych rozmiarach ciasny i wyrazisty, w treści spokojny. Ma polskie znaki i cyfry tabelaryczne. Hierarchię niesie waga i rozmiar, nie zmiana kroju.
 
 ### Hierarchy
 - **Display** (800, 32px, 1.1, -0.02em): nazwa dnia w widoku dnia.
 - **Headline** (800, 22px, 1.15): tytuły arkuszy i ekranu „Ile jeszcze”.
-- **Board** (800, 20px, 1.1, cyfry tabelaryczne): numer sali w karcie; ta sama rodzina dla godziny rozpoczęcia (17px) i licznika serii (44px).
+- **Hero** (800, 46px na telefonie / 72px od 900px, 0.98, -0.045em): nagłówek strony głównej w dwóch linijkach, druga w turkusie.
+- **Board** (800, 17px, cyfry tabelaryczne): godzina rozpoczęcia w lewej kolumnie; ta sama rodzina dla licznika serii (44px).
 - **Title** (800, 16px, 1.25): nazwa przedmiotu.
 - **Body** (500, 15px, 1.4): podtytuły, opisy, puste stany.
 - **Label** (700, 12–13px): forma zajęć z licznikiem `x/y`, prowadzący, nagłówki grup w wyszukiwarce, dni tygodnia.
@@ -247,12 +256,21 @@ System jest płaski. Głębię daje kontrast tonów (strona → powierzchnia →
 - **Wiersz nawigacji (tydzień, miesiąc):** okrągłe strzałki po bokach, zakres i liczba zajęć pośrodku.
 
 ### Karta zajęć jako wiersz tablicy (signature)
-Godzina startu (17px, 800) nad godziną końca (13px, przygaszona) w lewej kolumnie; w karcie nazwa przedmiotu, pod nią kropka koloru + forma + licznik `x/y`, potem prowadzący; po prawej sala w roli Board (20px, 800), a przy kilku salach naraz dopisek „+4 sale”. Trwające zajęcia dostają obwódkę stanu i pasek postępu z „zostało N min”.
+Godzina startu (17px, 800) nad godziną końca (13px, przygaszona) w lewej kolumnie. W karcie: nazwa przedmiotu, pod nią kropka koloru + forma + licznik `x/y`, a niżej linijka z ikoną budynku i salą (pogrubiona, cyfry tabelaryczne; przy kilku salach naraz „+4 sale”) oraz ikoną osoby i prowadzącym. Trwające zajęcia dostają obwódkę stanu i pasek postępu z „zostało N min”.
+
+### Ulubione
+- **Gwiazdka** przy każdej grupie w wyszukiwarce; włączona w bursztynie (star-amber / night-star-amber), wyłączona jako obrys w tuszu przygaszonym.
+- **Przełącznik w aplikacji:** pasek chipów pod nagłówkiem, obecny plan wypełniony turkusem; pokazuje się, gdy w ulubionych jest inny plan niż obecny.
+- **W oknie wyboru grupy:** sekcja „Ulubione” z chipami i przyciskiem ✕ do usuwania.
+- **Na stronie głównej:** chipy pod polem grupy otwierają plan jednym kliknięciem.
+
+### Strona główna
+Ciemna, jeden ekran bez przewijania ze stopką zawsze widoczną na dole; dwie kolumny od 900px (na telefonie jedna pod drugą). Przykładowy plan pokazuje tyle kart, ile się zmieści: 4 na komputerze (3 przy wysokości poniżej 760px), 2 na typowym telefonie, 1 na niskim, a poniżej 600px wysokości na telefonie znika. Po lewej duże logo z nazwą (52px, od 900px 64px), nagłówek Hero w dwóch linijkach „Szybki i darmowy.” / „Plan dla wszystkich wydziałów WAT.” (druga w turkusie), podtytuł „Bez logowania, bez reklam.”, duże pole grupy (64px) z przyciskiem „Otwórz plan” i ulubionymi. Po prawej sam przykładowy plan dnia, bez nagłówka i nazwy grupy: przedmioty, sale, godziny i prowadzący z prawdziwego planu, dane wpisane na stałe. Ruch (około 0,6s, sam CSS): znak logo się składa (kartka, kafelki zajęć, linia „teraz” przejeżdża od lewej), a karty przykładowego planu spadają jak klapki, jedna po drugiej. Nazwa, hasło i pole grupy są widoczne od razu; otwarcie planu jest natychmiastowe. Przy prefers-reduced-motion i przy przekierowaniu stałego użytkownika bez animacji. Stopka: autor i kontakt, drobnym drukiem informacja, że to nieoficjalne narzędzie.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** stawiaj godzinę i salę jako największe liczby na ekranie (17px i 20px, waga 800, cyfry tabelaryczne).
+- **Do** stawiaj godzinę jako największą liczbę w wierszu (17px, waga 800, cyfry tabelaryczne), a salę pogrubioną przy ikonie budynku.
 - **Do** przepuszczaj każdy kolor WAT przez tabelę odcieni przedmiotów w obu motywach.
 - **Do** sprawdzaj każdą parę tekst/tło w obu motywach: ≥ 4.5:1 dla tekstu, ≥ 3:1 dla kropek i pasków.
 - **Do** pokazuj datę pobrania planu, gdy jest starszy niż doba (bursztynowy baner).

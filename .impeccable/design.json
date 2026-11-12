@@ -16,7 +16,8 @@
     "typographyMeta": {
       "display": { "displayName": "Display", "purpose": "Nazwa dnia w widoku dnia." },
       "headline": { "displayName": "Headline", "purpose": "Tytuły arkuszy i ekranu „Ile jeszcze”." },
-      "board": { "displayName": "Board", "purpose": "Numer sali; ta sama rodzina dla godziny startu i licznika serii. Zawsze cyfry tabelaryczne." },
+      "hero": { "displayName": "Hero", "purpose": "Nagłówek strony głównej w dwóch linijkach, druga w turkusie." },
+      "board": { "displayName": "Board", "purpose": "Godzina startu i licznik serii. Zawsze cyfry tabelaryczne." },
       "title": { "displayName": "Title", "purpose": "Nazwa przedmiotu w karcie." },
       "body": { "displayName": "Body", "purpose": "Podtytuły, opisy, puste stany." },
       "label": { "displayName": "Label", "purpose": "Forma zajęć z licznikiem, prowadzący, dni tygodnia." }
@@ -51,7 +52,7 @@
       "refersTo": "button-today",
       "description": "Powrót do dzisiejszego dnia; widoczny tylko poza nim.",
       "html": "<button class=\"ds-today\">Dziś</button>",
-      "css": ".ds-today { height: 44px; padding: 0 16px; border-radius: 22px; border: 0; background: var(--accent, #0f766e); color: var(--accent-ink, #fff); font: 800 14px Manrope, system-ui, sans-serif; cursor: pointer; } .ds-today:focus-visible { outline: 2px solid var(--accent, #0f766e); outline-offset: 2px; }"
+      "css": ".ds-today { height: 44px; padding: 0 16px; border-radius: 22px; border: 0; background: var(--accent, #0f766e); color: var(--accent-ink, #fff); font: 800 14px \"Bricolage Grotesque\", system-ui, sans-serif; cursor: pointer; } .ds-today:focus-visible { outline: 2px solid var(--accent, #0f766e); outline-offset: 2px; }"
     },
     {
       "name": "Chip grupy",
@@ -59,14 +60,14 @@
       "refersTo": "chip-group",
       "description": "Aktualna grupa; otwiera wyszukiwarkę.",
       "html": "<button class=\"ds-chip\">WEL26EY4S0 <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"m6 9 6 6 6-6\"/></svg></button>",
-      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px; border-radius: 22px; background: var(--surface, #fff); color: var(--text, #0b1220); border: 1px solid var(--line, #cfd6df); font: 700 14px Manrope, system-ui, sans-serif; letter-spacing: .02em; cursor: pointer; } .ds-chip:hover { background: var(--surface-2, #e7ebf0); }"
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px; border-radius: 22px; background: var(--surface, #fff); color: var(--text, #0b1220); border: 1px solid var(--line, #cfd6df); font: 700 14px \"Bricolage Grotesque\", system-ui, sans-serif; letter-spacing: .02em; cursor: pointer; } .ds-chip:hover { background: var(--surface-2, #e7ebf0); }"
     },
     {
       "name": "Karta zajęć (wiersz tablicy)",
       "kind": "card",
       "description": "Godzina po lewej, przedmiot pośrodku, sala po prawej; tło w odcieniu przedmiotu.",
       "html": "<div class=\"ds-row\"><div class=\"ds-time\"><b>13:30</b><span>15:05</span></div><button class=\"ds-card\" style=\"--h:0;--s:1\"><div class=\"ds-main\"><div class=\"ds-subj\">Matematyka 1</div><div class=\"ds-type\"><span class=\"ds-dot\"></span>Wykład · 13/15</div><div class=\"ds-teacher\">dr Napiórkowska Joanna</div></div><div class=\"ds-room\"><b>315 S</b></div></button></div>",
-      "css": ".ds-row { display: grid; grid-template-columns: 48px 1fr; gap: 10px; font-family: Manrope, system-ui, sans-serif; } .ds-time { padding-top: 12px; display: flex; flex-direction: column; font-variant-numeric: tabular-nums; } .ds-time b { font-size: 17px; font-weight: 800; } .ds-time span { font-size: 13px; font-weight: 600; color: #475467; } .ds-card { text-align: left; font: inherit; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 14px; border-radius: 18px; background: hsl(var(--h) calc(var(--s) * 75%) 90%); color: hsl(var(--h) calc(var(--s) * 60%) 14%); border: 1px solid hsl(var(--h) calc(var(--s) * 45%) 80%); transition: transform .1s ease-out; } .ds-card:active { transform: scale(.985); } .ds-card:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; } .ds-main { display: flex; flex-direction: column; gap: 3px; } .ds-subj { font-size: 16px; font-weight: 800; line-height: 1.25; } .ds-type { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: hsl(var(--h) calc(var(--s) * 40%) 27%); } .ds-dot { width: 8px; height: 8px; border-radius: 4px; background: hsl(var(--h) calc(var(--s) * 75%) 40%); } .ds-teacher { font-size: 13px; color: hsl(var(--h) calc(var(--s) * 40%) 27%); } .ds-room b { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }"
+      "css": ".ds-row { display: grid; grid-template-columns: 48px 1fr; gap: 10px; font-family: \"Bricolage Grotesque\", system-ui, sans-serif; } .ds-time { padding-top: 12px; display: flex; flex-direction: column; font-variant-numeric: tabular-nums; } .ds-time b { font-size: 17px; font-weight: 800; } .ds-time span { font-size: 13px; font-weight: 600; color: #475467; } .ds-card { text-align: left; font: inherit; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 14px; border-radius: 18px; background: hsl(var(--h) calc(var(--s) * 75%) 90%); color: hsl(var(--h) calc(var(--s) * 60%) 14%); border: 1px solid hsl(var(--h) calc(var(--s) * 45%) 80%); transition: transform .1s ease-out; } .ds-card:active { transform: scale(.985); } .ds-card:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; } .ds-main { display: flex; flex-direction: column; gap: 3px; } .ds-subj { font-size: 16px; font-weight: 800; line-height: 1.25; } .ds-type { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: hsl(var(--h) calc(var(--s) * 40%) 27%); } .ds-dot { width: 8px; height: 8px; border-radius: 4px; background: hsl(var(--h) calc(var(--s) * 75%) 40%); } .ds-teacher { font-size: 13px; color: hsl(var(--h) calc(var(--s) * 40%) 27%); } .ds-room b { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }"
     },
     {
       "name": "Przełącznik segmentowy",
@@ -74,7 +75,7 @@
       "refersTo": "segmented",
       "description": "Widok planu i motyw w ustawieniach.",
       "html": "<div class=\"ds-seg\"><button aria-pressed=\"true\">Dzień</button><button aria-pressed=\"false\">Tydzień</button><button aria-pressed=\"false\">Miesiąc</button></div>",
-      "css": ".ds-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--surface-2, #e7ebf0); font-family: Manrope, system-ui, sans-serif; } .ds-seg button { height: 40px; border: 0; border-radius: 10px; background: none; font: 700 14px inherit; color: var(--muted, #475467); cursor: pointer; } .ds-seg button[aria-pressed=\"true\"] { background: var(--surface, #fff); color: var(--text, #0b1220); box-shadow: 0 1px 2px rgba(0,0,0,.12); } .ds-seg button:focus-visible { outline: 2px solid var(--accent, #0f766e); outline-offset: 2px; }"
+      "css": ".ds-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--surface-2, #e7ebf0); font-family: \"Bricolage Grotesque\", system-ui, sans-serif; } .ds-seg button { height: 40px; border: 0; border-radius: 10px; background: none; font: 700 14px inherit; color: var(--muted, #475467); cursor: pointer; } .ds-seg button[aria-pressed=\"true\"] { background: var(--surface, #fff); color: var(--text, #0b1220); box-shadow: 0 1px 2px rgba(0,0,0,.12); } .ds-seg button:focus-visible { outline: 2px solid var(--accent, #0f766e); outline-offset: 2px; }"
     },
     {
       "name": "Wyszukiwarka grupy",
@@ -82,7 +83,7 @@
       "refersTo": "search-field",
       "description": "Pole w arkuszu wyboru grupy.",
       "html": "<label class=\"ds-search\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/></svg><input type=\"search\" placeholder=\"np. WEL26EY4S0\"></label>",
-      "css": ".ds-search { display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 14px; border-radius: 14px; background: var(--surface-2, #e7ebf0); color: var(--muted, #475467); } .ds-search:focus-within { outline: 2px solid var(--accent, #0f766e); outline-offset: 2px; } .ds-search input { flex: 1; border: 0; outline: 0; background: none; color: var(--text, #0b1220); caret-color: var(--accent, #0f766e); font: 600 16px Manrope, system-ui, sans-serif; }"
+      "css": ".ds-search { display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 14px; border-radius: 14px; background: var(--surface-2, #e7ebf0); color: var(--muted, #475467); } .ds-search:focus-within { outline: 2px solid var(--accent, #0f766e); outline-offset: 2px; } .ds-search input { flex: 1; border: 0; outline: 0; background: none; color: var(--text, #0b1220); caret-color: var(--accent, #0f766e); font: 600 16px \"Bricolage Grotesque\", system-ui, sans-serif; }"
     },
     {
       "name": "Baner nieaktualności",
@@ -90,12 +91,12 @@
       "refersTo": "stale-banner",
       "description": "Gdy plan pobrano ponad dobę temu.",
       "html": "<p class=\"ds-stale\">Plan pobrany 19 października o 23:24 – może być nieaktualny. W razie wątpliwości sprawdź oficjalny plan WAT.</p>",
-      "css": ".ds-stale { margin: 0; padding: 10px 14px; border-radius: 14px; background: #fff4e0; color: #6b3d00; font: 600 14px/1.4 Manrope, system-ui, sans-serif; }"
+      "css": ".ds-stale { margin: 0; padding: 10px 14px; border-radius: 14px; background: #fff4e0; color: #6b3d00; font: 600 14px/1.4 \"Bricolage Grotesque\", system-ui, sans-serif; }"
     }
   ],
   "narrative": {
     "northStar": "Tablica przy sali w kieszeni",
-    "overview": "WATplan czyta się jak tablica informacyjna przy sali wykładowej, tylko zmieszczona w telefonie i podana na jedno zerknięcie między zajęciami. Godzina i sala zawsze stoją na pierwszym planie, duże, pogrubione, z cyframi o stałej szerokości; nazwa przedmiotu, forma zajęć i prowadzący są drugą linią informacji. Wszystko inne (nawigacja, ustawienia, eksport) schodzi na dalszy plan i mieści się w trzech okrągłych przyciskach nagłówka.\n\nNastrój jest konkretny i szybki: jeden krój (Manrope), jedna barwa akcentu (sygnałowy turkus) zarezerwowana na „tu jesteś” i „teraz”, oraz kolory przedmiotów z planów WAT, przefiltrowane do spokojnych odcieni, żeby nie krzyczały jak w Plansoft. Ciemny motyw jest wzorcem; jasny dorównuje mu kontrastem, a nie jest jego wyblakłą kopią. Oba wybiera system, użytkownik może to zmienić.\n\nWATplan nie jest tabelą Plansoft (gęsta siatka semestru, jaskrawe tła, drobny tekst), nie udaje oficjalnej aplikacji uczelni (bez logo WAT, bez urzędowego granatu) i nie jest generycznym „AI dashboardem” (bez gradientów, świecących cieni, kart w kartach).",
+    "overview": "WATplan czyta się jak tablica informacyjna przy sali wykładowej, tylko zmieszczona w telefonie i podana na jedno zerknięcie między zajęciami. Godzina i sala zawsze stoją na pierwszym planie, duże, pogrubione, z cyframi o stałej szerokości; nazwa przedmiotu, forma zajęć i prowadzący są drugą linią informacji. Wszystko inne (nawigacja, ustawienia, eksport) schodzi na dalszy plan i mieści się w trzech okrągłych przyciskach nagłówka.\n\nNastrój jest konkretny i szybki: jeden krój (Bricolage Grotesque), jedna barwa akcentu (sygnałowy turkus) zarezerwowana na „tu jesteś” i „teraz”, oraz kolory przedmiotów z planów WAT, przefiltrowane do spokojnych odcieni, żeby nie krzyczały jak w Plansoft. Ciemny motyw jest wzorcem; jasny dorównuje mu kontrastem, a nie jest jego wyblakłą kopią. Oba wybiera system, użytkownik może to zmienić.\n\nWATplan nie jest tabelą Plansoft (gęsta siatka semestru, jaskrawe tła, drobny tekst), nie udaje oficjalnej aplikacji uczelni (bez logo WAT, bez urzędowego granatu) i nie jest generycznym „AI dashboardem” (bez gradientów, świecących cieni, kart w kartach).",
     "keyCharacteristics": [
       "Godzina po lewej, sala po prawej, przedmiot pośrodku: układ wiersza tablicy.",
       "Jeden krój, skala o małych skokach, cyfry tabelaryczne wszędzie, gdzie stoi czas, sala lub licznik.",

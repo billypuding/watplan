@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -96,5 +97,49 @@ func TestOnDemandFetchesMissingPlanOnce(t *testing.T) {
 	}
 	if len(plan.Events) == 0 {
 		t.Fatal("plan bez zajęć")
+	}
+}
+
+func TestRouting(t *testing.T) {
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler, err := NewServer(config.NewRegistry(nil), st, nil, Options{Offline: true}).Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cases := []struct {
+		path     string
+		status   int
+		location string
+		contains string
+	}{
+		{"/?plan=WEL26EY4S0", http.StatusFound, "/app?plan=WEL26EY4S0", ""},
+		{"/?plan=WEL26EY4S0&view=week", http.StatusFound, "/app?plan=WEL26EY4S0&view=week", ""},
+		{"/?view=month", http.StatusFound, "/app?view=month", ""},
+		{"/app/?plan=X", http.StatusMovedPermanently, "/app?plan=X", ""},
+		{"/app", http.StatusOK, "", `src="/app.js`},
+		{"/app?plan=WEL26EY4S0", http.StatusOK, "", `src="/app.js`},
+		{"/", http.StatusOK, "", "selectedPlan"},
+		{"/?landing", http.StatusOK, "", "selectedPlan"},
+	}
+	for _, c := range cases {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, c.path, nil))
+		if rec.Code != c.status {
+			t.Errorf("%s: status %d, chcę %d", c.path, rec.Code, c.status)
+			continue
+		}
+		if c.location != "" && rec.Header().Get("Location") != c.location {
+			t.Errorf("%s: Location %q, chcę %q", c.path, rec.Header().Get("Location"), c.location)
+		}
+		if c.contains != "" && !strings.Contains(rec.Body.String(), c.contains) {
+			t.Errorf("%s: odpowiedź nie zawiera %q", c.path, c.contains)
+		}
+		if c.status == http.StatusOK && rec.Header().Get("Cache-Control") != "no-cache" {
+			t.Errorf("%s: Cache-Control %q, chcę no-cache", c.path, rec.Header().Get("Cache-Control"))
+		}
 	}
 }
