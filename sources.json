@@ -29,5 +29,12 @@
     "index_url": "https://wtc.wat.edu.pl/Plany/index.xml",
     "start_year": 2026,
     "pdf_links": true
+  },
+  {
+    "faculty": "WCY",
+    "index_url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad",
+    "start_year": 2026,
+    "format": "wcy",
+    "prefix": "WCY"
   }
 ]

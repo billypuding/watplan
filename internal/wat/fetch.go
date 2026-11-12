@@ -22,20 +22,13 @@ const (
 	maxBodyBytes   = 10 << 20
 	fetchAttempts  = 3
 	fetchRetryBase = 400 * time.Millisecond
-	// defaultMinInterval to minimalny odstęp między kolejnymi zapytaniami do
-	// serwerów WAT (wspólny dla wszystkich workerów). Serwery stoją za WAF-em
-	// (Incapsula), który blokuje IP po zbyt gęstym ruchu.
+
 	defaultMinInterval = time.Second
 	userAgent          = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 )
 
-// ErrBlocked oznacza, że WAF (Incapsula) zablokował zapytanie. Ponawianie
-// nic nie da i tylko przedłuża blokadę, więc Fetcher wstrzymuje wszystkie
-// zapytania do tej domeny na blockBackoff (inne domeny pobierają się dalej).
 var ErrBlocked = errors.New("zapytanie zablokowane przez WAF (Incapsula) - wstrzymuję pobieranie")
 
-// ErrProxy oznacza, że skonfigurowany PLANWAT_PROXY odrzucił połączenie
-// (np. 402 Payment Required po wyczerpaniu abonamentu). Ponawianie nic nie da.
 var ErrProxy = errors.New("serwer proxy (PLANWAT_PROXY) odrzucił połączenie")
 
 type Fetcher struct {
@@ -113,7 +106,6 @@ func hostOf(rawURL string) string {
 	return strings.ToLower(u.Hostname())
 }
 
-// hostBlocked zwraca czas, do którego domena jest wstrzymana po blokadzie WAF.
 func (f *Fetcher) hostBlocked(host string) (time.Time, bool) {
 	f.blockMu.Lock()
 	defer f.blockMu.Unlock()
@@ -139,7 +131,6 @@ func (f *Fetcher) markBlocked(host string) {
 	log.Printf("WAF blokuje %s - wstrzymuję zapytania do tej domeny do %s", host, until.Format("15:04"))
 }
 
-// BlockedHosts zwraca domeny wstrzymane po blokadzie WAF i czas wstrzymania.
 func (f *Fetcher) BlockedHosts() map[string]time.Time {
 	f.blockMu.Lock()
 	defer f.blockMu.Unlock()
@@ -153,8 +144,6 @@ func (f *Fetcher) BlockedHosts() map[string]time.Time {
 	return out
 }
 
-// pace czeka, aż minie minInterval od poprzedniego zapytania (globalnie dla
-// tego Fetchera, niezależnie od liczby workerów).
 func (f *Fetcher) pace() {
 	if f.minInterval <= 0 {
 		return
@@ -208,7 +197,6 @@ func (e *statusError) Error() string {
 	return fmt.Sprintf("status code error: %d", e.status)
 }
 
-// ProxyHost zwraca host skonfigurowanego proxy (bez loginu i hasła) albo "".
 func (f *Fetcher) ProxyHost() string {
 	if f.proxyURL == nil {
 		return ""
@@ -216,9 +204,6 @@ func (f *Fetcher) ProxyHost() string {
 	return f.proxyURL.Host
 }
 
-// proxyRejection rozpoznaje błąd, w którym proxy odpowiedziało na CONNECT
-// statusem innym niż 200. net/http zwraca wtedy *url.Error z samym tekstem
-// statusu, np. "Payment Required" albo "Proxy Authentication Required".
 func (f *Fetcher) proxyRejection(err error) (string, bool) {
 	if f.proxyURL == nil {
 		return "", false
@@ -296,9 +281,6 @@ func (f *Fetcher) fetchOnce(targetUrl string) ([]byte, error) {
 		return nil, err
 	}
 
-	// Incapsula potrafi zwrócić stronę blokady również ze statusem 200.
-	// Wtedy bez tej kontroli parser zobaczyłby pusty plan i uznał go za
-	// poprawny odczyt.
 	if isWAFBlockBody(body) {
 		log.Printf("fetch %s: strona blokady WAF (status %d)", targetUrl, resp.StatusCode)
 		return nil, fmt.Errorf("%w (status %d)", ErrBlocked, resp.StatusCode)

@@ -22,9 +22,7 @@ import (
 
 const (
 	timeLayout = "2006-01-02 15:04:05"
-	// Mała równoległość celowo: serwery WAT stoją za Incapsulą, która przy
-	// 16 równoległych zapytaniach (v1.0.2) zablokowała IP. Tempo i tak
-	// ogranicza Fetcher (PLANWAT_FETCH_INTERVAL).
+
 	maxConcurrentUpdates = 2
 	dropConfirmations    = 3
 )
@@ -107,8 +105,6 @@ func (u *Updater) UpdateAll(ctx context.Context, plans []config.PlanConfig) erro
 
 	log.Printf("odświeżanie: start, %d planów, %d równolegle", total, workers)
 
-	// Blokada WAF dotyczy jednej domeny: Fetcher wstrzymuje tylko ją, więc
-	// plany z pozostałych wydziałów pobierają się dalej.
 	var blockedN atomic.Int64
 
 	jobs := make(chan config.PlanConfig)
@@ -126,8 +122,7 @@ func (u *Updater) UpdateAll(ctx context.Context, plans []config.PlanConfig) erro
 				n := done.Add(1)
 				switch {
 				case errors.Is(err, wat.ErrBlocked):
-					// Pierwsza blokada domeny jest logowana przez Fetcher,
-					// kolejne plany z niej odpadają od razu, bez zapytań.
+
 					blockedN.Add(1)
 				case err != nil:
 					failN.Add(1)
@@ -176,8 +171,6 @@ func (u *Updater) Update(cfg config.PlanConfig) error {
 	return err
 }
 
-// Ensure pobiera plan tylko wtedy, gdy nie ma go jeszcze w cache. Dzięki temu
-// serwer hostowany w chmurze nie pobiera wszystkich planów w tle.
 func (u *Updater) Ensure(cfg config.PlanConfig) error {
 	lock := u.planLock(cfg.ID)
 	lock.Lock()
@@ -206,7 +199,7 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 		return updateResult{}, fmt.Errorf("pobieranie: %w", err)
 	}
 
-	events, err := wat.ParsePlan(bytes.NewReader(body), cfg.StartYear)
+	events, err := wat.Parse(cfg.Format, bytes.NewReader(body), cfg.StartYear)
 	if err != nil {
 		return updateResult{}, fmt.Errorf("parsowanie: %w", err)
 	}
@@ -270,7 +263,6 @@ func suspiciousDrop(oldCount, newCount int) bool {
 	return oldCount >= minGuardEvents && newCount*2 < oldCount
 }
 
-// BlockedHosts zwraca domeny WAT wstrzymane po blokadzie WAF.
 func (u *Updater) BlockedHosts() map[string]time.Time {
 	if u == nil || u.fetcher == nil {
 		return nil
@@ -278,7 +270,6 @@ func (u *Updater) BlockedHosts() map[string]time.Time {
 	return u.fetcher.BlockedHosts()
 }
 
-// ProxyHost zwraca host skonfigurowanego proxy albo "".
 func (u *Updater) ProxyHost() string {
 	if u == nil || u.fetcher == nil {
 		return ""

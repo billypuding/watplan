@@ -219,7 +219,7 @@ func TestUpdateAllStopsOnWAFBlock(t *testing.T) {
 func TestWAFBlockIsPerHost(t *testing.T) {
 	var blockedHits, okHits atomic.Int64
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Ten sam serwer pod dwiema nazwami: 127.0.0.1 blokuje, localhost działa.
+
 		if strings.HasPrefix(r.Host, "127.0.0.1") {
 			blockedHits.Add(1)
 			w.Header().Set("X-Iinfo", "62-966453-0 0NNN")

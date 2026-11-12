@@ -15,6 +15,7 @@ type PlanConfig struct {
 	URL       string `json:"url"`
 	StartYear int    `json:"start_year"`
 	Faculty   string `json:"faculty,omitempty"`
+	Format    string `json:"format,omitempty"`
 }
 
 func LoadConfig(path string) ([]PlanConfig, error) {

@@ -18,6 +18,8 @@ import (
 
 var (
 	planFileRe   = regexp.MustCompile(`(?i)^([A-Z]{3})(\d{2})[A-Z0-9]{2,}$`)
+	wcyGroupRe   = regexp.MustCompile(`grupa_id=([^"&#\s]+)`)
+	wcyPlainID   = regexp.MustCompile(`^[A-Za-z0-9]+$`)
 	attrValueRe  = regexp.MustCompile(`(?i)(?:href|src|value|url|file|path)\s*=\s*["']([^"']+)["']`)
 	rawHtmFileRe = regexp.MustCompile(`(?i)\b([a-z0-9_/-]+\.html?)\b`)
 )
@@ -26,6 +28,10 @@ func (f *Fetcher) DiscoverPlans(src config.Source) ([]config.PlanConfig, error) 
 	base, err := url.Parse(src.IndexURL)
 	if err != nil {
 		return nil, fmt.Errorf("zły index_url %q: %w", src.IndexURL, err)
+	}
+
+	if src.Format == FormatWCY {
+		return f.discoverWCY(base, src)
 	}
 
 	found := map[string]config.PlanConfig{}
@@ -198,4 +204,36 @@ func isPage(u *url.URL) bool {
 	}
 	ext := strings.ToLower(path.Ext(u.Path))
 	return ext == "" || ext == ".htm" || ext == ".html" || ext == ".php" || ext == ".xml"
+}
+
+func (f *Fetcher) discoverWCY(base *url.URL, src config.Source) ([]config.PlanConfig, error) {
+	body, err := f.FetchHTML(base.String())
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", base, err)
+	}
+	prefix := strings.ToUpper(src.Prefix)
+	seen := map[string]bool{}
+	var plans []config.PlanConfig
+	for _, m := range wcyGroupRe.FindAllSubmatch(body, -1) {
+		raw, err := url.QueryUnescape(string(m[1]))
+		if err != nil || !wcyPlainID.MatchString(raw) {
+			continue
+		}
+		id := strings.ToUpper(raw)
+		if seen[id] || (prefix != "" && !strings.HasPrefix(id, prefix)) {
+			continue
+		}
+		seen[id] = true
+		planURL := *base
+		planURL.RawQuery = "grupa_id=" + url.QueryEscape(id)
+		plans = append(plans, config.PlanConfig{
+			ID:        id,
+			Name:      id,
+			URL:       planURL.String(),
+			StartYear: src.StartYear,
+			Faculty:   src.Faculty,
+			Format:    FormatWCY,
+		})
+	}
+	return plans, nil
 }

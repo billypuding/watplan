@@ -6,8 +6,6 @@ import (
 	"testing"
 )
 
-// Prawdziwy plan z plansoft (WML, zima 2026/27) - regresja rozpoznawania
-// prowadzących, m.in. ćwiczeń z matematyki.
 func TestFixtureMathTeachers(t *testing.T) {
 	f, err := os.Open("testdata/plan_wat.html")
 	if err != nil {

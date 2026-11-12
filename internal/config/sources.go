@@ -15,6 +15,8 @@ type Source struct {
 	Depth     int    `json:"depth,omitempty"`
 	StartYear int    `json:"start_year,omitempty"`
 	PDFLinks  bool   `json:"pdf_links,omitempty"`
+	Format    string `json:"format,omitempty"`
+	Prefix    string `json:"prefix,omitempty"`
 }
 
 func LoadSources(path string) ([]Source, error) {

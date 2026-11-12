@@ -16,8 +16,6 @@ func (u *Updater) Discover(sources []config.Source, static, prev []config.PlanCo
 	return plans
 }
 
-// discover zwraca też informację, czy WAF zablokował którąś domenę. Wydział
-// z zablokowanej domeny zachowuje poprzednią listę planów.
 func (u *Updater) discover(sources []config.Source, static, prev []config.PlanConfig) ([]config.PlanConfig, bool) {
 	configured := make(map[string]bool, len(sources))
 	for _, s := range sources {
