@@ -1,8 +1,8 @@
-# PlanWat
+# WATplan
 
 A free, open-source weekly timetable viewer for students of the Military University of Technology (WAT) in Warsaw.
 
-WAT publishes class schedules as static plansoft HTML pages, which are hard to read, especially on a phone. PlanWat scrapes that page and shows it as a clean, colour-coded weekly calendar.
+WAT publishes class schedules as static plansoft HTML pages, which are hard to read, especially on a phone. WATplan scrapes that page and shows it as a clean, colour-coded weekly calendar.
 
 ## Features
 
@@ -88,7 +88,7 @@ the next deploy or restart. The committed `data/` directory is the permanent cac
 
 ## Disclaimer
 
-PlanWat is an independent student project, not affiliated with the Military University of Technology. The official schedule is always the source of truth.
+WATplan is an independent student project, not affiliated with the Military University of Technology. The official schedule is always the source of truth.
 
 ## License
 
