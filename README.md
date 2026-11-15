@@ -1,15 +1,25 @@
 # WATplan
 
-A free, open-source weekly timetable viewer for students of the Military University of Technology (WAT) in Warsaw.
+**[watplan.me](https://watplan.me)**
 
-WAT publishes class schedules as static plansoft HTML pages, which are hard to read, especially on a phone. WATplan scrapes that page and shows it as a clean, colour-coded weekly calendar.
+Darmowy plan zajęć dla wszystkich wydziałów Wojskowej Akademii Technicznej (WAT). Bez logowania, bez reklam. Wpisz kod grupy, np. `WCY26IY1S1`, i od razu widzisz swój plan.
+
+A free, open-source class timetable for students of the Military University of Technology (WAT) in Warsaw. It covers WCY, WEL, WIM, WLO, WML, WTC and IOE, about 750 groups in total (WIG is not supported yet).
+
+WAT publishes class schedules as static plansoft HTML pages, which are hard to read on a phone. WATplan turns them into a clean, phone-friendly timetable.
 
 ## Features
 
-- Weekly grid with an hours column and a colour for each subject
-- Switch between weeks without reloading the page
-- Automatically refreshes when WAT changes the schedule
-- Free and open source
+- Day, week and month views; move between days, weeks and months with arrows, the keyboard or a swipe
+- Each class shows its type, room and teacher, with a colour for each subject and breaks of 30 minutes or more marked
+- A progress bar on the class that is happening now, with the time left; finished classes are dimmed (both can be turned off in settings)
+- Tap a class to see every session of that subject: which one it is (e.g. 6/15), how many are left and when the last one is
+- Search across all groups, plus favourites for switching between groups quickly
+- Export the timetable to your calendar as an `.ics` file
+- Remembers your group and opens it straight away; recently opened plans are shown instantly from the phone's storage and stay visible if the server cannot be reached
+- Light, dark and automatic theme
+- Checks WAT for schedule changes in the background, with a manual refresh button and a notice when the plan is older than a day
+- No login, no ads, free and open source
 
 ## How it works
 
