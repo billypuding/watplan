@@ -7,5 +7,7 @@
 /watplan
 
 # impeccable (lokalne ustawienia)
-.impeccable/config.local.json
+.impeccable/
 CLAUDE.md
+PRODUCT.md
+DESIGN.md
