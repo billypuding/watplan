@@ -349,6 +349,9 @@ async function loadPlans() {
             groupLabel.textContent = 'Wybierz grupę';
             status = 'idle';
             render();
+        } else if (!currentPlanId) {
+            status = 'idle';
+            render();
         }
         renderFavorites();
     } catch (err) {
