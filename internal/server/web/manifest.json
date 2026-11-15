@@ -1,0 +1,17 @@
+{
+  "name": "WATplan – plan zajęć WAT",
+  "short_name": "WATplan",
+  "description": "Szybki i darmowy plan zajęć dla wydziałów WAT. Bez logowania, bez reklam.",
+  "lang": "pl",
+  "id": "/app",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "icons": [
+    { "src": "/favicon-192.png?v=2", "sizes": "192x192", "type": "image/png" },
+    { "src": "/favicon-512.png?v=2", "sizes": "512x512", "type": "image/png" },
+    { "src": "/favicon.svg?v=2", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

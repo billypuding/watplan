@@ -124,6 +124,7 @@ func TestRouting(t *testing.T) {
 		{"/app?plan=WEL26EY4S0", http.StatusOK, "", `src="/app.js`},
 		{"/", http.StatusOK, "", "selectedPlan"},
 		{"/?landing", http.StatusOK, "", "selectedPlan"},
+		{"/sw.js", http.StatusOK, "", "caches"},
 	}
 	for _, c := range cases {
 		rec := httptest.NewRecorder()
