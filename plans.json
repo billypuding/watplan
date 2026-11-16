@@ -2472,6 +2472,302 @@
     "faculty": "WEL"
   },
   {
+    "id": "WIG26AX1S0",
+    "name": "WIG26AX1S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geoinformatyka_jsm_cyw/stacjonarne/WIG26AX1S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26AX2S0",
+    "name": "WIG26AX2S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geoinformatyka_jsm_cyw/stacjonarne/WIG26AX2S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26AX3S0",
+    "name": "WIG26AX3S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geoinformatyka_jsm_cyw/stacjonarne/WIG26AX3S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26AX4S0",
+    "name": "WIG26AX4S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geoinformatyka_jsm_cyw/stacjonarne/WIG26AX4S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BW1S0",
+    "name": "WIG26BW1S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo_jsm_woj/stacjonarne/WIG26BW1S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BW2S0",
+    "name": "WIG26BW2S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo_jsm_woj/stacjonarne/WIG26BW2S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BW3S0",
+    "name": "WIG26BW3S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo_jsm_woj/stacjonarne/WIG26BW3S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BW4S0",
+    "name": "WIG26BW4S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo_jsm_woj/stacjonarne/WIG26BW4S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BX1N1",
+    "name": "WIG26BX1N1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo/niestacjonarne/WIG26BX1N1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BX1S1",
+    "name": "WIG26BX1S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo/stacjonarne/WIG26BX1S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BX2N1",
+    "name": "WIG26BX2N1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo/niestacjonarne/WIG26BX2N1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BX2S1",
+    "name": "WIG26BX2S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo/stacjonarne/WIG26BX2S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BX3N1",
+    "name": "WIG26BX3N1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo/niestacjonarne/WIG26BX3N1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BX3S1",
+    "name": "WIG26BX3S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo/stacjonarne/WIG26BX3S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BX4S1",
+    "name": "WIG26BX4S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo/stacjonarne/WIG26BX4S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BX5S1",
+    "name": "WIG26BX5S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo/stacjonarne/WIG26BX5S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26BX6S1",
+    "name": "WIG26BX6S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/budownictwo/stacjonarne/WIG26BX6S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26CX1S0",
+    "name": "WIG26CX1S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/bud_inz_cyfr_jsm_cyw/stacjonarne/WIG26CX1S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26CX2S0",
+    "name": "WIG26CX2S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/bud_inz_cyfr_jsm_cyw/stacjonarne/WIG26CX2S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26CX3S0",
+    "name": "WIG26CX3S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/bud_inz_cyfr_jsm_cyw/stacjonarne/WIG26CX3S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26GW1S0",
+    "name": "WIG26GW1S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geodezja_kartografia_jsm_woj/stacjonarne/WIG26GW1S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26GW2S0",
+    "name": "WIG26GW2S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geodezja_kartografia_jsm_woj/stacjonarne/WIG26GW2S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26GW3S0",
+    "name": "WIG26GW3S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geodezja_kartografia_jsm_woj/stacjonarne/WIG26GW3S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26GW4S0",
+    "name": "WIG26GW4S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geodezja_kartografia_jsm_woj/stacjonarne/WIG26GW4S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26GW5S0",
+    "name": "WIG26GW5S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geodezja_kartografia_jsm_woj/stacjonarne/WIG26GW5S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26IX1S1",
+    "name": "WIG26IX1S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/inzynieria_geoprzestrzenna/stacjonarne/WIG26IX1S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26IX2S1",
+    "name": "WIG26IX2S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/inzynieria_geoprzestrzenna/stacjonarne/WIG26IX2S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26IX3S1",
+    "name": "WIG26IX3S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/inzynieria_geoprzestrzenna/stacjonarne/WIG26IX3S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26KX1S1",
+    "name": "WIG26KX1S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geodezja_kataster/stacjonarne/WIG26KX1S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26KX2S1",
+    "name": "WIG26KX2S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geodezja_kataster/stacjonarne/WIG26KX2S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26KX3S1",
+    "name": "WIG26KX3S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geodezja_kataster/stacjonarne/WIG26KX3S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26KX4S1",
+    "name": "WIG26KX4S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geodezja_kataster/stacjonarne/WIG26KX4S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26KX5S1",
+    "name": "WIG26KX5S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/geodezja_kataster/stacjonarne/WIG26KX5S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26MX1S0",
+    "name": "WIG26MX1S0",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/meteo_hydro_jsm_cyw/stacjonarne/WIG26MX1S0.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26TX1S1",
+    "name": "WIG26TX1S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/transport/stacjonarne/WIG26TX1S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26TX2S1",
+    "name": "WIG26TX2S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/transport/stacjonarne/WIG26TX2S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
+    "id": "WIG26TX3S1",
+    "name": "WIG26TX3S1",
+    "url": "https://www.wig.wat.edu.pl/cpp/phocadownloadpap/transport/stacjonarne/WIG26TX3S1.pdf",
+    "start_year": 2026,
+    "faculty": "WIG",
+    "format": "wig-pdf"
+  },
+  {
     "id": "WME22MC1S0",
     "name": "WME22MC1S0",
     "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME22MC1S0.htm",

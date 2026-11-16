@@ -4,7 +4,7 @@
 
 Darmowy plan zajęć dla wszystkich wydziałów Wojskowej Akademii Technicznej (WAT). Bez logowania, bez reklam. Wpisz kod grupy, np. `WCY26IY1S1`, i od razu widzisz swój plan.
 
-A free, open-source class timetable for students of the Military University of Technology (WAT) in Warsaw. It covers WCY, WEL, WIM, WLO, WML, WTC and IOE, about 750 groups in total (WIG is not supported yet).
+A free, open-source class timetable for students of the Military University of Technology (WAT) in Warsaw. It covers WCY, WEL, WIG, WIM, WLO, WML, WTC and IOE, about 790 groups in total.
 
 WAT publishes class schedules as static plansoft HTML pages, which are hard to read on a phone. WATplan turns them into a clean, phone-friendly timetable.
 

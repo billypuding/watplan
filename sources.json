@@ -36,5 +36,11 @@
     "start_year": 2026,
     "format": "wcy",
     "prefix": "WCY"
+  },
+  {
+    "faculty": "WIG",
+    "index_url": "https://www.wig.wat.edu.pl/cpp/index.php/studenci/plany-rozklady-terminy/rozklady-zajec",
+    "start_year": 2026,
+    "format": "wig-pdf"
   }
 ]
