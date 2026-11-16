@@ -37,6 +37,7 @@ func main() {
 		imports = append(imports, value)
 		return nil
 	})
+	discoverFlag := flag.String("discover", "", "wyszukaj grupy wydziału (np. WIG) według sources.json, zapisz je w plans.json i zakończ")
 	flag.Parse()
 
 	offline := *offlineFlag || envBool("PLANWAT_OFFLINE")
@@ -57,6 +58,13 @@ func main() {
 		}
 		log.Printf("brak %s, startuję z pustą listą planów", plansFile)
 		static = nil
+	}
+
+	if *discoverFlag != "" {
+		if err := discoverFaculty(*discoverFlag, sourcesFile, plansFile, static); err != nil {
+			log.Fatal(err)
+		}
+		return
 	}
 
 	var sources []config.Source
@@ -164,4 +172,40 @@ func envBool(key string) bool {
 		return true
 	}
 	return false
+}
+
+func discoverFaculty(faculty, sourcesFile, plansFile string, static []config.PlanConfig) error {
+	sources, err := config.LoadSources(sourcesFile)
+	if err != nil {
+		return err
+	}
+	var src *config.Source
+	for i := range sources {
+		if strings.EqualFold(sources[i].Faculty, faculty) {
+			src = &sources[i]
+		}
+	}
+	if src == nil {
+		return fmt.Errorf("brak wydziału %q w %s", faculty, sourcesFile)
+	}
+
+	fetcher, err := wat.NewFetcher()
+	if err != nil {
+		return err
+	}
+	log.Printf("szukam grup %s na %s", src.Faculty, src.IndexURL)
+	found, err := fetcher.DiscoverPlans(*src)
+	if err != nil {
+		return fmt.Errorf("wyszukiwanie grup %s: %w", src.Faculty, err)
+	}
+	if len(found) == 0 {
+		return fmt.Errorf("nie znaleziono żadnych grup %s, %s bez zmian", src.Faculty, plansFile)
+	}
+
+	plans := config.ReplaceFaculty(static, src.Faculty, found)
+	if err := config.SavePlans(plansFile, plans); err != nil {
+		return err
+	}
+	log.Printf("zapisano %d grup %s w %s (wszystkich planów: %d)", len(found), src.Faculty, plansFile, len(plans))
+	return nil
 }

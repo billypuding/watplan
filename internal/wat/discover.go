@@ -30,8 +30,11 @@ func (f *Fetcher) DiscoverPlans(src config.Source) ([]config.PlanConfig, error) 
 		return nil, fmt.Errorf("zły index_url %q: %w", src.IndexURL, err)
 	}
 
-	if src.Format == FormatWCY {
+	switch src.Format {
+	case FormatWCY:
 		return f.discoverWCY(base, src)
+	case FormatWIGPDF:
+		return f.discoverWIG(base, src)
 	}
 
 	found := map[string]config.PlanConfig{}

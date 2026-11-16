@@ -80,3 +80,23 @@ func TestSavePlansWritesWhenContentChanges(t *testing.T) {
 		t.Fatalf("LoadConfig po zapisie: %v", err)
 	}
 }
+
+func TestReplaceFacultyKeepsOtherFaculties(t *testing.T) {
+	plans := []PlanConfig{
+		{ID: "WEL26EY4S0", Faculty: "WEL"},
+		{ID: "WIG25OLD1", Faculty: "WIG"},
+		{ID: "IOE26HX1S0", Faculty: "IOE"},
+	}
+	found := []PlanConfig{{ID: "WIG26BX2S1", Faculty: "WIG"}, {ID: "WIG26BX1S1", Faculty: "WIG"}}
+
+	got := ReplaceFaculty(plans, "WIG", found)
+	want := []string{"IOE26HX1S0", "WEL26EY4S0", "WIG26BX1S1", "WIG26BX2S1"}
+	if len(got) != len(want) {
+		t.Fatalf("planów %d, chcę %d: %+v", len(got), len(want), got)
+	}
+	for i, id := range want {
+		if got[i].ID != id {
+			t.Errorf("pozycja %d: %s, chcę %s", i, got[i].ID, id)
+		}
+	}
+}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 )
 
@@ -93,4 +94,21 @@ func (r *Registry) Get(id string) (PlanConfig, bool) {
 		}
 	}
 	return PlanConfig{}, false
+}
+
+func ReplaceFaculty(plans []PlanConfig, faculty string, found []PlanConfig) []PlanConfig {
+	out := make([]PlanConfig, 0, len(plans)+len(found))
+	for _, p := range plans {
+		if p.Faculty != faculty {
+			out = append(out, p)
+		}
+	}
+	out = append(out, found...)
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].Faculty != out[j].Faculty {
+			return out[i].Faculty < out[j].Faculty
+		}
+		return out[i].ID < out[j].ID
+	})
+	return out
 }

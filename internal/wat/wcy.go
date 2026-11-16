@@ -41,8 +41,11 @@ var (
 )
 
 func Parse(format string, r io.Reader, startYear int) ([]model.Event, error) {
-	if format == FormatWCY {
+	switch format {
+	case FormatWCY:
 		return ParseWCY(r)
+	case FormatWIGPDF:
+		return ParseWIGPDF(r, startYear)
 	}
 	return ParsePlan(r, startYear)
 }

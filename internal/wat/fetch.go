@@ -1,6 +1,7 @@
 package wat
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -272,7 +273,14 @@ func (f *Fetcher) fetchOnce(targetUrl string) ([]byte, error) {
 		return nil, &statusError{status: resp.StatusCode}
 	}
 
-	reader, err := charset.NewReader(io.LimitReader(resp.Body, maxBodyBytes), resp.Header.Get("Content-Type"))
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
+	if err != nil {
+		return nil, err
+	}
+	if len(raw) == 0 || bytes.HasPrefix(raw, []byte("%PDF")) {
+		return raw, nil
+	}
+	reader, err := charset.NewReader(bytes.NewReader(raw), resp.Header.Get("Content-Type"))
 	if err != nil {
 		return nil, err
 	}
