@@ -98,12 +98,19 @@ func (r *Registry) Get(id string) (PlanConfig, bool) {
 
 func ReplaceFaculty(plans []PlanConfig, faculty string, found []PlanConfig) []PlanConfig {
 	out := make([]PlanConfig, 0, len(plans)+len(found))
+	taken := make(map[string]bool, len(plans))
 	for _, p := range plans {
 		if p.Faculty != faculty {
 			out = append(out, p)
+			taken[p.ID] = true
 		}
 	}
-	out = append(out, found...)
+	for _, p := range found {
+		if !taken[p.ID] {
+			out = append(out, p)
+			taken[p.ID] = true
+		}
+	}
 	sort.SliceStable(out, func(i, j int) bool {
 		if out[i].Faculty != out[j].Faculty {
 			return out[i].Faculty < out[j].Faculty

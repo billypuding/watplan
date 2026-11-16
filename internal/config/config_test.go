@@ -86,17 +86,21 @@ func TestReplaceFacultyKeepsOtherFaculties(t *testing.T) {
 		{ID: "WEL26EY4S0", Faculty: "WEL"},
 		{ID: "WIG25OLD1", Faculty: "WIG"},
 		{ID: "IOE26HX1S0", Faculty: "IOE"},
+		{ID: "WIG26BW1S0", Faculty: "WEL"},
 	}
-	found := []PlanConfig{{ID: "WIG26BX2S1", Faculty: "WIG"}, {ID: "WIG26BX1S1", Faculty: "WIG"}}
+	found := []PlanConfig{{ID: "WIG26BX2S1", Faculty: "WIG"}, {ID: "WIG26BX1S1", Faculty: "WIG"}, {ID: "WIG26BW1S0", Faculty: "WIG"}, {ID: "WIG26BX1S1", Faculty: "WIG"}}
 
 	got := ReplaceFaculty(plans, "WIG", found)
-	want := []string{"IOE26HX1S0", "WEL26EY4S0", "WIG26BX1S1", "WIG26BX2S1"}
+	want := []string{"IOE26HX1S0", "WEL26EY4S0", "WIG26BW1S0", "WIG26BX1S1", "WIG26BX2S1"}
 	if len(got) != len(want) {
 		t.Fatalf("planów %d, chcę %d: %+v", len(got), len(want), got)
 	}
 	for i, id := range want {
 		if got[i].ID != id {
 			t.Errorf("pozycja %d: %s, chcę %s", i, got[i].ID, id)
+		}
+		if got[i].ID == "WIG26BW1S0" && got[i].Faculty != "WEL" {
+			t.Errorf("WIG26BW1S0 powinien zostać przy WEL: %+v", got[i])
 		}
 	}
 }
