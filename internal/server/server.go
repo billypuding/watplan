@@ -96,6 +96,15 @@ func (s *Server) Handler() (http.Handler, error) {
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Write(appPage)
 	})
+	faqPage, err := fs.ReadFile(static, "o-watplan.html")
+	if err != nil {
+		return nil, err
+	}
+	mux.HandleFunc("/o-watplan", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Write(faqPage)
+	})
 	mux.HandleFunc("/app/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, withQuery("/app", r), http.StatusMovedPermanently)
 	})

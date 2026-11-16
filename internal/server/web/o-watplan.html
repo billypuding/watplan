@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>O WATplan (watplan.me) – pytania i odpowiedzi</title>
+<meta name="description" content="Czym jest WATplan, skąd są dane, jak często się aktualizuje, jak dodać plan do kalendarza i zainstalować aplikację na telefonie. Nieoficjalny plan zajęć dla wydziałów WAT.">
+<meta name="theme-color" content="#0d1117">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://watplan.me/o-watplan">
+<meta property="og:site_name" content="watplan.me">
+<meta property="og:title" content="O WATplan (watplan.me) – pytania i odpowiedzi">
+<meta property="og:description" content="Darmowy, nieoficjalny plan zajęć dla wydziałów WAT. Bez logowania, bez reklam.">
+<link rel="icon" href="/favicon.ico?v=2" sizes="48x48">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png?v=2">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
+<link rel="apple-touch-icon" href="/favicon.png?v=2">
+<link rel="manifest" href="/manifest.json?v=1">
+<link rel="preload" href="/fonts/bricolage-latin.woff2?v=1" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/bricolage-pl.woff2?v=1" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/home.css?v=10">
+<link rel="stylesheet" href="/faq.css?v=2">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"WATplan","alternateName":"watplan.me","url":"https://watplan.me/","applicationCategory":"EducationalApplication","operatingSystem":"Web","inLanguage":"pl","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"PLN"},"author":{"@type":"Person","name":"billypuding","url":"https://github.com/billypuding"},"sameAs":["https://github.com/billypuding/watplan"]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Czy WATplan to oficjalny plan zajęć WAT?","acceptedAnswer":{"@type":"Answer","text":"Nie. WATplan to nieoficjalne narzędzie studenckie, niezwiązane z Wojskową Akademią Techniczną. Źródłem prawdy jest zawsze oficjalny plan wydziału."}},
+{"@type":"Question","name":"Czy WATplan z watplan.me to ten sam projekt co inne aplikacje o nazwie WATplan?","acceptedAnswer":{"@type":"Answer","text":"Nie. WATplan z watplan.me to osobny projekt, który tworzy billypuding; jego kod jest na github.com/billypuding/watplan. Na GitHubie istnieje też inny, niezależny projekt o nazwie WATplan autorstwa coobie, niezwiązany z watplan.me."}},
+{"@type":"Question","name":"Skąd WATplan bierze plany?","acceptedAnswer":{"@type":"Answer","text":"Z publicznych planów zajęć, które wydziały WAT publikują na swoich stronach. WATplan pobiera je, porządkuje i pokazuje w wygodniejszej formie."}},
+{"@type":"Question","name":"Jakie wydziały są dostępne?","acceptedAnswer":{"@type":"Answer","text":"Wszystkie wydziały WAT, razem około 790 grup: WCY – Wydział Cybernetyki; WEL – Wydział Elektroniki; WIG – Wydział Inżynierii Lądowej i Geodezji; WIM – Wydział Inżynierii Mechanicznej; WLO – Wydział Bezpieczeństwa, Logistyki i Zarządzania; WML – Wydział Mechatroniki, Uzbrojenia i Lotnictwa; WTC – Wydział Nowych Technologii i Chemii; IOE – Instytut Optoelektroniki. Plany WIG to plany bazowe; zmiany w trakcie semestru sprawdzaj w E-DZIEKANAT."}},
+{"@type":"Question","name":"Jak często plan jest aktualizowany?","acceptedAnswer":{"@type":"Answer","text":"Gdy otwierasz plan, a zapisana wersja ma więcej niż godzinę, WATplan w tle pobiera nową z WAT. Możesz też odświeżyć plan ręcznie przyciskiem odświeżania. Datę pobrania widać w ustawieniach, a gdy plan ma ponad dobę, aplikacja pokazuje ostrzeżenie."}},
+{"@type":"Question","name":"Jak znaleźć swoją grupę?","acceptedAnswer":{"@type":"Answer","text":"Wpisz kod grupy, na przykład WCY26IY1S1, w pole na stronie głównej albo w wyszukiwarce w aplikacji. Wystarczy fragment kodu. Gwiazdką dodasz grupę do ulubionych, żeby szybko przełączać się między planami."}},
+{"@type":"Question","name":"Jak dodać plan do kalendarza w telefonie?","acceptedAnswer":{"@type":"Answer","text":"W aplikacji otwórz ustawienia i wybierz „Pobierz plan (.ics)”. Plik zaimportujesz do Kalendarza Google, kalendarza w iPhonie albo Outlooka. To jednorazowa kopia: po zmianach w planie pobierz plik ponownie."}},
+{"@type":"Question","name":"Jak zainstalować WATplan na telefonie?","acceptedAnswer":{"@type":"Answer","text":"Na Androidzie otwórz watplan.me w Chrome i wybierz „Zainstaluj aplikację” albo „Dodaj do ekranu głównego”. Na iPhonie otwórz stronę w Safari, stuknij Udostępnij i wybierz „Do ekranu początkowego”. Zainstalowana aplikacja otwiera ostatni plan także bez internetu."}},
+{"@type":"Question","name":"Co oznacza liczba przy zajęciach, na przykład 6/15?","acceptedAnswer":{"@type":"Answer","text":"To numer tych zajęć w semestrze: szóste z piętnastu zajęć danego przedmiotu w tej formie. Stuknij kartę, żeby zobaczyć wszystkie terminy, ile zostało i kiedy są ostatnie."}},
+{"@type":"Question","name":"Czy WATplan zbiera moje dane?","acceptedAnswer":{"@type":"Answer","text":"Nie ma kont ani logowania. Twoja grupa, ulubione i ustawienia są zapisane tylko w Twojej przeglądarce. Strona liczy anonimowe odwiedziny za pomocą Umami, bez ciasteczek."}},
+{"@type":"Question","name":"Ile kosztuje WATplan?","acceptedAnswer":{"@type":"Answer","text":"Nic. WATplan jest darmowy, bez reklam, a jego kod jest otwarty na licencji MIT i dostępny na GitHubie."}},
+{"@type":"Question","name":"Znalazłem błąd w planie. Co zrobić?","acceptedAnswer":{"@type":"Answer","text":"Najpierw porównaj z oficjalnym planem wydziału. Jeśli tam jest inaczej niż w WATplan, napisz na awalczak@duck.com albo zgłoś problem na GitHubie, podając kod grupy i datę zajęć."}}
+]}
+</script>
+<script defer src="https://cloud.umami.is/script.js" data-website-id="7243e5ff-b868-43e2-819c-6f42ffe95547"></script>
+</head>
+<body class="home faq-page">
+<main class="faq">
+  <header class="faq-head">
+    <a class="live-logo" href="/?landing"><svg class="live-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#161b22"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.25" fill="none" stroke="#262d37" stroke-width="1.5"/><rect x="11" y="16" width="42" height="38" rx="8" fill="#e6edf3"/><path d="M11 24a8 8 0 0 1 8-8h26a8 8 0 0 1 8 8v4H11z" fill="#2dd4bf"/><rect x="20" y="10" width="5" height="11" rx="2.5" fill="#e6edf3"/><rect x="39" y="10" width="5" height="11" rx="2.5" fill="#e6edf3"/><rect x="16" y="32" width="14" height="8" rx="2.5" fill="#0f766e"/><rect x="34" y="32" width="14" height="8" rx="2.5" fill="#8b96a5"/><rect x="16" y="44" width="14" height="6" rx="2.5" fill="#8b96a5"/><rect x="13" y="41" width="38" height="2.5" rx="1.25" fill="#f5a524"/><circle cx="13.5" cy="42.25" r="3" fill="#f5a524"/></svg><span>WATplan</span></a>
+    <a class="faq-open" href="/app">Otwórz plan</a>
+  </header>
+
+  <h1 class="faq-h1">O WATplan</h1>
+  <p class="faq-lead">WATplan na watplan.me to darmowy plan zajęć dla wydziałów WAT, czytelny na telefonie. Bez logowania, bez reklam. Poniżej odpowiedzi na najczęstsze pytania.</p>
+
+  <section class="faq-list" aria-label="Pytania i odpowiedzi">
+    <details open>
+      <summary>Czy WATplan to oficjalny plan zajęć WAT?</summary>
+      <p>Nie. WATplan to nieoficjalne narzędzie studenckie, niezwiązane z Wojskową Akademią Techniczną. Źródłem prawdy jest zawsze oficjalny plan wydziału.</p>
+    </details>
+    <details>
+      <summary>Czy WATplan z watplan.me to ten sam projekt co inne aplikacje o nazwie WATplan?</summary>
+      <p>Nie. WATplan z watplan.me to osobny projekt, który tworzy billypuding; jego kod jest na <a href="https://github.com/billypuding/watplan">github.com/billypuding/watplan</a>. Na GitHubie istnieje też inny, niezależny projekt o nazwie WATplan autorstwa coobie, niezwiązany z watplan.me.</p>
+    </details>
+    <details>
+      <summary>Skąd WATplan bierze plany?</summary>
+      <p>Z publicznych planów zajęć, które wydziały WAT publikują na swoich stronach. WATplan pobiera je, porządkuje i pokazuje w wygodniejszej formie.</p>
+    </details>
+    <details>
+      <summary>Jakie wydziały są dostępne?</summary>
+      <p>Wszystkie wydziały WAT, razem około 790 grup:</p>
+      <ul>
+        <li><b>WCY</b> – Wydział Cybernetyki</li>
+        <li><b>WEL</b> – Wydział Elektroniki</li>
+        <li><b>WIG</b> – Wydział Inżynierii Lądowej i Geodezji</li>
+        <li><b>WIM</b> – Wydział Inżynierii Mechanicznej</li>
+        <li><b>WLO</b> – Wydział Bezpieczeństwa, Logistyki i Zarządzania</li>
+        <li><b>WML</b> – Wydział Mechatroniki, Uzbrojenia i Lotnictwa</li>
+        <li><b>WTC</b> – Wydział Nowych Technologii i Chemii</li>
+        <li><b>IOE</b> – Instytut Optoelektroniki</li>
+      </ul>
+      <p>Plany WIG to plany bazowe; zmiany w trakcie semestru sprawdzaj w E-DZIEKANAT.</p>
+    </details>
+    <details>
+      <summary>Jak często plan jest aktualizowany?</summary>
+      <p>Gdy otwierasz plan, a zapisana wersja ma więcej niż godzinę, WATplan w tle pobiera nową z WAT. Możesz też odświeżyć plan ręcznie przyciskiem odświeżania. Datę pobrania widać w ustawieniach, a gdy plan ma ponad dobę, aplikacja pokazuje ostrzeżenie.</p>
+    </details>
+    <details>
+      <summary>Jak znaleźć swoją grupę?</summary>
+      <p>Wpisz kod grupy, na przykład <b>WCY26IY1S1</b>, w pole na <a href="/?landing">stronie głównej</a> albo w wyszukiwarce w aplikacji. Wystarczy fragment kodu. Gwiazdką dodasz grupę do ulubionych, żeby szybko przełączać się między planami.</p>
+    </details>
+    <details>
+      <summary>Jak dodać plan do kalendarza w telefonie?</summary>
+      <p>W aplikacji otwórz ustawienia i wybierz „Pobierz plan (.ics)”. Plik zaimportujesz do Kalendarza Google, kalendarza w iPhonie albo Outlooka. To jednorazowa kopia: po zmianach w planie pobierz plik ponownie.</p>
+    </details>
+    <details>
+      <summary>Jak zainstalować WATplan na telefonie?</summary>
+      <p>Na Androidzie otwórz watplan.me w Chrome i wybierz „Zainstaluj aplikację” albo „Dodaj do ekranu głównego”. Na iPhonie otwórz stronę w Safari, stuknij Udostępnij i wybierz „Do ekranu początkowego”. Zainstalowana aplikacja otwiera ostatni plan także bez internetu.</p>
+    </details>
+    <details>
+      <summary>Co oznacza liczba przy zajęciach, na przykład 6/15?</summary>
+      <p>To numer tych zajęć w semestrze: szóste z piętnastu zajęć danego przedmiotu w tej formie. Stuknij kartę, żeby zobaczyć wszystkie terminy, ile zostało i kiedy są ostatnie.</p>
+    </details>
+    <details>
+      <summary>Czy WATplan zbiera moje dane?</summary>
+      <p>Nie ma kont ani logowania. Twoja grupa, ulubione i ustawienia są zapisane tylko w Twojej przeglądarce. Strona liczy anonimowe odwiedziny za pomocą Umami, bez ciasteczek.</p>
+    </details>
+    <details>
+      <summary>Ile kosztuje WATplan?</summary>
+      <p>Nic. WATplan jest darmowy, bez reklam, a jego kod jest otwarty na licencji MIT i dostępny na <a href="https://github.com/billypuding/watplan">GitHubie</a>.</p>
+    </details>
+    <details>
+      <summary>Znalazłem błąd w planie. Co zrobić?</summary>
+      <p>Najpierw porównaj z oficjalnym planem wydziału. Jeśli tam jest inaczej niż w WATplan, napisz na <a href="mailto:awalczak@duck.com">awalczak@duck.com</a> albo zgłoś problem na <a href="https://github.com/billypuding/watplan/issues">GitHubie</a>, podając kod grupy i datę zajęć.</p>
+    </details>
+  </section>
+</main>
+
+<footer class="live-foot">
+  <p>Autor: <a href="https://github.com/billypuding/watplan">billypuding</a> · Kontakt: <a href="mailto:awalczak@duck.com">awalczak@duck.com</a></p>
+  <p class="fine">Nieoficjalne narzędzie studenckie, niezwiązane z Wojskową Akademią Techniczną.</p>
+</footer>
+</body>
+</html>
