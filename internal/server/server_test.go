@@ -145,3 +145,37 @@ func TestRouting(t *testing.T) {
 		}
 	}
 }
+
+func TestCanonicalHostRedirect(t *testing.T) {
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler, err := NewServer(config.NewRegistry(nil), st, nil, Options{Offline: true, CanonicalHost: "watplan.me"}).Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cases := []struct {
+		host, path string
+		status     int
+		location   string
+	}{
+		{"watplan.onrender.com", "/", http.StatusMovedPermanently, "https://watplan.me/"},
+		{"watplan.onrender.com", "/app?plan=WEL26EY4S0&view=week", http.StatusMovedPermanently, "https://watplan.me/app?plan=WEL26EY4S0&view=week"},
+		{"watplan.onrender.com:443", "/o-watplan", http.StatusMovedPermanently, "https://watplan.me/o-watplan"},
+		{"watplan.onrender.com", "/api/plans", http.StatusOK, ""},
+		{"watplan.onrender.com", "/sw.js", http.StatusOK, ""},
+		{"watplan.me", "/", http.StatusOK, ""},
+		{"127.0.0.1:8080", "/", http.StatusOK, ""},
+	}
+	for _, c := range cases {
+		req := httptest.NewRequest(http.MethodGet, c.path, nil)
+		req.Host = c.host
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != c.status || rec.Header().Get("Location") != c.location {
+			t.Errorf("%s%s: status %d, Location %q; chcę %d, %q", c.host, c.path, rec.Code, rec.Header().Get("Location"), c.status, c.location)
+		}
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -44,6 +45,8 @@ type Options struct {
 	Offline bool
 
 	OnDemand bool
+
+	CanonicalHost string
 }
 
 type Server struct {
@@ -121,7 +124,25 @@ func (s *Server) Handler() (http.Handler, error) {
 		files.ServeHTTP(w, r)
 	})
 
-	return mux, nil
+	return withCanonicalHost(mux, s.options.CanonicalHost), nil
+}
+
+func withCanonicalHost(next http.Handler, canonical string) http.Handler {
+	if canonical == "" {
+		return next
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		host := strings.ToLower(r.Host)
+		if h, _, err := net.SplitHostPort(host); err == nil {
+			host = h
+		}
+		if host == canonical || !strings.HasSuffix(host, ".onrender.com") ||
+			strings.HasPrefix(r.URL.Path, "/api/") || r.URL.Path == "/sw.js" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		http.Redirect(w, r, "https://"+canonical+r.URL.RequestURI(), http.StatusMovedPermanently)
+	})
 }
 
 func withQuery(path string, r *http.Request) string {

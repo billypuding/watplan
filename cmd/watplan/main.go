@@ -98,8 +98,9 @@ func main() {
 	}
 
 	handler, err := server.NewServer(reg, st, upd, server.Options{
-		Offline:  offline,
-		OnDemand: onDemand,
+		Offline:       offline,
+		OnDemand:      onDemand,
+		CanonicalHost: os.Getenv("PLANWAT_CANONICAL_HOST"),
 	}).Handler()
 	if err != nil {
 		log.Fatal(err)

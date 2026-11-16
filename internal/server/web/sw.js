@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE = 'watplan-v1';
+const CACHE = 'watplan-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -22,7 +22,11 @@ async function staleWhileRevalidate(event, request, key) {
     const cache = await caches.open(CACHE);
     const cached = await cache.match(key);
     const network = fetch(request).then(async (response) => {
-        if (response.ok && !response.redirected && response.type === 'basic') {
+        if (response.type === 'opaqueredirect' || response.redirected) {
+            await cache.delete(key, { ignoreSearch: true });
+            return response;
+        }
+        if (response.ok && response.type === 'basic') {
             if (!cached && typeof key !== 'string') await cache.delete(key, { ignoreSearch: true });
             await cache.put(key, response.clone());
         }
