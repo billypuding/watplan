@@ -4,7 +4,7 @@
 }
 .faq-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .faq-head .live-logo { gap: 10px; font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
-.faq-mark { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+.faq-mark { width: 28px; height: 28px; display: block; }
 .home a.faq-open {
     display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 14px;
     background: var(--accent); color: var(--accent-ink); font-weight: 650; font-size: 16px; text-decoration: none;

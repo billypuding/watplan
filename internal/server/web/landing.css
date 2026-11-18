@@ -50,7 +50,7 @@ svg.i { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round
 .page { min-height: 100svh; display: flex; flex-direction: column; max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 3vw, 32px); }
 .nav { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 18px 0; }
 .brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; }
-.brand svg { width: 20px; height: 20px; stroke-width: 1.6; }
+.brand img { width: 26px; height: 26px; display: block; }
 .nav-link { padding: 7px 10px; border-radius: 6px; font-size: 14px; color: var(--text-2); }
 .nav-link:hover { color: var(--text); background: var(--surface-2); }
 
