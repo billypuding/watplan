@@ -46,3 +46,4 @@
 @media (prefers-reduced-motion: reduce) {
     .faq-list summary::after { transition: none; }
 }
+.home > .site-foot { width: 100%; max-width: 760px; margin: 0 auto; padding-left: 18px; padding-right: 18px; box-sizing: border-box; }

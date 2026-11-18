@@ -370,8 +370,12 @@ dialog::backdrop { background: var(--scrim); }
 .notice.show { opacity: 1; }
 .notice.error { background: var(--error); color: #fff; }
 
-.app-footer { margin-top: 32px; text-align: center; font-size: 13px; color: var(--muted); }
-.app-footer a { color: inherit; }
+.site-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 24px; margin-top: 32px; padding: 16px 0 max(20px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); font-size: 13px; line-height: 1.45; color: var(--muted); text-align: left; }
+.site-foot a { color: var(--text); opacity: .78; text-decoration: none; }
+.site-foot a:hover { opacity: 1; }
+.site-foot .gh { display: inline-flex; vertical-align: -2px; margin-left: 2px; color: var(--muted); opacity: 1; }
+.site-foot .gh svg { width: 14px; height: 14px; fill: currentColor; }
+@media (max-width: 560px) { .site-foot { font-size: 12px; gap: 4px; } }
 
 @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
