@@ -30,6 +30,7 @@ const (
 
 	staleAfter = time.Hour
 	staleRetry = 30 * time.Minute
+	staleWait  = 4 * time.Second
 	timeLayout = "2006-01-02 15:04:05"
 )
 
@@ -200,7 +201,15 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err == nil && s.options.OnDemand && s.updater != nil {
-		s.refreshIfStale(plan)
+		if done := s.refreshIfStale(plan); done != nil {
+			select {
+			case <-done:
+				if fresh, freshErr := s.store.Raw(id); freshErr == nil {
+					data = fresh
+				}
+			case <-time.After(staleWait):
+			}
+		}
 	}
 	if err != nil {
 		log.Printf("odczyt planu %s: %v", id, err)
@@ -250,31 +259,34 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-func (s *Server) refreshIfStale(plan config.PlanConfig) {
+func (s *Server) refreshIfStale(plan config.PlanConfig) <-chan struct{} {
 	cached, err := s.store.Load(plan.ID)
 	if err != nil {
-		return
+		return nil
 	}
 	fetched, err := time.ParseInLocation(timeLayout, cached.FetchedAt, warsawLoc)
 	if err == nil && time.Since(fetched) < staleAfter {
-		return
+		return nil
 	}
 
 	s.mu.Lock()
 	if time.Since(s.lastStale[plan.ID]) < staleRetry {
 		s.mu.Unlock()
-		return
+		return nil
 	}
 	s.lastStale[plan.ID] = time.Now()
 	s.mu.Unlock()
 
+	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		if err := s.updater.Update(plan); err != nil {
 			log.Printf("odświeżanie nieaktualnego planu %s: %v", plan.ID, err)
 			return
 		}
 		log.Printf("plan %s: odświeżony na żądanie (poprzednio %s)", plan.ID, cached.FetchedAt)
 	}()
+	return done
 }
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {

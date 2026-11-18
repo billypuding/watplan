@@ -100,6 +100,52 @@ func TestOnDemandFetchesMissingPlanOnce(t *testing.T) {
 	}
 }
 
+func TestOnDemandServesRefreshedStalePlan(t *testing.T) {
+	page, err := os.ReadFile("../wat/testdata/plan_wat.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	watSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(page)
+	}))
+	t.Cleanup(watSrv.Close)
+
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	const old = "2026-11-11 19:28:02"
+	if err := st.Save("WMT26AX3S1", model.Plan{FetchedAt: old, ModifiedAt: old, Events: []model.Event{{Date: "2026-11-12", Start: "08:00", End: "09:35", Subject: "Stary"}}}); err != nil {
+		t.Fatal(err)
+	}
+	reg := config.NewRegistry([]config.PlanConfig{{ID: "WMT26AX3S1", URL: watSrv.URL, StartYear: 2026}})
+
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	fetcher, err := wat.NewFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := NewServer(reg, st, updater.NewUpdater(st, fetcher), Options{OnDemand: true})
+	handler, err := srv.Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/plan/WMT26AX3S1", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, chcę 200", rec.Code)
+	}
+	var plan model.Plan
+	if err := json.Unmarshal(rec.Body.Bytes(), &plan); err != nil {
+		t.Fatal(err)
+	}
+	if plan.FetchedAt == old {
+		t.Fatalf("serwer oddał nieaktualny plan (%s) zamiast odświeżonego", plan.FetchedAt)
+	}
+}
+
 func TestRouting(t *testing.T) {
 	st, err := store.NewStore(t.TempDir())
 	if err != nil {

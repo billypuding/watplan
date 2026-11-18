@@ -44,6 +44,8 @@ const seriesSub = $('seriesSub');
 const seriesBody = $('seriesBody');
 const staleBanner = $('staleBanner');
 const STALE_AFTER_MS = 24 * 3600 * 1000;
+const STALE_RECHECK_MS = 8000;
+let staleRecheckFor = '';
 const PLAN_CACHE_KEY = 'planCache';
 const PLAN_CACHE_SIZE = 5;
 
@@ -464,6 +466,7 @@ async function loadPlan() {
         if (!response.ok || !data) throw new Error((data && data.error) || `Błąd serwera (${response.status})`);
         if (requestId !== loadCounter) return;
         storePlan(planId, text);
+        scheduleStaleRecheck(planId, data.fetched_at);
         if (cached && cached.raw === text) return;
         applyPlanData(data);
     } catch (err) {
@@ -482,10 +485,23 @@ async function loadPlan() {
     render();
 }
 
-function updateStaleBanner(fetchedAt) {
+function parseFetched(fetchedAt) {
     const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(fetchedAt || '');
-    if (!m) { staleBanner.classList.add('hidden'); return; }
-    const fetched = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+    if (!m) return null;
+    return { m, date: new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) };
+}
+
+function scheduleStaleRecheck(planId, fetchedAt) {
+    const parsed = parseFetched(fetchedAt);
+    if (!parsed || staleRecheckFor === planId || warsawNow() - parsed.date <= STALE_AFTER_MS) return;
+    staleRecheckFor = planId;
+    setTimeout(() => { if (currentPlanId === planId) loadPlan(); }, STALE_RECHECK_MS);
+}
+
+function updateStaleBanner(fetchedAt) {
+    const parsed = parseFetched(fetchedAt);
+    if (!parsed) { staleBanner.classList.add('hidden'); return; }
+    const { m, date: fetched } = parsed;
     const stale = warsawNow() - fetched > STALE_AFTER_MS;
     staleBanner.classList.toggle('hidden', !stale);
     if (stale) {
