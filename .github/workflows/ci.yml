@@ -36,4 +36,4 @@ jobs:
       - name: e2e
         env:
           CHROME_PATH: /usr/bin/google-chrome
-        run: node --test e2e/
+        run: node --test e2e/*.test.mjs

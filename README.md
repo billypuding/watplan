@@ -143,7 +143,7 @@ the next deploy or restart. The committed `data/` directory is the permanent cac
 
 ```bash
 go test ./...
-node --test e2e/
+node --test e2e/*.test.mjs
 ```
 
 The end-to-end tests build the server, run it offline on the plans in
