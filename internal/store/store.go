@@ -17,6 +17,23 @@ type Store struct {
 	dir    string
 	mu     sync.RWMutex
 	mirror durable.Mirror
+	onSave []func(string, model.Plan)
+	hookMu sync.Mutex
+}
+
+func (s *Store) OnSave(fn func(id string, plan model.Plan)) {
+	s.hookMu.Lock()
+	s.onSave = append(s.onSave, fn)
+	s.hookMu.Unlock()
+}
+
+func (s *Store) notify(id string, plan model.Plan) {
+	s.hookMu.Lock()
+	hooks := append([]func(string, model.Plan){}, s.onSave...)
+	s.hookMu.Unlock()
+	for _, fn := range hooks {
+		fn(id, plan)
+	}
 }
 
 const (
@@ -148,6 +165,7 @@ func (s *Store) Save(id string, plan model.Plan) error {
 		return err
 	}
 	s.mirrorPut(durable.Keyed(planPrefix, id), data)
+	go s.notify(id, plan)
 	return nil
 }
 

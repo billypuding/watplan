@@ -164,3 +164,35 @@ func TestDiscoverFallsBackToSiblingIndex(t *testing.T) {
 		t.Fatalf("bez obu plików chcę ErrGone, mam %v", err)
 	}
 }
+
+func TestDiscoverReusesListingOn304(t *testing.T) {
+	var full, notModified int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("If-None-Match") == `"v1"` {
+			notModified++
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		full++
+		w.Header().Set("ETag", `"v1"`)
+		_, _ = w.Write([]byte(`<a href="WEL26EX1S0.htm">a</a><a href="WEL26EX2S0.htm">b</a>`))
+	}))
+	t.Cleanup(srv.Close)
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	f, err := NewFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := config.Source{Faculty: "WEL", IndexURL: srv.URL + "/zima/index.xml", StartYear: 2026}
+	first, err := f.DiscoverPlans(src)
+	if err != nil || len(first) != 2 {
+		t.Fatalf("pierwsze: %v %v", first, err)
+	}
+	second, err := f.DiscoverPlans(src)
+	if err != nil || len(second) != 2 || second[0].ID != "WEL26EX1S0" {
+		t.Fatalf("drugie: %v %v", second, err)
+	}
+	if full != 1 || notModified != 1 {
+		t.Fatalf("pełnych %d, 304: %d", full, notModified)
+	}
+}

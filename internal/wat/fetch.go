@@ -57,6 +57,9 @@ type Fetcher struct {
 	blockMu      sync.Mutex
 	blockedUntil map[string]time.Time
 
+	listMu   sync.Mutex
+	listings map[string]listing
+
 	proxyMu    sync.Mutex
 	proxyError string
 	proxyAt    time.Time

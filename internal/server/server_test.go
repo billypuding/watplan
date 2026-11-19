@@ -225,3 +225,37 @@ func TestCanonicalHostRedirect(t *testing.T) {
 		}
 	}
 }
+
+func TestPlanETagGives304(t *testing.T) {
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = st.Save("TST26XX1S0", model.Plan{FetchedAt: "2026-11-19 10:00:00", Events: []model.Event{{Date: "2026-11-20", Start: "08:00", End: "09:35", Subject: "X"}}})
+	h, err := NewServer(config.NewRegistry([]config.PlanConfig{{ID: "TST26XX1S0"}}), st, nil, Options{Offline: true}).Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/plan/TST26XX1S0", nil))
+	etag := rec.Header().Get("ETag")
+	if rec.Code != http.StatusOK || etag == "" || rec.Header().Get("Cache-Control") != "no-cache" {
+		t.Fatalf("status %d etag %q cache %q", rec.Code, etag, rec.Header().Get("Cache-Control"))
+	}
+	for _, header := range []string{etag, "W/" + etag, `"inny", ` + etag} {
+		req := httptest.NewRequest(http.MethodGet, "/api/plan/TST26XX1S0", nil)
+		req.Header.Set("If-None-Match", header)
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		if rec.Code != http.StatusNotModified || rec.Body.Len() != 0 {
+			t.Fatalf("If-None-Match %q: status %d, %d B", header, rec.Code, rec.Body.Len())
+		}
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/plan/TST26XX1S0", nil)
+	req.Header.Set("If-None-Match", `"stary"`)
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("inny ETag: status %d", rec.Code)
+	}
+}

@@ -7,13 +7,11 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/billypuding/watplan/internal/config"
+	"github.com/billypuding/watplan/internal/model"
 	"github.com/billypuding/watplan/internal/store"
 )
-
-const roomsTTL = 10 * time.Minute
 
 var (
 	roomRe      = regexp.MustCompile(`^(.+?)/?\s+(\d{1,3}[A-Z]?|[A-Z])$`)
@@ -30,15 +28,15 @@ type roomKey struct {
 
 type span struct{ from, to int }
 
+type planRooms map[string]map[roomKey][]span
+
 type roomIndex struct {
-	rooms map[roomKey]bool
-	busy  map[string]map[roomKey][]span
-	plans int
-	built time.Time
+	perPlan map[string]planRooms
+	rooms   map[roomKey]int
 }
 
 type roomsCache struct {
-	mu  sync.Mutex
+	mu  sync.RWMutex
 	idx *roomIndex
 }
 
@@ -71,44 +69,95 @@ func minClock(m int) string {
 	return strconv.Itoa(m/60/10) + strconv.Itoa(m/60%10) + ":" + strconv.Itoa(m%60/10) + strconv.Itoa(m%10)
 }
 
+func roomsOf(events []model.Event) planRooms {
+	out := planRooms{}
+	for _, e := range events {
+		from, to := clockMin(e.Start), clockMin(e.End)
+		if from < 0 || to <= from {
+			continue
+		}
+		for _, part := range roomSplitRe.Split(e.Room, -1) {
+			key, ok := parseRoom(part)
+			if !ok {
+				continue
+			}
+			day := out[e.Date]
+			if day == nil {
+				day = map[roomKey][]span{}
+				out[e.Date] = day
+			}
+			day[key] = append(day[key], span{from, to})
+		}
+	}
+	return out
+}
+
+func (idx *roomIndex) set(id string, pr planRooms) {
+	for _, day := range idx.perPlan[id] {
+		for key := range day {
+			idx.rooms[key]--
+			if idx.rooms[key] <= 0 {
+				delete(idx.rooms, key)
+			}
+		}
+	}
+	for _, day := range pr {
+		for key := range day {
+			idx.rooms[key]++
+		}
+	}
+	if len(pr) == 0 {
+		delete(idx.perPlan, id)
+		return
+	}
+	idx.perPlan[id] = pr
+}
+
 func buildRoomIndex(reg *config.Registry, st *store.Store) *roomIndex {
-	idx := &roomIndex{rooms: map[roomKey]bool{}, busy: map[string]map[roomKey][]span{}, built: time.Now()}
+	idx := &roomIndex{perPlan: map[string]planRooms{}, rooms: map[roomKey]int{}}
 	for _, p := range reg.List() {
 		plan, err := st.Load(p.ID)
 		if err != nil {
 			continue
 		}
-		idx.plans++
-		for _, e := range plan.Events {
-			from, to := clockMin(e.Start), clockMin(e.End)
-			if from < 0 || to <= from {
-				continue
-			}
-			for _, part := range roomSplitRe.Split(e.Room, -1) {
-				key, ok := parseRoom(part)
-				if !ok {
-					continue
-				}
-				idx.rooms[key] = true
-				day := idx.busy[e.Date]
-				if day == nil {
-					day = map[roomKey][]span{}
-					idx.busy[e.Date] = day
-				}
-				day[key] = append(day[key], span{from, to})
-			}
-		}
+		idx.set(p.ID, roomsOf(plan.Events))
 	}
 	return idx
 }
 
-func (s *Server) roomIndex() *roomIndex {
+func (c *roomsCache) update(id string, plan model.Plan) {
+	pr := roomsOf(plan.Events)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.idx != nil {
+		c.idx.set(id, pr)
+	}
+}
+
+func (s *Server) withRooms(fn func(*roomIndex)) {
+	s.rooms.mu.RLock()
+	if s.rooms.idx != nil {
+		defer s.rooms.mu.RUnlock()
+		fn(s.rooms.idx)
+		return
+	}
+	s.rooms.mu.RUnlock()
 	s.rooms.mu.Lock()
-	defer s.rooms.mu.Unlock()
-	if s.rooms.idx == nil || time.Since(s.rooms.idx.built) > roomsTTL {
+	if s.rooms.idx == nil {
 		s.rooms.idx = buildRoomIndex(s.registry, s.store)
 	}
-	return s.rooms.idx
+	s.rooms.mu.Unlock()
+	s.withRooms(fn)
+}
+
+func (idx *roomIndex) busyOn(date string) map[roomKey][]span {
+	busy := map[roomKey][]span{}
+	for _, pr := range idx.perPlan {
+		for key, spans := range pr[date] {
+			busy[key] = append(busy[key], spans...)
+		}
+	}
+	return busy
 }
 
 type freeRoom struct {
@@ -130,7 +179,7 @@ const (
 )
 
 func freeRooms(idx *roomIndex, date string, from, to int, building string) []freeBuilding {
-	day := idx.busy[date]
+	day := idx.busyOn(date)
 	byBuilding := map[string]*freeBuilding{}
 	for key := range idx.rooms {
 		if building != "" && key.building != building {
@@ -209,24 +258,35 @@ func (s *Server) handleRooms(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "godzina końca musi być po godzinie początku")
 		return
 	}
-	idx := s.roomIndex()
-	buildings := map[string]bool{}
-	for key := range idx.rooms {
-		buildings[key.building] = true
-	}
-	all := make([]string, 0, len(buildings))
-	for b := range buildings {
-		all = append(all, b)
-	}
+	var all []string
+	var free []freeBuilding
+	plans, hasData := 0, false
+	s.withRooms(func(idx *roomIndex) {
+		buildings := map[string]bool{}
+		for key := range idx.rooms {
+			buildings[key.building] = true
+		}
+		for b := range buildings {
+			all = append(all, b)
+		}
+		free = freeRooms(idx, date, from, to, q.Get("building"))
+		plans = len(idx.perPlan)
+		for _, pr := range idx.perPlan {
+			if len(pr[date]) > 0 {
+				hasData = true
+				break
+			}
+		}
+	})
 	sort.Slice(all, func(i, j int) bool { return naturalLess(all[i], all[j]) })
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"date":      date,
 		"from":      fromS,
 		"to":        toS,
-		"free":      freeRooms(idx, date, from, to, q.Get("building")),
+		"free":      free,
 		"buildings": all,
-		"plans":     idx.plans,
-		"has_data":  len(idx.busy[date]) > 0,
+		"plans":     plans,
+		"has_data":  hasData,
 	})
 }

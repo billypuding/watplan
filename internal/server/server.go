@@ -71,7 +71,7 @@ type Server struct {
 }
 
 func NewServer(registry *config.Registry, store *store.Store, updater *updater.Updater, options Options) *Server {
-	return &Server{
+	s := &Server{
 		registry:    registry,
 		store:       store,
 		updater:     updater,
@@ -79,6 +79,8 @@ func NewServer(registry *config.Registry, store *store.Store, updater *updater.U
 		lastRefresh: make(map[string]time.Time),
 		lastStale:   make(map[string]time.Time),
 	}
+	store.OnSave(s.rooms.update)
+	return s
 }
 
 func (s *Server) Handler() (http.Handler, error) {
@@ -209,8 +211,30 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sum := sha1.Sum(data)
+	etag := `"` + hex.EncodeToString(sum[:10]) + `"`
+	w.Header().Set("ETag", etag)
+	w.Header().Set("Cache-Control", "no-cache")
+	if etagMatches(r.Header.Get("If-None-Match"), etag) {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
+}
+
+func etagMatches(header, etag string) bool {
+	if header == "" {
+		return false
+	}
+	want := strings.TrimPrefix(etag, "W/")
+	for _, part := range strings.Split(header, ",") {
+		part = strings.TrimPrefix(strings.TrimSpace(part), "W/")
+		if part == want || part == "*" {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig) ([]byte, bool) {
@@ -399,7 +423,7 @@ func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
 	etag := `"` + hex.EncodeToString(sum[:10]) + `"`
 	w.Header().Set("ETag", etag)
 	w.Header().Set("Cache-Control", "public, max-age=900")
-	if r.Header.Get("If-None-Match") == etag {
+	if etagMatches(r.Header.Get("If-None-Match"), etag) {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}

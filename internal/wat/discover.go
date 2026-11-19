@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -52,7 +53,29 @@ func (f *Fetcher) discover(base *url.URL, src config.Source) ([]config.PlanConfi
 	found := map[string]config.PlanConfig{}
 	visited := map[string]bool{}
 
-	err := f.crawl(base, base, src, src.Depth, visited, found)
+	var err error
+	if src.Depth == 0 {
+		key := base.String()
+		prev, cached := f.cachedListing(key)
+		var body []byte
+		var got Validators
+		body, got, err = f.FetchPage(key, prev.validators)
+		if errors.Is(err, ErrNotModified) && cached {
+			return append([]config.PlanConfig(nil), prev.plans...), nil
+		}
+		if err == nil {
+			visited[key] = true
+			if err := f.collect(base, base, body, src, 0, visited, found); err != nil {
+				return nil, err
+			}
+			plans := listingPlans(found)
+			f.storeListing(key, got, plans)
+			return plans, nil
+		}
+		err = fmt.Errorf("%s: %w", key, err)
+	} else {
+		err = f.crawl(base, base, src, src.Depth, visited, found)
+	}
 	if alt := siblingIndex(base); err != nil && errors.Is(err, ErrGone) && alt != nil {
 		log.Printf("discover %s: %s zniknął, próbuję %s", src.Faculty, base, alt)
 		if altErr := f.crawl(alt, alt, src, src.Depth, visited, found); altErr == nil {
@@ -62,12 +85,40 @@ func (f *Fetcher) discover(base *url.URL, src config.Source) ([]config.PlanConfi
 	if err != nil {
 		return nil, err
 	}
+	return listingPlans(found), nil
+}
 
+type listing struct {
+	validators Validators
+	plans      []config.PlanConfig
+}
+
+func listingPlans(found map[string]config.PlanConfig) []config.PlanConfig {
 	plans := make([]config.PlanConfig, 0, len(found))
 	for _, p := range found {
 		plans = append(plans, p)
 	}
-	return plans, nil
+	sort.Slice(plans, func(i, j int) bool { return plans[i].ID < plans[j].ID })
+	return plans
+}
+
+func (f *Fetcher) cachedListing(key string) (listing, bool) {
+	f.listMu.Lock()
+	defer f.listMu.Unlock()
+	l, ok := f.listings[key]
+	return l, ok
+}
+
+func (f *Fetcher) storeListing(key string, v Validators, plans []config.PlanConfig) {
+	if v.empty() {
+		return
+	}
+	f.listMu.Lock()
+	defer f.listMu.Unlock()
+	if f.listings == nil {
+		f.listings = map[string]listing{}
+	}
+	f.listings[key] = listing{validators: v, plans: append([]config.PlanConfig(nil), plans...)}
 }
 
 func (f *Fetcher) crawl(root, page *url.URL, src config.Source, depth int,
@@ -83,6 +134,11 @@ func (f *Fetcher) crawl(root, page *url.URL, src config.Source, depth int,
 	if err != nil {
 		return fmt.Errorf("%s: %w", key, err)
 	}
+	return f.collect(root, page, body, src, depth, visited, found)
+}
+
+func (f *Fetcher) collect(root, page *url.URL, body []byte, src config.Source, depth int,
+	visited map[string]bool, found map[string]config.PlanConfig) error {
 
 	var rawLinks []string
 	doc, err := html.Parse(bytes.NewReader(body))
