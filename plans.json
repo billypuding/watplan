@@ -688,6 +688,14 @@
     "format": "wcy"
   },
   {
+    "id": "WCY25-BD",
+    "name": "WCY25*BD",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY25%2ABD",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
     "id": "WCY25IB1N2",
     "name": "WCY25IB1N2",
     "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY25IB1N2",
@@ -979,6 +987,142 @@
     "id": "WCY25KY6S1",
     "name": "WCY25KY6S1",
     "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY25KY6S1",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-AM",
+    "name": "WCY26*AM",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AAM",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-BBD",
+    "name": "WCY26*BBD",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2ABBD",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-BD",
+    "name": "WCY26*BD",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2ABD",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-BD-2",
+    "name": "WCY26*Bd",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2ABd",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-FIZ1A",
+    "name": "WCY26*Fiz1a",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AFiz1a",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-FIZ1B",
+    "name": "WCY26*Fiz1b",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AFiz1b",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-FIZ1C",
+    "name": "WCY26*Fiz1c",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AFiz1c",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-FIZ2",
+    "name": "WCY26*Fiz2",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AFiz2",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-FIZ2N",
+    "name": "WCY26*Fiz2n",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AFiz2n",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-KDM",
+    "name": "WCY26*KDM",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AKDM",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-M1",
+    "name": "WCY26*M1",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AM1",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-M2",
+    "name": "WCY26*M2",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AM2",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-MD",
+    "name": "WCY26*Md",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AMd",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-WDA",
+    "name": "WCY26*WdA",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AWdA",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-WDP",
+    "name": "WCY26*WdP",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AWdP",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-ZKSTA",
+    "name": "WCY26*ZkSTa",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AZkSTa",
+    "start_year": 2026,
+    "faculty": "WCY",
+    "format": "wcy"
+  },
+  {
+    "id": "WCY26-ZKSTB",
+    "name": "WCY26*ZkSTb",
+    "url": "https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id=WCY26%2AZkSTb",
     "start_year": 2026,
     "faculty": "WCY",
     "format": "wcy"
@@ -3086,6 +3230,20 @@
     "faculty": "WIM"
   },
   {
+    "id": "WME26A1N5",
+    "name": "WME26A1N5",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/(WME26A1N5)_-_SP_BRDiRzS.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26B1N5",
+    "name": "WME26B1N5",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/(WME26B1N5)_-_SP_BRDiRzS.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
     "id": "WME26BX1S1",
     "name": "WME26BX1S1",
     "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26BX1S1.htm",
@@ -3110,6 +3268,13 @@
     "id": "WME26BX4S1",
     "name": "WME26BX4S1",
     "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26BX4S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26C1N5",
+    "name": "WME26C1N5",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/(WME26C1N5)_-_SP_BRDiRzS.htm",
     "start_year": 2026,
     "faculty": "WIM"
   },
@@ -3145,6 +3310,13 @@
     "id": "WME26DX4S1",
     "name": "WME26DX4S1",
     "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26DX4S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26MK1N5",
+    "name": "WME26MK1N5",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/(WME26MK1N5)_-_SP_Teoria_i_praktyka_ksztalcenia_i_egzaminowania_kierowcow.htm",
     "start_year": 2026,
     "faculty": "WIM"
   },
@@ -3327,6 +3499,34 @@
     "id": "WME26TX5S1",
     "name": "WME26TX5S1",
     "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/WME26TX5S1.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26XD1S6",
+    "name": "WME26XD1S6",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/(WME26XD1S6)_Kurs_-_Zastosowanie_technologii_wytwarzania_przyrostowego_-_druku_3D_w_SZ.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26XD2S6",
+    "name": "WME26XD2S6",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/(WME26XD2S6)_Kurs_-_Zastosowanie_technologii_wytwarzania_przyrostowego_-_druku_3D_w_SZ.htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26XO1S6",
+    "name": "WME26XO1S6",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/(WME26XO1S6)_Kurs_-_Organizacja_szkol._techniczno-inzynieryjnego_w_wojskach_inz._(8103104).htm",
+    "start_year": 2026,
+    "faculty": "WIM"
+  },
+  {
+    "id": "WME26XT1S6",
+    "name": "WME26XT1S6",
+    "url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/(WME26XT1S6)__Kurs_-_Taktyka_i_technika_pododzialow_wojsk_inzynieryjnych-8103044.htm",
     "start_year": 2026,
     "faculty": "WIM"
   },
