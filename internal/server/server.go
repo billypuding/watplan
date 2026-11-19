@@ -506,15 +506,27 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		"proxy":         s.updater.ProxyHost(),
 		"faculties":     s.updater.SourceStatus(),
 		"push":          s.options.Push != nil,
+		"proxy_error":   proxyErrorText(s.updater),
 		"missing_plans": s.updater.MissingPlans(),
 		"now":           time.Now().In(warsawLoc).Format(timeLayout),
 	})
 }
 
+func proxyErrorText(u *updater.Updater) string {
+	status, at := u.ProxyError()
+	if status == "" {
+		return ""
+	}
+	return status + " (" + at.In(warsawLoc).Format(timeLayout) + ")"
+}
+
 func (s *Server) writeUpdateError(w http.ResponseWriter, err error) {
 	if errors.Is(err, wat.ErrProxy) {
-		writeError(w, http.StatusBadGateway,
-			"serwer PlanWat nie może połączyć się przez skonfigurowane proxy. Pokazuję ostatni zapisany plan")
+		msg := "serwer PlanWat nie może połączyć się przez skonfigurowane proxy"
+		if status, _ := s.updater.ProxyError(); status != "" {
+			msg += " (" + status + ")"
+		}
+		writeError(w, http.StatusBadGateway, msg+". Pokazuję ostatni zapisany plan")
 		return
 	}
 	if errors.Is(err, wat.ErrBlocked) {

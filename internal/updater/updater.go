@@ -333,6 +333,13 @@ func (u *Updater) BlockedHosts() map[string]time.Time {
 	return u.fetcher.BlockedHosts()
 }
 
+func (u *Updater) ProxyError() (string, time.Time) {
+	if u == nil || u.fetcher == nil {
+		return "", time.Time{}
+	}
+	return u.fetcher.ProxyError()
+}
+
 func (u *Updater) ProxyHost() string {
 	if u == nil || u.fetcher == nil {
 		return ""

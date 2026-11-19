@@ -56,6 +56,28 @@ type Fetcher struct {
 	blockBackoff time.Duration
 	blockMu      sync.Mutex
 	blockedUntil map[string]time.Time
+
+	proxyMu    sync.Mutex
+	proxyError string
+	proxyAt    time.Time
+	proxyUntil time.Time
+}
+
+const proxyPause = 30 * time.Minute
+
+func (f *Fetcher) proxyPaused() (time.Time, bool) {
+	f.proxyMu.Lock()
+	defer f.proxyMu.Unlock()
+	if f.proxyURL == nil || time.Now().After(f.proxyUntil) {
+		return time.Time{}, false
+	}
+	return f.proxyUntil, true
+}
+
+func (f *Fetcher) ProxyError() (string, time.Time) {
+	f.proxyMu.Lock()
+	defer f.proxyMu.Unlock()
+	return f.proxyError, f.proxyAt
 }
 
 const defaultBlockBackoff = time.Hour
@@ -181,12 +203,19 @@ func (f *Fetcher) FetchHTML(targetUrl string) ([]byte, error) {
 }
 
 func (f *Fetcher) Blocked(targetUrl string) bool {
+	if _, paused := f.proxyPaused(); paused {
+		return true
+	}
 	_, blocked := f.hostBlocked(hostOf(targetUrl))
 	return blocked
 }
 
 func (f *Fetcher) FetchPage(targetUrl string, prev Validators) ([]byte, Validators, error) {
 	host := hostOf(targetUrl)
+	if until, paused := f.proxyPaused(); paused {
+		status, _ := f.ProxyError()
+		return nil, Validators{}, fmt.Errorf("%w: %s %s (pobieranie wstrzymane do %s)", ErrProxy, f.proxyURL.Host, status, until.Format("15:04"))
+	}
 	if until, blocked := f.hostBlocked(host); blocked {
 		return nil, Validators{}, fmt.Errorf("%w (%s wstrzymane do %s)", ErrBlocked, host, until.Format("15:04"))
 	}
@@ -298,11 +327,22 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators) (fetched, error) 
 	resp, err := f.client.Do(req)
 	if err != nil {
 		if status, ok := f.proxyRejection(err); ok {
+			f.proxyMu.Lock()
+			f.proxyError, f.proxyAt = status, time.Now()
+			f.proxyUntil = time.Now().Add(proxyPause)
+			f.proxyMu.Unlock()
+			log.Printf("proxy %s odrzuciło połączenie: %s - wstrzymuję pobieranie do %s", f.proxyURL.Host, status, time.Now().Add(proxyPause).Format("15:04"))
 			return fetched{}, fmt.Errorf("%w: %s %s - sprawdź konto u dostawcy proxy albo usuń PLANWAT_PROXY", ErrProxy, f.proxyURL.Host, status)
 		}
 		return fetched{}, err
 	}
 	defer resp.Body.Close()
+
+	if f.proxyURL != nil {
+		f.proxyMu.Lock()
+		f.proxyError = ""
+		f.proxyMu.Unlock()
+	}
 
 	if resp.StatusCode == http.StatusNotModified && !prev.empty() {
 		return fetched{validators: prev}, ErrNotModified

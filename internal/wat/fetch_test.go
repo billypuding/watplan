@@ -115,3 +115,33 @@ func TestProxyRejectionIsNotRetried(t *testing.T) {
 		t.Error("ProxyHost pusty mimo ustawionego PLANWAT_PROXY")
 	}
 }
+
+func TestProxyRejectionPausesAllFetching(t *testing.T) {
+	var hits atomic.Int64
+	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.WriteHeader(http.StatusPaymentRequired)
+	}))
+	t.Cleanup(proxy.Close)
+
+	t.Setenv("PLANWAT_PROXY", proxy.URL)
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	f, err := NewFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _ = f.FetchHTML("https://wml.wat.edu.pl/plan.htm")
+	_, err = f.FetchHTML("https://wel.wat.edu.pl/inny.htm")
+	if !errors.Is(err, ErrProxy) || !strings.Contains(err.Error(), "402") {
+		t.Fatalf("drugie pobranie: %v", err)
+	}
+	if hits.Load() != 1 {
+		t.Fatalf("zapytań do proxy %d, chcę 1 (pauza po 402)", hits.Load())
+	}
+	if !f.Blocked("https://wcy.wat.edu.pl/x") {
+		t.Fatal("Blocked powinno zwracać true w czasie pauzy proxy")
+	}
+	if status, _ := f.ProxyError(); !strings.Contains(status, "402") {
+		t.Fatalf("ProxyError = %q", status)
+	}
+}
