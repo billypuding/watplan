@@ -19,7 +19,7 @@
 <meta name="apple-mobile-web-app-title" content="WATplan">
 <link rel="preload" href="/fonts/geist-latin.woff2?v=1" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/geist-latin-ext.woff2?v=1" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/style.css?v=12">
+<link rel="stylesheet" href="/style.css?v=13">
 <script src="/theme.js"></script>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="20fefe3e-d94a-4560-9026-171fd09c2730"></script>
 </head>
@@ -104,10 +104,26 @@
     <label class="switch"><input type="checkbox" id="optDimPast"><span>Przyciemnij zajęcia, które już się skończyły</span></label>
   </section>
 
-  <section class="setting">
+  <section class="setting cal">
     <h3>Plan w kalendarzu</h3>
-    <p class="hint">Plik .ics zaimportujesz do Google Calendar, Apple Calendar i Outlooka.</p>
-    <button id="downloadIcs" class="primary-btn" type="button">Pobierz plan (.ics)</button>
+    <p class="hint">Subskrypcja sama się aktualizuje, gdy WAT zmieni plan.</p>
+    <div class="cal-actions">
+      <a id="calApple" class="cal-btn" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <span>iPhone i Mac</span>
+      </a>
+      <a id="calGoogle" class="cal-btn" href="#" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 12h-8"/></svg>
+        <span>Google</span>
+      </a>
+      <button id="calCopy" class="cal-btn" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg>
+        <span>Kopiuj link</span>
+      </button>
+    </div>
+    <label class="switch"><input type="checkbox" id="calAlarm"><span>Przypomnienie 15 min przed zajęciami</span></label>
+    <p class="hint">Google Calendar sprawdza zmiany co kilka godzin. Link z „Kopiuj link” wkleisz w Outlooku i innych kalendarzach.</p>
+    <button id="downloadIcs" class="ghost-btn" type="button">Pobierz jednorazowo plik .ics</button>
   </section>
 
   <section class="setting status">
@@ -131,6 +147,6 @@
 </dialog>
 
 <script defer src="/groups.js?v=2"></script>
-<script defer src="/app.js?v=10"></script>
+<script defer src="/app.js?v=11"></script>
 </body>
 </html>

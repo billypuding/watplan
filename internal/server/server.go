@@ -2,7 +2,9 @@ package server
 
 import (
 	"compress/gzip"
+	"crypto/sha1"
 	"embed"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -17,6 +19,7 @@ import (
 	"time"
 
 	"github.com/billypuding/watplan/internal/config"
+	"github.com/billypuding/watplan/internal/model"
 	"github.com/billypuding/watplan/internal/store"
 	"github.com/billypuding/watplan/internal/updater"
 	"github.com/billypuding/watplan/internal/wat"
@@ -90,6 +93,7 @@ func (s *Server) Handler() (http.Handler, error) {
 	mux.HandleFunc("/api/plan/", withGzip(s.handlePlan))
 	mux.HandleFunc("/api/refresh", s.handleRefresh)
 	mux.HandleFunc("/api/status", s.handleStatus)
+	mux.HandleFunc("/cal/", withGzip(s.handleCalendar))
 
 	appPage, err := fs.ReadFile(static, "app.html")
 	if err != nil {
@@ -186,19 +190,30 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data, ok := s.planData(w, plan)
+	if !ok {
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
+}
+
+func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig) ([]byte, bool) {
+	id := plan.ID
 	data, err := s.store.Raw(id)
 	if errors.Is(err, fs.ErrNotExist) && s.options.OnDemand && s.updater != nil {
 		log.Printf("plan %s: brak w cache, pobieram na żądanie", id)
 		if updateErr := s.updater.Ensure(plan); updateErr != nil {
 			log.Printf("pobieranie planu %s na żądanie: %v", id, updateErr)
 			s.writeUpdateError(w, updateErr)
-			return
+			return nil, false
 		}
 		data, err = s.store.Raw(id)
 	}
 	if errors.Is(err, fs.ErrNotExist) {
 		writeError(w, http.StatusServiceUnavailable, "plan nie został jeszcze pobrany")
-		return
+		return nil, false
 	}
 	if err == nil && s.options.OnDemand && s.updater != nil {
 		if done := s.refreshIfStale(plan); done != nil {
@@ -214,11 +229,83 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("odczyt planu %s: %v", id, err)
 		writeError(w, http.StatusInternalServerError, "błąd odczytu planu")
+		return nil, false
+	}
+	return data, true
+}
+
+func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		writeError(w, http.StatusMethodNotAllowed, "wymagana metoda GET")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+	name := strings.TrimPrefix(r.URL.Path, "/cal/")
+	id, ok := strings.CutSuffix(name, ".ics")
+	if !ok {
+		writeError(w, http.StatusNotFound, "nie znaleziono kalendarza")
+		return
+	}
+	plan, ok := s.registry.Get(id)
+	if !ok {
+		writeError(w, http.StatusNotFound, "nie znaleziono planu")
+		return
+	}
+
+	alarm := 0
+	if v := r.URL.Query().Get("alarm"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 0 || n > 1440 {
+			writeError(w, http.StatusBadRequest, "parametr 'alarm' to liczba minut od 0 do 1440")
+			return
+		}
+		alarm = n
+	}
+
+	data, ok := s.planData(w, plan)
+	if !ok {
+		return
+	}
+	var stored model.Plan
+	if err := json.Unmarshal(data, &stored); err != nil {
+		log.Printf("odczyt planu %s: %v", id, err)
+		writeError(w, http.StatusInternalServerError, "błąd odczytu planu")
+		return
+	}
+
+	stamp, err := time.ParseInLocation(timeLayout, stored.ModifiedAt, warsawLoc)
+	if err != nil {
+		stamp = time.Now()
+	}
+	body := buildICS(plan, stored.Events, icsOptions{alarm: alarm, baseURL: s.baseURL(r), stamp: stamp})
+
+	sum := sha1.Sum(body)
+	etag := `"` + hex.EncodeToString(sum[:10]) + `"`
+	w.Header().Set("ETag", etag)
+	w.Header().Set("Cache-Control", "public, max-age=900")
+	if r.Header.Get("If-None-Match") == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
+	if r.URL.Query().Has("download") {
+		w.Header().Set("Content-Disposition", `attachment; filename="plan-`+plan.ID+`.ics"`)
+	}
+	if r.Method == http.MethodHead {
+		return
+	}
+	w.Write(body)
+}
+
+func (s *Server) baseURL(r *http.Request) string {
+	if s.options.CanonicalHost != "" {
+		return "https://" + s.options.CanonicalHost
+	}
+	scheme := "http"
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+	return scheme + "://" + r.Host
 }
 
 func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {

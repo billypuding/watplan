@@ -48,7 +48,7 @@ self.addEventListener('fetch', (event) => {
     if (request.method !== 'GET') return;
     const url = new URL(request.url);
     if (url.origin !== self.location.origin) return;
-    if (url.pathname.startsWith('/api/') || url.pathname === '/sw.js') return;
+    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/cal/') || url.pathname === '/sw.js') return;
 
     if (request.mode === 'navigate') {
         const key = shellKey(url);

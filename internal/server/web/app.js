@@ -60,7 +60,7 @@ let noticeTimer = null;
 let status = 'idle';
 let statusMessage = '';
 
-const defaults = { v: SETTINGS_VERSION, theme: 'auto', view: 'agenda', live: true, dimPast: true };
+const defaults = { v: SETTINGS_VERSION, theme: 'auto', view: 'agenda', live: true, dimPast: true, calAlarm: false };
 
 function loadSettings() {
     let stored = {};
@@ -919,54 +919,55 @@ async function refreshServer() {
 }
 refreshButton.addEventListener('click', refreshServer);
 
-function icsEscape(text) {
-    return String(text).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
-}
-const icsTime = (date, time) => date.replace(/-/g, '') + 'T' + time.replace(':', '') + '00';
+const calApple = $('calApple');
+const calGoogle = $('calGoogle');
+const calCopy = $('calCopy');
+const calAlarm = $('calAlarm');
 
-function buildICS() {
-    const planName = (allPlans.find(p => p.id === currentPlanId) || {}).name || currentPlanId;
-    const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
-    const lines = [
-        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//WATplan//PL', 'CALSCALE:GREGORIAN',
-        'X-WR-CALNAME:' + icsEscape('WAT ' + planName), 'X-WR-TIMEZONE:Europe/Warsaw',
-        'BEGIN:VTIMEZONE', 'TZID:Europe/Warsaw',
-        'BEGIN:STANDARD', 'DTSTART:19701025T030000', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
-        'BEGIN:DAYLIGHT', 'DTSTART:19700329T020000', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
-        'END:VTIMEZONE',
-    ];
-    allEvents.forEach((e, i) => {
-        lines.push(
-            'BEGIN:VEVENT',
-            `UID:${currentPlanId}-${e.date}-${e.start.replace(':', '')}-${i}@watplan`,
-            `DTSTAMP:${stamp}`,
-            `DTSTART;TZID=Europe/Warsaw:${icsTime(e.date, e.start)}`,
-            `DTEND;TZID=Europe/Warsaw:${icsTime(e.date, e.end)}`,
-            'SUMMARY:' + icsEscape(e.subject + (e.type ? ` (${e.type})` : '')),
-        );
-        if (e.room) lines.push('LOCATION:' + icsEscape('Sala ' + e.room));
-        if (e.teacher) lines.push('DESCRIPTION:' + icsEscape(e.teacher));
-        lines.push('END:VEVENT');
-    });
-    lines.push('END:VCALENDAR');
-    return lines.join('\r\n') + '\r\n';
+function calendarURL() {
+    const path = `/cal/${encodeURIComponent(currentPlanId)}.ics` + (settings.calAlarm ? '?alarm=15' : '');
+    return window.location.origin + path;
 }
+
+function syncCalendar() {
+    calAlarm.checked = settings.calAlarm;
+    const ready = !!currentPlanId;
+    for (const el of [calApple, calGoogle, calCopy, downloadIcsBtn]) el.toggleAttribute('aria-disabled', !ready);
+    if (!ready) return;
+    const webcal = calendarURL().replace(/^https?:/, 'webcal:');
+    calApple.href = webcal;
+    calGoogle.href = 'https://calendar.google.com/calendar/render?cid=' + encodeURIComponent(webcal);
+}
+
+function needPlan(e) {
+    if (currentPlanId) return false;
+    if (e) e.preventDefault();
+    setNotice('Najpierw wybierz grupę z planem', true);
+    return true;
+}
+
+calApple.addEventListener('click', needPlan);
+calGoogle.addEventListener('click', needPlan);
+calAlarm.addEventListener('change', () => { settings.calAlarm = calAlarm.checked; saveSettings(); syncCalendar(); });
+
+calCopy.addEventListener('click', async () => {
+    if (needPlan()) return;
+    const link = calendarURL();
+    try {
+        await navigator.clipboard.writeText(link);
+        setNotice('Skopiowano link do kalendarza', false);
+    } catch (_) {
+        window.prompt('Skopiuj link do kalendarza:', link);
+    }
+});
 
 downloadIcsBtn.addEventListener('click', () => {
-    if (!currentPlanId || allEvents.length === 0) {
-        setNotice('Najpierw wybierz grupę z planem', true);
-        return;
-    }
-    const blob = new Blob([buildICS()], { type: 'text/calendar;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `plan-${currentPlanId}.ics`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(link.href);
-    setNotice('Pobrano plan w formacie .ics', false);
+    if (needPlan()) return;
+    const url = calendarURL();
+    window.location.href = url + (url.includes('?') ? '&' : '?') + 'download=1';
 });
+
+settingsBtn.addEventListener('click', syncCalendar);
 
 loadPlans();
 

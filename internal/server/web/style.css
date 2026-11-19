@@ -313,6 +313,12 @@ dialog::backdrop { background: var(--scrim); }
 .switch input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
 
 .primary-btn { height: 46px; padding: 0 18px; border-radius: 23px; background: var(--accent); color: var(--accent-ink); font-weight: 650; }
+.cal-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 4px; }
+.cal-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 68px; padding: 10px 6px; border-radius: 14px; background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 13.5px; text-align: center; text-decoration: none; line-height: 1.2; }
+.cal-btn:hover { background: color-mix(in srgb, var(--surface-2) 80%, var(--text)); }
+.cal-btn[aria-disabled] { opacity: .5; }
+.cal .hint:last-of-type { margin-top: 2px; font-size: 13px; }
+.cal .ghost-btn { margin-top: 2px; }
 .ghost-btn { height: 44px; padding: 0 16px; border-radius: 22px; background: var(--surface-2); font-weight: 600; }
 .status { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); }
 .status b { color: var(--text); }
