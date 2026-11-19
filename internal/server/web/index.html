@@ -26,7 +26,7 @@
 <meta name="apple-mobile-web-app-title" content="WATplan">
 <link rel="preload" href="/fonts/geist-latin.woff2?v=1" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/geist-latin-ext.woff2?v=1" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/landing.css?v=3">
+<link rel="stylesheet" href="/landing.css?v=5">
 <script defer src="https://cloud.umami.is/script.js" data-website-id="20fefe3e-d94a-4560-9026-171fd09c2730"></script>
 </head>
 <body data-app="/app">
@@ -49,7 +49,13 @@
         <div id="group-results" class="group-results" hidden></div>
       </form>
       <div class="tools">
-        <button type="button" class="tool" data-refresh><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66"/><path d="M20 4v7h-7"/></svg><span>Odśwież listę grup</span></button>
+        <div class="tools-left">
+          <button type="button" class="tool" data-refresh><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66"/><path d="M20 4v7h-7"/></svg><span>Odśwież<span class="tool-long"> listę grup</span></span></button>
+          <div class="sem-pick" role="group" aria-label="Semestr" data-sem-pick>
+            <button type="button" data-semester="zima">Zimowy</button>
+            <button type="button" data-semester="lato">Letni</button>
+          </div>
+        </div>
         <span class="tool-status" data-refresh-status aria-live="polite"></span>
       </div>
       <section class="tab" aria-labelledby="fav-h">
@@ -76,6 +82,6 @@
 </div>
 
 <script defer src="/groups.js?v=2"></script>
-<script defer src="/landing.js?v=8"></script>
+<script defer src="/landing.js?v=9"></script>
 </body>
 </html>

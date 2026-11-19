@@ -69,6 +69,25 @@
         }
     });
 
+    const semPick = document.querySelector('[data-sem-pick]');
+    if (semPick) {
+        const readSettings = () => { try { return JSON.parse(localStorage.getItem('settings') || '{}') || {}; } catch (_) { return {}; } };
+        const summerStart = (year) => { const d = new Date(year, 1, 22); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; };
+        const today = new Date();
+        const fallback = today.getMonth() >= 7 || today < summerStart(today.getFullYear()) ? 'zima' : 'lato';
+        const current = () => { const v = readSettings().semester; return v === 'zima' || v === 'lato' ? v : fallback; };
+        const sync = () => semPick.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.semester === current())));
+        semPick.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-semester]');
+            if (!btn) return;
+            const settings = readSettings();
+            settings.semester = btn.dataset.semester === fallback ? 'auto' : btn.dataset.semester;
+            try { localStorage.setItem('settings', JSON.stringify(settings)); } catch (_) { }
+            sync();
+        });
+        sync();
+    }
+
     const status = document.querySelector('[data-refresh-status]');
     const refresh = document.querySelector('[data-refresh]');
     const groupsWord = (n) => `${n} ${plural(n, 'grupa', 'grupy', 'grup')}`;

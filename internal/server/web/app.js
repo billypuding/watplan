@@ -455,23 +455,6 @@ function renderSubjects() {
     }));
 }
 
-function semesterSwitch() {
-    const sem = currentSemester();
-    return h('div', { class: 'sem-switch segmented', role: 'group', 'aria-label': 'Semestr' },
-        [['zima', 'Zimowy'], ['lato', 'Letni']].map(([value, label]) => h('button', {
-            type: 'button', 'aria-pressed': String(sem === value), onclick: () => setSemester(value),
-        }, label)));
-}
-
-function setSemester(value) {
-    if (currentSemester() === value) return;
-    settings.semester = value === semesterOf(todayISO()) ? 'auto' : value;
-    saveSettings();
-    indexEvents(planEvents);
-    selectedDate = pickInitialDate();
-    render();
-}
-
 function pickInitialDate() {
     if (allEvents.length === 0) return todayISO();
     const today = todayISO();
@@ -694,8 +677,7 @@ function render() {
             h('b', null, currentSemester() === 'lato' ? 'Brak planu na semestr letni' : 'Brak planu na semestr zimowy'),
             planEvents.length ? `Wydział nie opublikował jeszcze tego planu. WATplan doda go sam, gdy pojawi się na stronie WAT.` : 'Brak zajęć w planie.',
             planEvents.length ? h('br') : null,
-            planEvents.length ? h('button', { type: 'button', class: 'link-btn', onclick: () => setSemester(currentSemester() === 'lato' ? 'zima' : 'lato') }, `Pokaż semestr ${other}`) : null));
-        view.prepend(semesterSwitch());
+            planEvents.length ? h('a', { class: 'link-btn', href: '/?landing' }, `Wybierz semestr ${other} na stronie głównej`) : null));
         return;
     }
     if (!selectedDate) selectedDate = pickInitialDate();
@@ -703,7 +685,6 @@ function render() {
     if (currentView() === 'week') renderWeek();
     else if (currentView() === 'month') renderMonth();
     else renderAgenda();
-    view.prepend(semesterSwitch());
     placeChangeChip();
     tickLive();
 }

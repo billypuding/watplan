@@ -93,14 +93,19 @@ test('ukrycie przedmiotu usuwa go z planu i z linku kalendarza', { skip }, async
     assert.ok(decodeURIComponent(href.replace(/\+/g, ' ')).includes(`hide=${subject}`));
 });
 
-test('przełącznik semestru: letni jest pusty, zimowy wraca', { skip }, async () => {
+test('wybór semestru na stronie głównej przełącza plan', { skip }, async () => {
+    await page.goto(server.base + '/?landing');
+    await page.waitFor(`!!document.querySelector('[data-sem-pick] [aria-pressed="true"]')`);
+    assert.equal(await page.eval(`document.querySelector('[data-sem-pick] [aria-pressed="true"]').textContent`), 'Zimowy');
+    await page.click('[data-sem-pick] [data-semester="lato"]');
     await page.goto(app('&view=day'));
-    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
-    assert.equal(await page.eval(`document.querySelector('.sem-switch [aria-pressed="true"]').textContent`), 'Zimowy');
-    await page.eval(`document.querySelectorAll('.sem-switch button')[1].click(); true`);
     await page.waitFor(`document.querySelector('.empty-day b')?.textContent === 'Brak planu na semestr letni'`);
     assert.equal(await page.eval(`document.querySelectorAll('.ev-card').length`), 0);
-    await page.eval(`[...document.querySelectorAll('.empty-day .link-btn')].pop().click(); true`);
+    assert.equal(await page.eval(`!!document.querySelector('.sem-switch')`), false);
+    await page.goto(server.base + '/?landing');
+    await page.waitFor(`document.querySelector('[data-sem-pick] [data-semester="lato"]')?.getAttribute('aria-pressed') === 'true'`);
+    await page.click('[data-sem-pick] [data-semester="zima"]');
+    await page.goto(app('&view=day'));
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
 });
 
