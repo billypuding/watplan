@@ -20,7 +20,7 @@
 <meta name="apple-mobile-web-app-title" content="WATplan">
 <link rel="preload" href="/fonts/geist-latin.woff2?v=1" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/geist-latin-ext.woff2?v=1" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/style.css?v=17">
+<link rel="stylesheet" href="/style.css?v=18">
 <script src="/theme.js"></script>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="20fefe3e-d94a-4560-9026-171fd09c2730"></script>
 </head>
@@ -35,6 +35,9 @@
       <button id="todayBtn" class="today-btn hidden" type="button">Dziś</button>
       <button id="refreshButton" class="round-btn" type="button" aria-label="Odśwież plan" title="Odśwież plan">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg>
+      </button>
+      <button id="toolsBtn" class="round-btn" type="button" aria-label="Narzędzia" title="Narzędzia" aria-haspopup="dialog">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>
       </button>
       <button id="settingsBtn" class="round-btn" type="button" aria-label="Ustawienia" title="Ustawienia" aria-haspopup="dialog">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
@@ -55,6 +58,7 @@
 </div>
 
 <div id="notice" class="notice" role="status"></div>
+<div id="printArea" class="print-area" aria-hidden="true"></div>
 <button id="changeChip" class="change-chip hidden" type="button"></button>
 
 <dialog id="groupModal" class="sheet">
@@ -164,6 +168,62 @@
   <div id="seriesBody" class="series-body"></div>
 </dialog>
 
+<dialog id="toolsModal" class="sheet">
+  <div class="sheet-head">
+    <h2>Narzędzia</h2>
+    <button class="round-btn" type="button" data-close aria-label="Zamknij">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="tool-list">
+    <button class="tool-item" type="button" data-tool="rooms"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M2 21h20"/><path d="M13 12h.01"/><path d="M16 9h2a2 2 0 0 1 2 2v10"/></svg><span><b>Wolne sale</b><small>Sale bez zajęć w wybranym bloku</small></span></button>
+    <button class="tool-item" type="button" data-tool="compare"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="7" height="16" rx="2"/><rect x="14" y="4" width="7" height="16" rx="2"/></svg><span><b>Porównaj grupy</b><small>Plany obok siebie i wspólny wolny czas</small></span></button>
+    <button class="tool-item" type="button" data-tool="changes"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v4l3 2"/><path d="M3.05 11a9 9 0 1 1 .5 4"/><path d="M3 4v5h5"/></svg><span><b>Historia zmian</b><small>Przeniesione, odwołane i nowe zajęcia</small></span></button>
+    <button class="tool-item" type="button" data-tool="print"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg><span><b>Miesiąc do PDF</b><small>Zapisz albo wydrukuj plan miesiąca</small></span></button>
+  </div>
+</dialog>
+
+<dialog id="roomsModal" class="fullscreen">
+  <div class="series-head">
+    <button class="round-btn" type="button" data-close aria-label="Wróć">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div class="series-title">
+      <h2>Wolne sale</h2>
+      <p id="roomsSub"></p>
+    </div>
+  </div>
+  <div class="series-body">
+    <div class="tool-filters">
+      <label><span>Dzień</span><input type="date" id="roomsDate"></label>
+      <label><span>Blok</span><select id="roomsSlot"></select></label>
+      <label><span>Budynek</span><select id="roomsBuilding"><option value="">Wszystkie</option></select></label>
+    </div>
+    <div id="roomsBody"></div>
+    <p class="hint tool-note">Na podstawie planów wszystkich grup w WATplan. Sala może być zajęta przez wydarzenia spoza planów, np. egzaminy albo konsultacje.</p>
+  </div>
+</dialog>
+
+<dialog id="compareModal" class="fullscreen">
+  <div class="series-head">
+    <button class="round-btn" type="button" data-close aria-label="Wróć">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div class="series-title">
+      <h2>Porównaj grupy</h2>
+      <p id="compareSub">Do 4 grup obok siebie</p>
+    </div>
+  </div>
+  <div class="series-body compare-body">
+    <div id="compareGroups" class="compare-groups"></div>
+    <div class="compare-add">
+      <input type="search" id="compareSearch" placeholder="Dodaj grupę, np. WEL26EY4S0" autocomplete="off" autocapitalize="characters" aria-label="Dodaj grupę do porównania">
+      <div id="compareResults" class="compare-results"></div>
+    </div>
+    <div id="compareBody"></div>
+  </div>
+</dialog>
+
 <dialog id="weekModal" class="sheet">
   <div class="sheet-head">
     <h2>Wybierz tydzień</h2>
@@ -194,6 +254,6 @@
 </dialog>
 
 <script defer src="/groups.js?v=2"></script>
-<script defer src="/app.js?v=15"></script>
+<script defer src="/app.js?v=16"></script>
 </body>
 </html>

@@ -378,3 +378,35 @@ func TestUpdateRecordsChangeHistoryAndNotifies(t *testing.T) {
 		t.Fatalf("plan bez zmian dopisał historię: %d wpisów", len(h))
 	}
 }
+
+func TestStaleBaselineRecordsHistoryWithoutNotifying(t *testing.T) {
+	var body atomic.Value
+	body.Store(planHTML(10))
+	u, st, cfg := newTestUpdater(t, &body)
+	now := time.Date(2026, 1, 20, 12, 0, 0, 0, time.UTC)
+	u.clock = func() time.Time { return now }
+	var notified atomic.Int64
+	u.OnChange(func(config.PlanConfig, model.Change) { notified.Add(1) })
+
+	if err := u.Update(cfg); err != nil {
+		t.Fatal(err)
+	}
+	plan := loadPlan(t, st, cfg.ID)
+	plan.FetchedAt = "2026-01-10 08:00:00"
+	if err := st.Save(cfg.ID, plan); err != nil {
+		t.Fatal(err)
+	}
+
+	body.Store(planHTML(9))
+	if err := u.Update(cfg); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(50 * time.Millisecond)
+	h, _ := st.History(cfg.ID)
+	if len(h) != 1 || h[0].Since != "2026-01-10 08:00:00" {
+		t.Fatalf("historia %+v", h)
+	}
+	if notified.Load() != 0 {
+		t.Fatal("powiadomienie o zmianie względem starej wersji planu")
+	}
+}

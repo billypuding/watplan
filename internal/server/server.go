@@ -64,6 +64,7 @@ type Server struct {
 	mu          sync.Mutex
 	lastRefresh map[string]time.Time
 	lastStale   map[string]time.Time
+	rooms       roomsCache
 }
 
 func NewServer(registry *config.Registry, store *store.Store, updater *updater.Updater, options Options) *Server {
@@ -97,6 +98,7 @@ func (s *Server) Handler() (http.Handler, error) {
 	mux.HandleFunc("/api/refresh", s.handleRefresh)
 	mux.HandleFunc("/api/status", s.handleStatus)
 	mux.HandleFunc("/api/changes/", withGzip(s.handleChanges))
+	mux.HandleFunc("/api/rooms", withGzip(s.handleRooms))
 	mux.HandleFunc("/api/push/key", s.handlePushKey)
 	mux.HandleFunc("/api/push/subscribe", s.handlePushSubscribe)
 	mux.HandleFunc("/api/push/unsubscribe", s.handlePushUnsubscribe)

@@ -12,6 +12,7 @@ type EventChange struct {
 
 type Change struct {
 	At      string        `json:"at"`
+	Since   string        `json:"since,omitempty"`
 	Added   []Event       `json:"added,omitempty"`
 	Removed []Event       `json:"removed,omitempty"`
 	Moved   []EventChange `json:"moved,omitempty"`

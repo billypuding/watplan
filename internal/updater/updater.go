@@ -51,7 +51,10 @@ type Updater struct {
 	clock    func() time.Time
 }
 
-const historyKeep = 40
+const (
+	historyKeep = 40
+	freshBase   = 36 * time.Hour
+)
 
 func (u *Updater) OnChange(fn func(config.PlanConfig, model.Change)) {
 	u.onChange = fn
@@ -286,6 +289,7 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 		}
 		today := clock().In(warsawLoc).Format("2006-01-02")
 		change = model.Changes(old.Events, events, today, now)
+		change.Since = old.FetchedAt
 	}
 
 	plan := model.Plan{Events: events, FetchedAt: now, ModifiedAt: modifiedAt, ETag: got.ETag, LastMod: got.LastModified}
@@ -296,11 +300,25 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 		if err := u.store.AddHistory(cfg.ID, change, historyKeep); err != nil {
 			log.Printf("plan %s: zapis historii zmian: %v", cfg.ID, err)
 		}
-		if u.onChange != nil {
+		if u.onChange != nil && u.freshBaseline(old.FetchedAt) {
 			go u.onChange(cfg, change)
+		} else if u.onChange != nil {
+			log.Printf("plan %s: zmiany względem starej wersji z %s, bez powiadomienia", cfg.ID, old.FetchedAt)
 		}
 	}
 	return updateResult{events: len(events)}, nil
+}
+
+func (u *Updater) freshBaseline(fetchedAt string) bool {
+	at, err := time.ParseInLocation(timeLayout, fetchedAt, warsawLoc)
+	if err != nil {
+		return false
+	}
+	clock := u.clock
+	if clock == nil {
+		clock = time.Now
+	}
+	return clock().Sub(at) < freshBase
 }
 
 func suspiciousDrop(oldCount, newCount int) bool {
