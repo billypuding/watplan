@@ -222,11 +222,11 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 	}
 
 	var prev wat.Validators
-	if len(old.Events) > 0 && old.DropStreak == 0 {
+	if len(old.Events) > 0 && old.DropStreak == 0 && len(cfg.Extra) == 0 {
 		prev = wat.Validators{ETag: old.ETag, LastModified: old.LastMod}
 	}
 
-	body, got, err := u.fetcher.FetchPage(cfg.URL, prev)
+	events, got, err := u.fetchEvents(cfg, prev)
 	if errors.Is(err, wat.ErrNotModified) {
 		old.FetchedAt = time.Now().In(warsawLoc).Format(timeLayout)
 		if err := u.store.Save(cfg.ID, old); err != nil {
@@ -235,12 +235,7 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 		return updateResult{events: len(old.Events), unchanged: true}, nil
 	}
 	if err != nil {
-		return updateResult{}, fmt.Errorf("pobieranie: %w", err)
-	}
-
-	events, err := wat.Parse(cfg.Format, bytes.NewReader(body), cfg.StartYear)
-	if err != nil {
-		return updateResult{}, fmt.Errorf("parsowanie: %w", err)
+		return updateResult{}, err
 	}
 
 	if len(events) == 0 {
@@ -307,6 +302,60 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 		}
 	}
 	return updateResult{events: len(events)}, nil
+}
+
+func (u *Updater) fetchEvents(cfg config.PlanConfig, prev wat.Validators) ([]model.Event, wat.Validators, error) {
+	body, got, err := u.fetcher.FetchPage(cfg.URL, prev)
+	if errors.Is(err, wat.ErrNotModified) {
+		return nil, got, err
+	}
+	var events []model.Event
+	switch {
+	case err == nil:
+		events, err = wat.Parse(cfg.Format, bytes.NewReader(body), cfg.StartYear)
+		if err != nil {
+			return nil, got, fmt.Errorf("parsowanie: %w", err)
+		}
+	case errors.Is(err, wat.ErrGone) && len(cfg.Extra) > 0:
+	default:
+		return nil, got, fmt.Errorf("pobieranie: %w", err)
+	}
+	if len(cfg.Extra) == 0 {
+		return events, got, nil
+	}
+
+	for _, src := range cfg.Extra {
+		body, _, err := u.fetcher.FetchPage(src.URL, wat.Validators{})
+		if errors.Is(err, wat.ErrGone) {
+			continue
+		}
+		if err != nil {
+			return nil, wat.Validators{}, fmt.Errorf("pobieranie %s: %w", src.URL, err)
+		}
+		format, year := src.Format, src.StartYear
+		if format == "" {
+			format = cfg.Format
+		}
+		if year == 0 {
+			year = cfg.StartYear
+		}
+		more, err := wat.Parse(format, bytes.NewReader(body), year)
+		if err != nil {
+			return nil, wat.Validators{}, fmt.Errorf("parsowanie %s: %w", src.URL, err)
+		}
+		events = append(events, more...)
+	}
+
+	seen := make(map[model.Event]bool, len(events))
+	unique := events[:0]
+	for _, e := range events {
+		if !seen[e] {
+			seen[e] = true
+			unique = append(unique, e)
+		}
+	}
+	model.SortEvents(unique)
+	return unique, wat.Validators{}, nil
 }
 
 func (u *Updater) freshBaseline(fetchedAt string) bool {

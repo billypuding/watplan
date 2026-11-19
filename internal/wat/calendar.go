@@ -95,7 +95,9 @@ func findDays(grid [][]Cell, legendCol, startYear int) ([]dayBlock, error) {
 				}
 				continue
 			}
-			if month < prevMonth {
+			if prevMonth == 0 && month >= time.February && month < time.August {
+				year = startYear + 1
+			} else if month < prevMonth {
 				year++
 			}
 			prevMonth = month

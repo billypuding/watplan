@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"sort"
 	"time"
 
 	"github.com/billypuding/watplan/internal/config"
@@ -78,11 +77,29 @@ func (u *Updater) recordSource(faculty string, st FacultyStatus) {
 	if u.sources == nil {
 		u.sources = make(map[string]FacultyStatus)
 	}
+	if prev, ok := u.sources[faculty]; ok && st.Error != "" && prev.Error == "" && prev.Checked == st.Checked {
+		return
+	}
+	if prev, ok := u.sources[faculty]; ok && st.Error == "" && prev.Error == "" && prev.Checked == st.Checked {
+		st.Groups += prev.Groups
+		st.New += prev.New
+	}
 	u.sources[faculty] = st
+}
+
+func sourceKey(src config.Source) string {
+	if src.Semester == "" {
+		return src.Faculty
+	}
+	return src.Faculty + " " + src.Semester
 }
 
 func describeDiscoveryError(src config.Source, err error) string {
 	switch {
+	case src.Optional && errors.Is(err, wat.ErrGone):
+		return "jeszcze nie opublikowano (404)"
+	case errors.Is(err, wat.ErrStaleSource):
+		return "na stronie są jeszcze plany z poprzedniego roku"
 	case errors.Is(err, wat.ErrGone):
 		return fmt.Sprintf("lista grup zniknęła (404) - wydział przeniósł plany, popraw index_url w sources.json (%s)", src.IndexURL)
 	case errors.Is(err, wat.ErrBlocked):
@@ -93,6 +110,10 @@ func describeDiscoveryError(src config.Source, err error) string {
 }
 
 func logDiscoveryError(src config.Source, err error) {
+	if (src.Optional && errors.Is(err, wat.ErrGone)) || errors.Is(err, wat.ErrStaleSource) {
+		log.Printf("discover %q: %s", sourceKey(src), describeDiscoveryError(src, err))
+		return
+	}
 	if errors.Is(err, wat.ErrGone) {
 		log.Printf("UWAGA discover %q: %s", src.Faculty, describeDiscoveryError(src, err))
 		return
@@ -132,16 +153,25 @@ func (u *Updater) checkSources(sources []config.Source, reg *config.Registry) {
 		known[p.ID] = true
 	}
 
-	var added []config.PlanConfig
+	var added, later []config.PlanConfig
 	for _, src := range sources {
 		now := time.Now().In(warsawLoc).Format(timeLayout)
 		plans, err := u.fetcher.DiscoverPlans(src)
 		if err == nil && len(plans) == 0 {
 			err = errors.New("lista grup jest pusta")
 		}
+		if err == nil && src.Semester != "" {
+			err = u.fetcher.CheckCurrent(src, plans)
+		}
 		if err != nil {
 			logDiscoveryError(src, err)
-			u.recordSource(src.Faculty, FacultyStatus{Checked: now, Error: describeDiscoveryError(src, err)})
+			u.recordSource(sourceKey(src), FacultyStatus{Checked: now, Error: describeDiscoveryError(src, err)})
+			continue
+		}
+		if src.Semester != "" {
+			later = append(later, plans...)
+			log.Printf("discover %q: %d grup na stronie wydziału", sourceKey(src), len(plans))
+			u.recordSource(sourceKey(src), FacultyStatus{Groups: len(plans), Checked: now})
 			continue
 		}
 		fresh := 0
@@ -154,21 +184,18 @@ func (u *Updater) checkSources(sources []config.Source, reg *config.Registry) {
 			fresh++
 		}
 		log.Printf("discover %q: %d grup na stronie wydziału, %d nowych", src.Faculty, len(plans), fresh)
-		u.recordSource(src.Faculty, FacultyStatus{Groups: len(plans), New: fresh, Checked: now})
+		u.recordSource(sourceKey(src), FacultyStatus{Groups: len(plans), New: fresh, Checked: now})
 	}
 
-	if len(added) == 0 {
+	if len(added) == 0 && len(later) == 0 {
 		return
 	}
-	merged := append(append([]config.PlanConfig{}, current...), added...)
-	sort.Slice(merged, func(i, j int) bool {
-		if merged[i].Faculty != merged[j].Faculty {
-			return merged[i].Faculty < merged[j].Faculty
-		}
-		return merged[i].ID < merged[j].ID
-	})
+	merged, n := config.MergeExtra(current, append(added, later...))
+	if n == 0 {
+		return
+	}
 	reg.Set(merged)
-	log.Printf("discover: dodano %d nowych grup do listy", len(added))
+	log.Printf("discover: %d nowych grup lub źródeł planów", n)
 }
 
 func (u *Updater) fillMissing(ctx context.Context, reg *config.Registry, failed map[string]time.Time, opts MaintainOptions) bool {

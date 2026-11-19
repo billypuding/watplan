@@ -18,6 +18,8 @@ type Source struct {
 	PDFLinks  bool   `json:"pdf_links,omitempty"`
 	Format    string `json:"format,omitempty"`
 	Prefix    string `json:"prefix,omitempty"`
+	Semester  string `json:"semester,omitempty"`
+	Optional  bool   `json:"optional,omitempty"`
 }
 
 func LoadSources(path string) ([]Source, error) {
@@ -94,6 +96,46 @@ func (r *Registry) Get(id string) (PlanConfig, bool) {
 		}
 	}
 	return PlanConfig{}, false
+}
+
+func MergeExtra(plans []PlanConfig, found []PlanConfig) ([]PlanConfig, int) {
+	out := append([]PlanConfig(nil), plans...)
+	index := make(map[string]int, len(out))
+	for i, p := range out {
+		index[p.ID] = i
+	}
+	added := 0
+	for _, f := range found {
+		i, ok := index[f.ID]
+		if !ok {
+			index[f.ID] = len(out)
+			out = append(out, f)
+			added++
+			continue
+		}
+		p := &out[i]
+		if p.URL == f.URL {
+			continue
+		}
+		known := false
+		for _, e := range p.Extra {
+			if e.URL == f.URL {
+				known = true
+				break
+			}
+		}
+		if !known {
+			p.Extra = append(append([]PlanSource(nil), p.Extra...), PlanSource{URL: f.URL, Format: f.Format, StartYear: f.StartYear})
+			added++
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].Faculty != out[j].Faculty {
+			return out[i].Faculty < out[j].Faculty
+		}
+		return out[i].ID < out[j].ID
+	})
+	return out, added
 }
 
 func ReplaceFaculty(plans []PlanConfig, faculty string, found []PlanConfig) []PlanConfig {

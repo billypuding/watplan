@@ -46,3 +46,15 @@ func TestTypeMarkerWithSubjectIsKept(t *testing.T) {
 		t.Fatalf("zdarzenia = %v, chcę [\"Przedmiot|inne\"]", got)
 	}
 }
+
+func TestSummerPlanGetsNextYear(t *testing.T) {
+	html := `<table><tr><td>pon.</td><td>&nbsp</td><td>22 II</td><td>01 III</td><td>&nbsp</td><td>&nbsp</td></tr>` +
+		`<tr><td>pon.</td><td>1-2</td><td>Fizyka</td><td>Fizyka</td><td>&nbsp</td><td>&nbsp</td></tr></table>`
+	events, err := ParsePlan(strings.NewReader(html), 2026)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 2 || events[0].Date != "2027-02-22" || events[1].Date != "2027-03-01" {
+		t.Fatalf("zajęcia semestru letniego: %+v", events)
+	}
+}

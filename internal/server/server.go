@@ -65,6 +65,7 @@ type Server struct {
 	lastRefresh map[string]time.Time
 	lastStale   map[string]time.Time
 	rooms       roomsCache
+	semester    semesterCache
 }
 
 func NewServer(registry *config.Registry, store *store.Store, updater *updater.Updater, options Options) *Server {
@@ -99,6 +100,7 @@ func (s *Server) Handler() (http.Handler, error) {
 	mux.HandleFunc("/api/status", s.handleStatus)
 	mux.HandleFunc("/api/changes/", withGzip(s.handleChanges))
 	mux.HandleFunc("/api/rooms", withGzip(s.handleRooms))
+	mux.HandleFunc("/api/semester", s.handleSemester)
 	mux.HandleFunc("/api/makeup", withGzip(s.handleMakeup))
 	mux.HandleFunc("/api/push/key", s.handlePushKey)
 	mux.HandleFunc("/api/push/subscribe", s.handlePushSubscribe)

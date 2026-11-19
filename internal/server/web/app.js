@@ -60,7 +60,7 @@ let noticeTimer = null;
 let status = 'idle';
 let statusMessage = '';
 
-const defaults = { v: SETTINGS_VERSION, theme: 'auto', view: 'auto', live: true, dimPast: true, calAlarm: false };
+const defaults = { v: SETTINGS_VERSION, theme: 'auto', view: 'auto', live: true, dimPast: true, calAlarm: false, semester: 'auto' };
 
 function loadSettings() {
     let stored = {};
@@ -218,7 +218,7 @@ function plural(n, one, few, many) {
     const d = n % 10, dd = n % 100;
     return d >= 2 && d <= 4 && (dd < 12 || dd > 14) ? few : many;
 }
-const classesWord = (n) => `${n} ${plural(n, 'zajęcia', 'zajęcia', 'zajęć')}`;
+const classesWord = (n) => `${n} ${plural(n, 'zajęcie', 'zajęcia', 'zajęć')}`;
 
 const hueCache = {};
 function hueOf(hex) {
@@ -309,9 +309,28 @@ const seriesKey = (e) => `${e.subject}\u0000${e.type || ''}`;
 let planEvents = [];
 let planWeeks = [];
 
+const SEMESTER_GAP_DAYS = 21;
+
+function semesterSegments() {
+    const segments = [];
+    for (const monday of planWeeks) {
+        const last = segments[segments.length - 1];
+        if (last && (parseISO(monday) - parseISO(last[last.length - 1])) / 86400000 <= SEMESTER_GAP_DAYS) last.push(monday);
+        else segments.push([monday]);
+    }
+    return segments.map(weeks => {
+        const first = parseISO(weeks[0]);
+        const winter = first.getMonth() >= 7 || first.getMonth() === 0;
+        const startYear = first.getMonth() >= 7 ? first.getFullYear() : first.getFullYear() - 1;
+        return { weeks, name: winter ? 'Semestr zimowy' : 'Semestr letni', years: `${startYear}/${String(startYear + 1).slice(2)}` };
+    });
+}
+
 function weekNumber(mondayISO) {
-    const i = planWeeks.indexOf(mondayISO);
-    if (i >= 0) return `tydzień ${i + 1}/${planWeeks.length}`;
+    for (const seg of semesterSegments()) {
+        const i = seg.weeks.indexOf(mondayISO);
+        if (i >= 0) return `tydzień ${i + 1}/${seg.weeks.length}`;
+    }
     if (!planWeeks.length) return 'tydzień bez zajęć';
     if (mondayISO < planWeeks[0]) return 'przed semestrem';
     if (mondayISO > planWeeks[planWeeks.length - 1]) return 'po semestrze';
@@ -336,25 +355,34 @@ function openWeekPicker() {
     if (!planWeeks.length) return;
     const current = mondayOf(selectedDate);
     const thisWeek = mondayOf(todayISO());
-    let month = '';
+    const segments = semesterSegments();
     const items = [];
-    planWeeks.forEach((monday, i) => {
-        const d = parseISO(monday);
-        const m = `${d.getFullYear()}-${d.getMonth()}`;
-        if (m !== month) {
-            month = m;
-            items.push(h('li', { class: 'series-month' }, `${MONTHS_NOM[d.getMonth()]} ${d.getFullYear()}`));
-        }
-        const n = weekCount(monday);
-        const cls = ['wk-pick', monday === current && 'sel', monday === thisWeek && 'now', monday < thisWeek && 'done'].filter(Boolean).join(' ');
-        items.push(h('li', null, h('button', {
-            type: 'button', class: cls, 'aria-current': monday === current ? 'true' : null,
-            onclick: () => { weekModal.close(); selectedDate = monday === thisWeek ? todayISO() : (nextDateWithEvents(addDaysISO(monday, -1), 1) || monday); render(); },
-        },
-            h('span', { class: 'idx' }, String(i + 1)),
-            h('span', { class: 'when' }, h('b', null, weekRange(monday)), h('span', null, n ? classesWord(n) : 'bez zajęć')),
-            monday === thisWeek ? h('span', { class: 'tag' }, 'Ten tydzień') : null)));
+    segments.forEach((seg, si) => {
+        if (segments.length > 1) items.push(h('li', { class: 'wk-sem', id: `wk-sem-${si}` }, `${seg.name} ${seg.years}`));
+        let month = '';
+        seg.weeks.forEach((monday, i) => {
+            const d = parseISO(monday);
+            const m = `${d.getFullYear()}-${d.getMonth()}`;
+            if (m !== month) {
+                month = m;
+                items.push(h('li', { class: 'series-month' }, `${MONTHS_NOM[d.getMonth()]} ${d.getFullYear()}`));
+            }
+            const n = weekCount(monday);
+            const cls = ['wk-pick', monday === current && 'sel', monday === thisWeek && 'now', monday < thisWeek && 'done'].filter(Boolean).join(' ');
+            items.push(h('li', null, h('button', {
+                type: 'button', class: cls, 'aria-current': monday === current ? 'true' : null,
+                onclick: () => { weekModal.close(); selectedDate = monday === thisWeek ? todayISO() : (nextDateWithEvents(addDaysISO(monday, -1), 1) || monday); render(); },
+            },
+                h('span', { class: 'idx' }, String(i + 1)),
+                h('span', { class: 'when' }, h('b', null, weekRange(monday)), h('span', null, n ? classesWord(n) : 'bez zajęć')),
+                monday === thisWeek ? h('span', { class: 'tag' }, 'Ten tydzień') : null)));
+        });
     });
+    const jump = segments.length > 1 ? h('div', { class: 'segmented wk-sem-jump' }, segments.map((seg, si) => h('button', {
+        type: 'button', 'aria-pressed': String(seg.weeks.includes(current)),
+        onclick: () => weekList.querySelector(`#wk-sem-${si}`)?.scrollIntoView({ block: 'start' }),
+    }, seg.name.replace('Semestr ', '').replace(/^./, c => c.toUpperCase())))) : null;
+    if (jump) items.unshift(h('li', null, jump));
     weekList.replaceChildren(h('ol', { class: 'wk-pick-list' }, items));
     weekModal.showModal();
     const sel = weekList.querySelector('.sel');
@@ -371,12 +399,26 @@ function setHiddenSubjects(planId, set) {
     safeSet('hiddenSubjects', JSON.stringify(all));
 }
 
+function summerStart(year) {
+    const d = new Date(year, 1, 22);
+    return toISO(addDays(d, -dayIndex(d)));
+}
+
+function semesterOf(iso) {
+    const [y, m] = iso.split('-').map(Number);
+    if (m >= 8) return 'zima';
+    return iso < summerStart(y) ? 'zima' : 'lato';
+}
+
+const currentSemester = () => settings.semester === 'zima' || settings.semester === 'lato' ? settings.semester : semesterOf(todayISO());
+
 function indexEvents(events) {
     planEvents = events;
     eventsByDate = {};
     seriesByKey = {};
     const hidden = hiddenSubjects(currentPlanId);
-    const sorted = events.slice().sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+    const semester = currentSemester();
+    const sorted = events.filter(e => semesterOf(e.date) === semester).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
     for (const e of sorted) (seriesByKey[seriesKey(e)] ||= []).push(e);
     for (const list of Object.values(seriesByKey)) {
         list.forEach((e, i) => { e._n = i + 1; e._total = list.length; });
@@ -411,6 +453,23 @@ function renderSubjects() {
         });
         return h('label', { class: 'switch subject' }, input, h('span', null, name), h('small', null, String(counts.get(name))));
     }));
+}
+
+function semesterSwitch() {
+    const sem = currentSemester();
+    return h('div', { class: 'sem-switch segmented', role: 'group', 'aria-label': 'Semestr' },
+        [['zima', 'Zimowy'], ['lato', 'Letni']].map(([value, label]) => h('button', {
+            type: 'button', 'aria-pressed': String(sem === value), onclick: () => setSemester(value),
+        }, label)));
+}
+
+function setSemester(value) {
+    if (currentSemester() === value) return;
+    settings.semester = value === semesterOf(todayISO()) ? 'auto' : value;
+    saveSettings();
+    indexEvents(planEvents);
+    selectedDate = pickInitialDate();
+    render();
 }
 
 function pickInitialDate() {
@@ -629,12 +688,22 @@ function render() {
         ));
         return;
     }
-    if (allEvents.length === 0) { view.replaceChildren(h('div', { class: 'message' }, 'Brak zajęć w planie')); return; }
+    if (allEvents.length === 0) {
+        const other = currentSemester() === 'lato' ? 'zimowy' : 'letni';
+        view.replaceChildren(h('div', { class: 'empty-day' },
+            h('b', null, currentSemester() === 'lato' ? 'Brak planu na semestr letni' : 'Brak planu na semestr zimowy'),
+            planEvents.length ? `Wydział nie opublikował jeszcze tego planu. WATplan doda go sam, gdy pojawi się na stronie WAT.` : 'Brak zajęć w planie.',
+            planEvents.length ? h('br') : null,
+            planEvents.length ? h('button', { type: 'button', class: 'link-btn', onclick: () => setSemester(currentSemester() === 'lato' ? 'zima' : 'lato') }, `Pokaż semestr ${other}`) : null));
+        view.prepend(semesterSwitch());
+        return;
+    }
     if (!selectedDate) selectedDate = pickInitialDate();
 
     if (currentView() === 'week') renderWeek();
     else if (currentView() === 'month') renderMonth();
     else renderAgenda();
+    view.prepend(semesterSwitch());
     placeChangeChip();
     tickLive();
 }

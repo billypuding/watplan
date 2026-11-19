@@ -40,6 +40,13 @@ test('strona główna: wyszukanie grupy otwiera jej plan', { skip }, async () =>
     assert.deepEqual(page.errors, []);
 });
 
+test('strona główna: licznik semestru z danych planów', { skip }, async () => {
+    await page.goto(server.base + '/?landing');
+    await page.waitFor(`document.querySelector('[data-sem-weeks]')?.textContent.includes('/ 17')`);
+    assert.equal(await page.text('#sem-h'), 'Semestr zimowy 2026/27');
+    assert.match(await page.text('[data-sem-left]'), /został|zostały|zostało/);
+});
+
 test('telefon: domyślnie widok dnia z bieżącymi zajęciami', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
@@ -84,6 +91,17 @@ test('ukrycie przedmiotu usuwa go z planu i z linku kalendarza', { skip }, async
     const href = await page.eval(`document.getElementById('calApple').href`);
     assert.ok(href.startsWith('webcal://'));
     assert.ok(decodeURIComponent(href.replace(/\+/g, ' ')).includes(`hide=${subject}`));
+});
+
+test('przełącznik semestru: letni jest pusty, zimowy wraca', { skip }, async () => {
+    await page.goto(app('&view=day'));
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    assert.equal(await page.eval(`document.querySelector('.sem-switch [aria-pressed="true"]').textContent`), 'Zimowy');
+    await page.eval(`document.querySelectorAll('.sem-switch button')[1].click(); true`);
+    await page.waitFor(`document.querySelector('.empty-day b')?.textContent === 'Brak planu na semestr letni'`);
+    assert.equal(await page.eval(`document.querySelectorAll('.ev-card').length`), 0);
+    await page.eval(`[...document.querySelectorAll('.empty-day .link-btn')].pop().click(); true`);
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
 });
 
 test('subskrypcja kalendarza zwraca poprawny plik .ics', { skip }, async () => {

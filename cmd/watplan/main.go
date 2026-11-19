@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -221,33 +222,65 @@ func discoverFaculty(faculty, sourcesFile, plansFile string, static []config.Pla
 	if err != nil {
 		return err
 	}
-	var src *config.Source
-	for i := range sources {
-		if strings.EqualFold(sources[i].Faculty, faculty) {
-			src = &sources[i]
+	var matched []config.Source
+	for _, src := range sources {
+		if strings.EqualFold(src.Faculty, faculty) {
+			matched = append(matched, src)
 		}
 	}
-	if src == nil {
+	if len(matched) == 0 {
 		return fmt.Errorf("brak wydziału %q w %s", faculty, sourcesFile)
 	}
+	sort.SliceStable(matched, func(i, j int) bool { return matched[i].Semester == "" && matched[j].Semester != "" })
 
 	fetcher, err := wat.NewFetcher()
 	if err != nil {
 		return err
 	}
-	log.Printf("szukam grup %s na %s", src.Faculty, src.IndexURL)
-	found, err := fetcher.DiscoverPlans(*src)
-	if err != nil {
-		return fmt.Errorf("wyszukiwanie grup %s: %w", src.Faculty, err)
-	}
-	if len(found) == 0 {
-		return fmt.Errorf("nie znaleziono żadnych grup %s, %s bez zmian", src.Faculty, plansFile)
+	plans := static
+	for _, src := range matched {
+		log.Printf("szukam grup %s %s na %s", src.Faculty, src.Semester, src.IndexURL)
+		found, err := fetcher.DiscoverPlans(src)
+		if src.Optional && errors.Is(err, wat.ErrGone) {
+			log.Printf("%s %s: jeszcze nie opublikowano", src.Faculty, src.Semester)
+			continue
+		}
+		if err == nil && src.Semester != "" && len(found) > 0 {
+			if cerr := fetcher.CheckCurrent(src, found); errors.Is(cerr, wat.ErrStaleSource) {
+				log.Printf("%s %s: na stronie są jeszcze plany z poprzedniego roku, pomijam", src.Faculty, src.Semester)
+				continue
+			} else if cerr != nil {
+				return fmt.Errorf("sprawdzanie planów %s %s: %w", src.Faculty, src.Semester, cerr)
+			}
+		}
+		if err != nil {
+			return fmt.Errorf("wyszukiwanie grup %s: %w", src.Faculty, err)
+		}
+		if len(found) == 0 {
+			return fmt.Errorf("nie znaleziono żadnych grup %s, %s bez zmian", src.Faculty, plansFile)
+		}
+		if src.Semester == "" {
+			extras := map[string][]config.PlanSource{}
+			for _, p := range plans {
+				if len(p.Extra) > 0 {
+					extras[p.ID] = p.Extra
+				}
+			}
+			for i := range found {
+				found[i].Extra = extras[found[i].ID]
+			}
+			plans = config.ReplaceFaculty(plans, src.Faculty, found)
+			log.Printf("%d grup %s", len(found), src.Faculty)
+			continue
+		}
+		var n int
+		plans, n = config.MergeExtra(plans, found)
+		log.Printf("%s %s: %d grup, %d nowych grup lub źródeł", src.Faculty, src.Semester, len(found), n)
 	}
 
-	plans := config.ReplaceFaculty(static, src.Faculty, found)
 	if err := config.SavePlans(plansFile, plans); err != nil {
 		return err
 	}
-	log.Printf("zapisano %d grup %s w %s (wszystkich planów: %d)", len(found), src.Faculty, plansFile, len(plans))
+	log.Printf("zapisano %s (wszystkich planów: %d)", plansFile, len(plans))
 	return nil
 }

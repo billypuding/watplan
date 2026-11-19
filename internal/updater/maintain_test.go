@@ -119,3 +119,69 @@ func TestFillMissingSkipsBlockedHostAndRemembersFailures(t *testing.T) {
 		t.Fatalf("MissingPlans = %d", u.MissingPlans())
 	}
 }
+
+func TestCheckSourcesAttachesSummerPlans(t *testing.T) {
+	u, _, base := newMaintainFixture(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/zima/index.xml":
+			fmt.Fprint(w, `<a href="WEL26EX1S0.htm">x</a>`)
+		case "/lato/index.xml":
+			fmt.Fprint(w, `<a href="WEL26EX1S0.htm">x</a><a href="WEL26EX9S0.htm">y</a>`)
+		case "/lato/WEL26EX1S0.htm", "/lato/WEL26EX9S0.htm":
+			fmt.Fprint(w, summerHTML)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+	reg := config.NewRegistry([]config.PlanConfig{{ID: "WEL26EX1S0", URL: base + "/zima/WEL26EX1S0.htm", Faculty: "WEL", StartYear: 2026}})
+	sources := []config.Source{
+		{Faculty: "WEL", IndexURL: base + "/zima/index.xml", StartYear: 2026},
+		{Faculty: "WEL", IndexURL: base + "/lato/index.xml", StartYear: 2026, Semester: "lato", Optional: true},
+		{Faculty: "WIM", IndexURL: base + "/brak/index.xml", StartYear: 2026, Semester: "lato", Optional: true},
+	}
+	u.checkSources(sources, reg)
+
+	p, _ := reg.Get("WEL26EX1S0")
+	if len(p.Extra) != 1 || p.Extra[0].URL != base+"/lato/WEL26EX1S0.htm" {
+		t.Fatalf("plan zimowy bez źródła letniego: %+v", p)
+	}
+	if n, ok := reg.Get("WEL26EX9S0"); !ok || n.URL != base+"/lato/WEL26EX9S0.htm" {
+		t.Fatalf("nowa grupa letnia: %+v %v", n, ok)
+	}
+	status := u.SourceStatus()
+	if status["WEL lato"].Groups != 2 || status["WIM lato"].Error != "jeszcze nie opublikowano (404)" {
+		t.Fatalf("status %+v", status)
+	}
+
+	u.checkSources(sources, reg)
+	if p, _ := reg.Get("WEL26EX1S0"); len(p.Extra) != 1 {
+		t.Fatalf("źródło letnie dodane dwa razy: %+v", p.Extra)
+	}
+}
+
+func TestCheckSourcesRejectsLastYearSummer(t *testing.T) {
+	oldSummer := `<table><tr><td>pon.</td><td>&nbsp</td><td>02 III</td><td>09 III</td><td>&nbsp</td><td>&nbsp</td></tr>` +
+		`<tr><td>pon.</td><td>1-2</td><td>Fizyka</td><td>Fizyka</td><td>&nbsp</td><td>&nbsp</td></tr></table>`
+	u, _, base := newMaintainFixture(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/lato/index.xml":
+			fmt.Fprint(w, `<a href="WME21MC1S0.htm">x</a><a href="WEL26EX1S0.htm">y</a>`)
+		case "/lato/WME21MC1S0.htm", "/lato/WEL26EX1S0.htm":
+			fmt.Fprint(w, oldSummer)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+	reg := config.NewRegistry([]config.PlanConfig{{ID: "WEL26EX1S0", URL: base + "/zima/WEL26EX1S0.htm", Faculty: "WIM", StartYear: 2026}})
+	u.checkSources([]config.Source{{Faculty: "WIM", IndexURL: base + "/lato/index.xml", StartYear: 2026, Semester: "lato", Optional: true}}, reg)
+
+	if len(reg.List()) != 1 {
+		t.Fatalf("dodano grupy ze starego semestru: %+v", reg.List())
+	}
+	if p, _ := reg.Get("WEL26EX1S0"); len(p.Extra) != 0 {
+		t.Fatalf("doczepiono stare źródło: %+v", p.Extra)
+	}
+	if got := u.SourceStatus()["WIM lato"].Error; got != "na stronie są jeszcze plany z poprzedniego roku" {
+		t.Fatalf("status %q", got)
+	}
+}

@@ -201,7 +201,9 @@ func wigDates(cells []pdfCell, dayCol wigColumn, startYear int) map[time.Weekday
 		var prev time.Month
 		valid := cols[:0]
 		for _, col := range cols {
-			if col.date.Month() < prev {
+			if prev == 0 && col.date.Month() >= time.February && col.date.Month() < time.August {
+				year = startYear + 1
+			} else if col.date.Month() < prev {
 				year++
 			}
 			prev = col.date.Month()

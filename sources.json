@@ -42,5 +42,40 @@
     "index_url": "https://www.wig.wat.edu.pl/cpp/index.php/studenci/plany-rozklady-terminy/rozklady-zajec",
     "start_year": 2026,
     "format": "wig-pdf"
+  },
+  {
+    "faculty": "WML",
+    "index_url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2026_sem_lato/index.xml",
+    "start_year": 2026,
+    "semester": "lato",
+    "optional": true
+  },
+  {
+    "faculty": "WML",
+    "index_url": "https://wml.wat.edu.pl/wp-content/uploads/rozklady_zajec/2027_sem_lato/index.xml",
+    "start_year": 2026,
+    "semester": "lato",
+    "optional": true
+  },
+  {
+    "faculty": "WEL",
+    "index_url": "https://wel.wat.edu.pl/planyzajec/lato/index.xml",
+    "start_year": 2026,
+    "semester": "lato",
+    "optional": true
+  },
+  {
+    "faculty": "WLO",
+    "index_url": "https://wlo.wat.edu.pl/planzajec/lato/index.html",
+    "start_year": 2026,
+    "semester": "lato",
+    "optional": true
+  },
+  {
+    "faculty": "WIM",
+    "index_url": "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/lato/index.html",
+    "start_year": 2026,
+    "semester": "lato",
+    "optional": true
   }
 ]

@@ -410,3 +410,51 @@ func TestStaleBaselineRecordsHistoryWithoutNotifying(t *testing.T) {
 		t.Fatal("powiadomienie o zmianie względem starej wersji planu")
 	}
 }
+
+const summerHTML = `<table><tr><td>pon.</td><td>&nbsp</td><td>22 II</td><td>01 III</td><td>&nbsp</td><td>&nbsp</td></tr>` +
+	`<tr><td>pon.</td><td>1-2</td><td>Fizyka</td><td>Fizyka</td><td>&nbsp</td><td>&nbsp</td></tr></table>`
+
+func TestUpdateMergesWinterAndSummerSources(t *testing.T) {
+	var summer atomic.Bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/zima.htm":
+			fmt.Fprint(w, planHTML(3))
+		case "/lato.htm":
+			if !summer.Load() {
+				http.NotFound(w, r)
+				return
+			}
+			fmt.Fprint(w, summerHTML)
+		}
+	}))
+	t.Cleanup(srv.Close)
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	fetcher, err := wat.NewFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+	u := NewUpdater(st, fetcher)
+	cfg := config.PlanConfig{ID: "TST26XX1S0", URL: srv.URL + "/zima.htm", StartYear: 2026,
+		Extra: []config.PlanSource{{URL: srv.URL + "/lato.htm"}}}
+
+	if err := u.Update(cfg); err != nil {
+		t.Fatalf("lato jeszcze nieopublikowane: %v", err)
+	}
+	if got := loadPlan(t, st, cfg.ID); len(got.Events) != 3 {
+		t.Fatalf("tylko zima: %d zajęć", len(got.Events))
+	}
+
+	summer.Store(true)
+	if err := u.Update(cfg); err != nil {
+		t.Fatal(err)
+	}
+	got := loadPlan(t, st, cfg.ID)
+	if len(got.Events) != 5 || got.Events[3].Date != "2027-02-22" || got.Events[4].Date != "2027-03-01" {
+		t.Fatalf("zima + lato: %+v", got.Events)
+	}
+}

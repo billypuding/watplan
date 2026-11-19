@@ -9,13 +9,21 @@ import (
 
 var planIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 
-type PlanConfig struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
+type PlanSource struct {
 	URL       string `json:"url"`
-	StartYear int    `json:"start_year"`
-	Faculty   string `json:"faculty,omitempty"`
 	Format    string `json:"format,omitempty"`
+	StartYear int    `json:"start_year,omitempty"`
+}
+
+type PlanConfig struct {
+	ID        string       `json:"id"`
+	Name      string       `json:"name"`
+	URL       string       `json:"url"`
+	StartYear int          `json:"start_year"`
+	Faculty   string       `json:"faculty,omitempty"`
+	Format    string       `json:"format,omitempty"`
+	Extra     []PlanSource `json:"extra,omitempty"`
+	Semester  string       `json:"-"`
 }
 
 func LoadConfig(path string) ([]PlanConfig, error) {

@@ -34,6 +34,14 @@ func (f *Fetcher) DiscoverPlans(src config.Source) ([]config.PlanConfig, error) 
 		return nil, fmt.Errorf("zły index_url %q: %w", src.IndexURL, err)
 	}
 
+	plans, err := f.discover(base, src)
+	for i := range plans {
+		plans[i].Semester = src.Semester
+	}
+	return plans, err
+}
+
+func (f *Fetcher) discover(base *url.URL, src config.Source) ([]config.PlanConfig, error) {
 	switch src.Format {
 	case FormatWCY:
 		return f.discoverWCY(base, src)
@@ -44,7 +52,7 @@ func (f *Fetcher) DiscoverPlans(src config.Source) ([]config.PlanConfig, error) 
 	found := map[string]config.PlanConfig{}
 	visited := map[string]bool{}
 
-	err = f.crawl(base, base, src, src.Depth, visited, found)
+	err := f.crawl(base, base, src, src.Depth, visited, found)
 	if alt := siblingIndex(base); err != nil && errors.Is(err, ErrGone) && alt != nil {
 		log.Printf("discover %s: %s zniknął, próbuję %s", src.Faculty, base, alt)
 		if altErr := f.crawl(alt, alt, src, src.Depth, visited, found); altErr == nil {
@@ -296,4 +304,31 @@ func (f *Fetcher) discoverWCY(base *url.URL, src config.Source) ([]config.PlanCo
 		})
 	}
 	return plans, nil
+}
+
+var ErrStaleSource = errors.New("plany z poprzedniego roku akademickiego")
+
+func (f *Fetcher) CheckCurrent(src config.Source, plans []config.PlanConfig) error {
+	const samples = 2
+	tried := 0
+	var lastErr error
+	for _, p := range plans {
+		if tried >= samples {
+			break
+		}
+		tried++
+		body, err := f.FetchHTML(p.URL)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		events, err := Parse(p.Format, bytes.NewReader(body), p.StartYear)
+		if err == nil && len(events) > 0 {
+			return nil
+		}
+	}
+	if lastErr != nil && tried == 1 {
+		return lastErr
+	}
+	return ErrStaleSource
 }
