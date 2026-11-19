@@ -122,6 +122,19 @@ The app re-sends its subscription every time it opens, so a lost
 `push.json` heals itself, but to keep subscriptions and change history across
 deploys put `PLANWAT_PUSH_FILE` and `PLANWAT_DATA` on a persistent disk.
 
+### Keeping data across deploys (Turso)
+
+Render wipes the disk on every deploy. To keep plans, change history and push
+subscriptions, create a free Turso database and set:
+
+- `PLANWAT_DB_URL`: the database URL, e.g. `libsql://watplan-<name>.turso.io`
+- `PLANWAT_DB_TOKEN`: a database token
+
+On start the server restores everything from the database (newer plans win),
+uploads local plans the database does not have yet, and from then on mirrors
+every write in the background. `/api/status` shows the state under `db`.
+Without these variables the server works on local files only.
+
 Note that Render's filesystem is ephemeral: plans fetched at runtime disappear on
 the next deploy or restart. The committed `data/` directory is the permanent cache.
 

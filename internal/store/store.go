@@ -6,14 +6,103 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
+	"github.com/billypuding/watplan/internal/durable"
 	"github.com/billypuding/watplan/internal/model"
 )
 
 type Store struct {
-	dir string
-	mu  sync.RWMutex
+	dir    string
+	mu     sync.RWMutex
+	mirror durable.Mirror
+}
+
+const (
+	planPrefix    = "plan"
+	historyPrefix = "history"
+)
+
+func (s *Store) SetMirror(m durable.Mirror) {
+	s.mu.Lock()
+	s.mirror = m
+	s.mu.Unlock()
+}
+
+func (s *Store) Restore(m durable.Mirror) (restored, uploaded int, err error) {
+	remote, err := m.All(planPrefix + "/")
+	if err != nil {
+		return 0, 0, err
+	}
+	seen := map[string]bool{}
+	for key, data := range remote {
+		id := durable.TrimKey(planPrefix, key)
+		seen[id] = true
+		var incoming model.Plan
+		if json.Unmarshal(data, &incoming) != nil {
+			continue
+		}
+		local, lerr := s.Load(id)
+		if lerr == nil && local.FetchedAt >= incoming.FetchedAt {
+			continue
+		}
+		if err := s.writeFile(s.path(id), data); err != nil {
+			return restored, uploaded, err
+		}
+		restored++
+	}
+
+	entries, err := os.ReadDir(s.dir)
+	if err != nil {
+		return restored, uploaded, err
+	}
+	for _, e := range entries {
+		name := e.Name()
+		if e.IsDir() || !strings.HasSuffix(name, ".json") || strings.HasSuffix(name, ".history.json") {
+			continue
+		}
+		id := strings.TrimSuffix(name, ".json")
+		if seen[id] {
+			continue
+		}
+		data, err := s.Raw(id)
+		if err != nil {
+			continue
+		}
+		if err := m.Put(durable.Keyed(planPrefix, id), data); err != nil {
+			return restored, uploaded, err
+		}
+		uploaded++
+	}
+
+	histories, err := m.All(historyPrefix + "/")
+	if err != nil {
+		return restored, uploaded, err
+	}
+	for key, data := range histories {
+		id := durable.TrimKey(historyPrefix, key)
+		if err := s.writeFile(s.historyPath(id), data); err != nil {
+			return restored, uploaded, err
+		}
+	}
+	return restored, uploaded, nil
+}
+
+func (s *Store) writeFile(path string, data []byte) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+		return err
+	}
+	return os.Rename(tmp, path)
+}
+
+func (s *Store) mirrorPut(key string, data []byte) {
+	if s.mirror != nil {
+		_ = s.mirror.Put(key, data)
+	}
 }
 
 func NewStore(dir string) (*Store, error) {
@@ -55,7 +144,11 @@ func (s *Store) Save(id string, plan model.Plan) error {
 	if err := os.WriteFile(tmp, data, 0o644); err != nil {
 		return err
 	}
-	return os.Rename(tmp, s.path(id))
+	if err := os.Rename(tmp, s.path(id)); err != nil {
+		return err
+	}
+	s.mirrorPut(durable.Keyed(planPrefix, id), data)
+	return nil
 }
 
 func (s *Store) History(id string) ([]model.Change, error) {
@@ -98,7 +191,11 @@ func (s *Store) AddHistory(id string, change model.Change, keep int) error {
 	if err := os.WriteFile(tmp, data, 0o644); err != nil {
 		return err
 	}
-	return os.Rename(tmp, s.historyPath(id))
+	if err := os.Rename(tmp, s.historyPath(id)); err != nil {
+		return err
+	}
+	s.mirrorPut(durable.Keyed(historyPrefix, id), data)
+	return nil
 }
 
 func (s *Store) historyPath(id string) string {

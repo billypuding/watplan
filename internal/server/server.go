@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/billypuding/watplan/internal/config"
+	"github.com/billypuding/watplan/internal/durable"
 	"github.com/billypuding/watplan/internal/model"
 	"github.com/billypuding/watplan/internal/push"
 	"github.com/billypuding/watplan/internal/store"
@@ -48,6 +49,7 @@ var warsawLoc = func() *time.Location {
 
 type Options struct {
 	Push *push.Service
+	DB   *durable.Queue
 
 	Offline bool
 
@@ -509,9 +511,18 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		"faculties":     s.updater.SourceStatus(),
 		"push":          s.options.Push != nil,
 		"proxy_error":   proxyErrorText(s.updater),
+		"db":            s.dbStatus(),
 		"missing_plans": s.updater.MissingPlans(),
 		"now":           time.Now().In(warsawLoc).Format(timeLayout),
 	})
+}
+
+func (s *Server) dbStatus() map[string]any {
+	if s.options.DB == nil {
+		return map[string]any{"enabled": false}
+	}
+	failed, saved := s.options.DB.Status()
+	return map[string]any{"enabled": true, "saved": saved, "error": failed}
 }
 
 func proxyErrorText(u *updater.Updater) string {

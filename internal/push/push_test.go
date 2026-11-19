@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/billypuding/watplan/internal/durable"
 	"github.com/billypuding/watplan/internal/model"
 )
 
@@ -105,5 +106,20 @@ func TestDescribeChange(t *testing.T) {
 	}
 	if _, err := json.Marshal(p); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestRestoreSubscriptionsFromMirror(t *testing.T) {
+	first, _ := newTestService(t)
+	mirror := durable.NewMemory()
+	if _, err := first.Restore(mirror); err != nil {
+		t.Fatal(err)
+	}
+	_ = first.Subscribe(sub("https://fcm.googleapis.com/a", "WMT26AX3S1"))
+
+	second, _ := newTestService(t)
+	added, err := second.Restore(mirror)
+	if err != nil || added != 1 || second.Count() != 1 {
+		t.Fatalf("po deployu odtworzono %d (%v), jest %d", added, err, second.Count())
 	}
 }

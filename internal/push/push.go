@@ -17,6 +17,8 @@ import (
 	"time"
 
 	webpush "github.com/SherClockHolmes/webpush-go"
+
+	"github.com/billypuding/watplan/internal/durable"
 )
 
 const (
@@ -62,9 +64,36 @@ type Service struct {
 	subject string
 	path    string
 
-	mu   sync.Mutex
-	subs map[string]Subscription
-	send sender
+	mu     sync.Mutex
+	subs   map[string]Subscription
+	send   sender
+	mirror durable.Mirror
+}
+
+const mirrorKey = "push/subscriptions"
+
+func (s *Service) Restore(m durable.Mirror) (int, error) {
+	remote, err := m.All(mirrorKey)
+	if err != nil {
+		return 0, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.mirror = m
+	added := 0
+	if data, ok := remote[mirrorKey]; ok {
+		var list []Subscription
+		if err := json.Unmarshal(data, &list); err != nil {
+			return 0, err
+		}
+		for _, sub := range list {
+			if _, ok := s.subs[sub.Endpoint]; !ok {
+				s.subs[sub.Endpoint] = sub
+				added++
+			}
+		}
+	}
+	return added, s.saveLocked()
 }
 
 func GenerateKeys() (public, private string, err error) {
@@ -110,7 +139,7 @@ func (s *Service) load() error {
 }
 
 func (s *Service) saveLocked() error {
-	if s.path == "" {
+	if s.path == "" && s.mirror == nil {
 		return nil
 	}
 	list := make([]Subscription, 0, len(s.subs))
@@ -121,6 +150,12 @@ func (s *Service) saveLocked() error {
 	data, err := json.Marshal(list)
 	if err != nil {
 		return err
+	}
+	if s.mirror != nil {
+		_ = s.mirror.Put(mirrorKey, data)
+	}
+	if s.path == "" {
+		return nil
 	}
 	tmp := s.path + ".tmp"
 	if err := os.WriteFile(tmp, data, 0o600); err != nil {

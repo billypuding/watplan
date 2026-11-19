@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/billypuding/watplan/internal/config"
+	"github.com/billypuding/watplan/internal/durable"
 	"github.com/billypuding/watplan/internal/model"
 	"github.com/billypuding/watplan/internal/push"
 	"github.com/billypuding/watplan/internal/server"
@@ -100,12 +101,36 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var db *durable.Queue
+	if dbURL := os.Getenv("PLANWAT_DB_URL"); dbURL != "" {
+		turso, err := durable.OpenTurso(dbURL, os.Getenv("PLANWAT_DB_TOKEN"))
+		if err != nil {
+			log.Printf("baza niedostępna (%v), działam na samych plikach", err)
+		} else {
+			db = durable.NewQueue(turso)
+			started := time.Now()
+			restored, uploaded, err := st.Restore(db)
+			if err != nil {
+				log.Printf("odtwarzanie z bazy: %v", err)
+			}
+			st.SetMirror(db)
+			log.Printf("baza: odtworzono %d planów, do wysłania %d, %v", restored, uploaded, time.Since(started).Round(time.Millisecond))
+		}
+	}
+
 	var pushSvc *push.Service
 	if public, private := os.Getenv("PLANWAT_VAPID_PUBLIC"), os.Getenv("PLANWAT_VAPID_PRIVATE"); public != "" && private != "" {
 		pushFile := envOr("PLANWAT_PUSH_FILE", filepath.Join(dataDir, "push.json"))
 		pushSvc, err = push.New(public, private, envOr("PLANWAT_VAPID_SUBJECT", "mailto:awalczak@duck.com"), pushFile)
 		if err != nil {
 			log.Fatal(err)
+		}
+		if db != nil {
+			if added, err := pushSvc.Restore(db); err != nil {
+				log.Printf("odtwarzanie subskrypcji z bazy: %v", err)
+			} else if added > 0 {
+				log.Printf("baza: odtworzono %d subskrypcji", added)
+			}
 		}
 		log.Printf("powiadomienia push włączone (%d subskrypcji, %s)", pushSvc.Count(), pushFile)
 	}
@@ -133,6 +158,7 @@ func main() {
 
 	handler, err := server.NewServer(reg, st, upd, server.Options{
 		Push:          pushSvc,
+		DB:            db,
 		Offline:       offline,
 		OnDemand:      onDemand,
 		CanonicalHost: os.Getenv("PLANWAT_CANONICAL_HOST"),

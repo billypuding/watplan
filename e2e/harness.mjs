@@ -83,7 +83,9 @@ const clockScript = (iso) => `(() => {
 export async function startBrowser() {
     const profile = mkdtempSync(join(tmpdir(), 'watplan-chrome-'));
     const port = await freePort();
-    const proc = spawn(chromePath, ['--headless=new', '--disable-gpu', '--no-first-run', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+    const flags = ['--headless=new', '--disable-gpu', '--no-first-run', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`];
+    if (process.env.CI) flags.push('--no-sandbox', '--disable-dev-shm-usage');
+    const proc = spawn(chromePath, [...flags, 'about:blank'], { stdio: 'ignore' });
     const target = await waitFor(async () => (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t => t.type === 'page'));
     const ws = new WebSocket(target.webSocketDebuggerUrl);
     await new Promise((resolve, reject) => { ws.onopen = resolve; ws.onerror = reject; });
