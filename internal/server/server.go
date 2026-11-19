@@ -99,6 +99,7 @@ func (s *Server) Handler() (http.Handler, error) {
 	mux.HandleFunc("/api/status", s.handleStatus)
 	mux.HandleFunc("/api/changes/", withGzip(s.handleChanges))
 	mux.HandleFunc("/api/rooms", withGzip(s.handleRooms))
+	mux.HandleFunc("/api/makeup", withGzip(s.handleMakeup))
 	mux.HandleFunc("/api/push/key", s.handlePushKey)
 	mux.HandleFunc("/api/push/subscribe", s.handlePushSubscribe)
 	mux.HandleFunc("/api/push/unsubscribe", s.handlePushUnsubscribe)

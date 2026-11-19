@@ -955,7 +955,75 @@ function renderSeries() {
         ));
     }
 
-    seriesBody.replaceChildren(chips, summary, h('ul', { class: 'series-list' }, items));
+    seriesBody.replaceChildren(chips, summary, makeupSection(list, next), h('ul', { class: 'series-list' }, items));
+}
+
+function overlapsMine(m) {
+    const a = toMin(m.start), b = toMin(m.end);
+    return (eventsByDate[m.date] || []).find(e => toMin(e.start) < b && toMin(e.end) > a);
+}
+
+function makeupSection(list, next) {
+    if (!list.length) return null;
+    const picked = seriesPicked && list.includes(seriesPicked) ? seriesPicked : (next || list[list.length - 1]);
+    const select = h('select', { 'aria-label': 'Które zajęcia chcesz odrobić' },
+        ...list.map(e => {
+            const opt = h('option', { value: String(e._n) }, `nr ${e._n} · ${shortDate(e.date)}`);
+            if (e === picked) opt.selected = true;
+            return opt;
+        }));
+    const results = h('div', { class: 'makeup-results' });
+    const load = async () => {
+        const n = select.value;
+        results.replaceChildren(h('p', { class: 'hint' }, 'Szukam w innych grupach...'));
+        try {
+            const params = new URLSearchParams({ plan: currentPlanId, subject: seriesSubjectName, type: seriesType, n });
+            const data = await fetchJSON('/api/makeup?' + params);
+            if (select.value !== n) return;
+            const matches = data.matches || [];
+            if (!matches.length) {
+                results.replaceChildren(h('p', { class: 'hint' }, data.cohort
+                    ? `Żadna inna grupa ${data.cohort} nie ma zajęć nr ${n} z tego przedmiotu.`
+                    : 'Dla tej grupy nie da się ustalić rocznika.'));
+                return;
+            }
+            const today = todayISO();
+            const slots = new Map();
+            for (const m of matches) {
+                const mine = overlapsMine(m);
+                if (mine && mine.subject === seriesSubjectName && (mine.type || '') === seriesType) continue;
+                const key = `${m.date}|${m.start}|${m.room || ''}`;
+                if (!slots.has(key)) slots.set(key, { ...m, groups: [], clash: mine });
+                slots.get(key).groups.push(m.group);
+            }
+            const all = [...slots.values()];
+            const upcoming = all.filter(m => m.date >= today);
+            const past = all.filter(m => m.date < today);
+            const row = (m) => h('li', { class: 'makeup-item' + (m.date < today ? ' done' : '') },
+                h('span', { class: 'when' }, h('b', null, `${shortDate(m.date)}, ${m.start}–${m.end}`),
+                    h('span', null, [m.room && `sala ${m.room}`, m.groups.length > 2 ? `${m.groups.length} grup: ${m.groups.slice(0, 2).join(', ')}…` : m.groups.join(', ')].filter(Boolean).join(' · '))),
+                m.clash ? h('span', { class: 'makeup-tag clash', title: `${m.clash.subject} ${m.clash.start}–${m.clash.end}` }, 'koliduje')
+                    : m.date < today ? h('span', { class: 'makeup-tag' }, 'minęło')
+                        : h('span', { class: 'makeup-tag ok' }, 'pasuje'));
+            if (!all.length) {
+                results.replaceChildren(h('p', { class: 'hint' }, `Inne grupy ${data.cohort} mają zajęcia nr ${n} w tym samym terminie co Ty, np. wspólny wykład.`));
+                return;
+            }
+            const list = h('ul', { class: 'makeup-list' }, upcoming.map(row));
+            const morePast = past.length ? h('button', { type: 'button', class: 'link-btn', onclick: (e) => { list.prepend(...past.map(row)); e.currentTarget.remove(); } },
+                `Pokaż minione (${past.length})`) : null;
+            results.replaceChildren(
+                h('p', { class: 'hint' }, upcoming.length ? `Zajęcia nr ${n} w innych grupach ${data.cohort}:` : `Wszystkie terminy zajęć nr ${n} w innych grupach ${data.cohort} już minęły.`),
+                list, morePast);
+        } catch (err) {
+            results.replaceChildren(h('p', { class: 'hint error' }, err.message));
+        }
+    };
+    select.addEventListener('change', load);
+    load();
+    return h('section', { class: 'makeup' },
+        h('header', null, h('b', null, 'Gdzie odrobić?'), select),
+        results);
 }
 
 function tickLive() {

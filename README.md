@@ -126,6 +126,18 @@ Note that Render's filesystem is ephemeral: plans fetched at runtime disappear o
 the next deploy or restart. The committed `data/` directory is the permanent cache.
 
 
+## Tests
+
+```bash
+go test ./...
+node --test e2e/
+```
+
+The end-to-end tests build the server, run it offline on the plans in
+`e2e/fixtures`, and drive a headless Chrome over the DevTools protocol with the
+clock frozen at 19 November 2026. They need Node 22+ and Chrome; set
+`CHROME_PATH` if Chrome is not in the default location. No npm packages are used.
+
 ## Disclaimer
 
 WATplan is an independent student project, not affiliated with the Military University of Technology. The official schedule is always the source of truth.

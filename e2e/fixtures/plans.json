@@ -1,0 +1,23 @@
+[
+  {
+    "id": "WMT26AX1S1",
+    "name": "WMT26AX1S1",
+    "url": "http://127.0.0.1:1/WMT26AX1S1.htm",
+    "start_year": 2026,
+    "faculty": "WMT"
+  },
+  {
+    "id": "WMT26AX2S1",
+    "name": "WMT26AX2S1",
+    "url": "http://127.0.0.1:1/WMT26AX2S1.htm",
+    "start_year": 2026,
+    "faculty": "WMT"
+  },
+  {
+    "id": "WMT26AX3S1",
+    "name": "WMT26AX3S1",
+    "url": "http://127.0.0.1:1/WMT26AX3S1.htm",
+    "start_year": 2026,
+    "faculty": "WMT"
+  }
+]

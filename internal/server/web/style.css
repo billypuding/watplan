@@ -597,3 +597,19 @@ dialog::backdrop { background: var(--scrim); }
     .pr-ev { margin-bottom: 1mm; }
     .pr-ev span { color: #444; }
 }
+
+.makeup { margin-top: 16px; padding: 14px; border-radius: 18px; background: var(--surface); }
+.makeup header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.makeup header b { font-size: 16px; font-weight: 650; }
+.makeup select { height: 38px; max-width: 60%; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; }
+.makeup .hint { margin: 10px 0 6px; font-size: 13px; }
+.makeup .hint.error { color: var(--error); }
+.makeup-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.makeup-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+.makeup-item .when { display: flex; flex-direction: column; min-width: 0; }
+.makeup-item .when b { font-size: 14.5px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.makeup-item .when span { font-size: 13px; color: var(--muted); }
+.makeup-item.done .when b { color: var(--muted); font-weight: 550; }
+.makeup-tag { flex: none; padding: 3px 9px; border-radius: 99px; font-size: 12px; font-weight: 650; background: var(--surface-2); color: var(--muted); }
+.makeup-tag.ok { color: var(--chg-add); background: color-mix(in srgb, var(--chg-add) 14%, transparent); }
+.makeup-tag.clash { color: var(--chg-del); background: color-mix(in srgb, var(--chg-del) 14%, transparent); }
