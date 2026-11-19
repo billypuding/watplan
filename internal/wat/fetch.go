@@ -32,6 +32,19 @@ var ErrBlocked = errors.New("zapytanie zablokowane przez WAF (Incapsula) - wstrz
 
 var ErrProxy = errors.New("serwer proxy (PLANWAT_PROXY) odrzucił połączenie")
 
+var ErrNotModified = errors.New("strona bez zmian od ostatniego pobrania")
+
+var ErrGone = errors.New("strony już nie ma (404/410)")
+
+type Validators struct {
+	ETag         string
+	LastModified string
+}
+
+func (v Validators) empty() bool {
+	return v.ETag == "" && v.LastModified == ""
+}
+
 type Fetcher struct {
 	client   *http.Client
 	proxyURL *url.URL
@@ -163,18 +176,31 @@ func (f *Fetcher) pace() {
 }
 
 func (f *Fetcher) FetchHTML(targetUrl string) ([]byte, error) {
+	body, _, err := f.FetchPage(targetUrl, Validators{})
+	return body, err
+}
+
+func (f *Fetcher) Blocked(targetUrl string) bool {
+	_, blocked := f.hostBlocked(hostOf(targetUrl))
+	return blocked
+}
+
+func (f *Fetcher) FetchPage(targetUrl string, prev Validators) ([]byte, Validators, error) {
 	host := hostOf(targetUrl)
 	if until, blocked := f.hostBlocked(host); blocked {
-		return nil, fmt.Errorf("%w (%s wstrzymane do %s)", ErrBlocked, host, until.Format("15:04"))
+		return nil, Validators{}, fmt.Errorf("%w (%s wstrzymane do %s)", ErrBlocked, host, until.Format("15:04"))
 	}
 
 	var lastErr error
 	for attempt := 1; attempt <= fetchAttempts; attempt++ {
-		body, err := f.fetchOnce(targetUrl)
+		body, got, err := f.fetchOnce(targetUrl, prev)
 		if err == nil {
-			return body, nil
+			return body, got, nil
 		}
 		lastErr = err
+		if errors.Is(err, ErrNotModified) {
+			return nil, prev, err
+		}
 		if errors.Is(err, ErrBlocked) {
 			f.markBlocked(host)
 			break
@@ -187,7 +213,7 @@ func (f *Fetcher) FetchHTML(targetUrl string) ([]byte, error) {
 		log.Printf("fetch %s: %v (próba %d/%d, ponawiam za %v)", targetUrl, err, attempt, fetchAttempts, delay.Round(time.Millisecond))
 		time.Sleep(delay)
 	}
-	return nil, lastErr
+	return nil, Validators{}, lastErr
 }
 
 type statusError struct {
@@ -196,6 +222,10 @@ type statusError struct {
 
 func (e *statusError) Error() string {
 	return fmt.Sprintf("status code error: %d", e.status)
+}
+
+func (e *statusError) Is(target error) bool {
+	return target == ErrGone && (e.status == http.StatusNotFound || e.status == http.StatusGone)
 }
 
 func (f *Fetcher) ProxyHost() string {
@@ -223,7 +253,7 @@ func (f *Fetcher) proxyRejection(err error) (string, bool) {
 }
 
 func retryable(err error) bool {
-	if errors.Is(err, ErrBlocked) || errors.Is(err, ErrProxy) {
+	if errors.Is(err, ErrBlocked) || errors.Is(err, ErrProxy) || errors.Is(err, ErrNotModified) {
 		return false
 	}
 	var se *statusError
@@ -239,24 +269,44 @@ func retryable(err error) bool {
 	return true
 }
 
-func (f *Fetcher) fetchOnce(targetUrl string) ([]byte, error) {
+func (f *Fetcher) fetchOnce(targetUrl string, prev Validators) ([]byte, Validators, error) {
+	body, err := f.fetchBody(targetUrl, prev)
+	return body.data, body.validators, err
+}
+
+type fetched struct {
+	data       []byte
+	validators Validators
+}
+
+func (f *Fetcher) fetchBody(targetUrl string, prev Validators) (fetched, error) {
 	req, err := http.NewRequest(http.MethodGet, targetUrl, nil)
 	if err != nil {
-		return nil, err
+		return fetched{}, err
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
 	req.Header.Set("Accept-Language", "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7")
+	if prev.ETag != "" {
+		req.Header.Set("If-None-Match", prev.ETag)
+	}
+	if prev.LastModified != "" {
+		req.Header.Set("If-Modified-Since", prev.LastModified)
+	}
 
 	f.pace()
 	resp, err := f.client.Do(req)
 	if err != nil {
 		if status, ok := f.proxyRejection(err); ok {
-			return nil, fmt.Errorf("%w: %s %s - sprawdź konto u dostawcy proxy albo usuń PLANWAT_PROXY", ErrProxy, f.proxyURL.Host, status)
+			return fetched{}, fmt.Errorf("%w: %s %s - sprawdź konto u dostawcy proxy albo usuń PLANWAT_PROXY", ErrProxy, f.proxyURL.Host, status)
 		}
-		return nil, err
+		return fetched{}, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotModified && !prev.empty() {
+		return fetched{validators: prev}, ErrNotModified
+	}
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		snippet, _ := io.ReadAll(io.LimitReader(resp.Body, 500))
@@ -268,32 +318,34 @@ func (f *Fetcher) fetchOnce(targetUrl string) ([]byte, error) {
 			snippet,
 		)
 		if isWAFBlock(resp, snippet) {
-			return nil, fmt.Errorf("%w (status %d)", ErrBlocked, resp.StatusCode)
+			return fetched{}, fmt.Errorf("%w (status %d)", ErrBlocked, resp.StatusCode)
 		}
-		return nil, &statusError{status: resp.StatusCode}
+		return fetched{}, &statusError{status: resp.StatusCode}
 	}
+
+	got := Validators{ETag: resp.Header.Get("ETag"), LastModified: resp.Header.Get("Last-Modified")}
 
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
 	if err != nil {
-		return nil, err
+		return fetched{}, err
 	}
 	if len(raw) == 0 || bytes.HasPrefix(raw, []byte("%PDF")) {
-		return raw, nil
+		return fetched{data: raw, validators: got}, nil
 	}
 	reader, err := charset.NewReader(bytes.NewReader(raw), resp.Header.Get("Content-Type"))
 	if err != nil {
-		return nil, err
+		return fetched{}, err
 	}
 	body, err := io.ReadAll(reader)
 	if err != nil {
-		return nil, err
+		return fetched{}, err
 	}
 
 	if isWAFBlockBody(body) {
 		log.Printf("fetch %s: strona blokady WAF (status %d)", targetUrl, resp.StatusCode)
-		return nil, fmt.Errorf("%w (status %d)", ErrBlocked, resp.StatusCode)
+		return fetched{}, fmt.Errorf("%w (status %d)", ErrBlocked, resp.StatusCode)
 	}
-	return body, nil
+	return fetched{data: body, validators: got}, nil
 }
 
 func isWAFBlock(resp *http.Response, snippet []byte) bool {

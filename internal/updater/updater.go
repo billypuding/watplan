@@ -44,6 +44,8 @@ type Updater struct {
 	workers int
 	mu      sync.Mutex
 	locks   map[string]*sync.Mutex
+	sources map[string]FacultyStatus
+	missing atomic.Int64
 }
 
 type updateResult struct {
@@ -52,6 +54,7 @@ type updateResult struct {
 	streak    int
 	skipped   bool
 	pending   bool
+	unchanged bool
 }
 
 func NewUpdater(store *store.Store, fetcher *wat.Fetcher) *Updater {
@@ -99,6 +102,7 @@ func (u *Updater) UpdateAll(ctx context.Context, plans []config.PlanConfig) erro
 		done  atomic.Int64
 		okN   atomic.Int64
 		skipN atomic.Int64
+		sameN atomic.Int64
 		pendN atomic.Int64
 		failN atomic.Int64
 	)
@@ -130,6 +134,9 @@ func (u *Updater) UpdateAll(ctx context.Context, plans []config.PlanConfig) erro
 				case res.skipped:
 					skipN.Add(1)
 					log.Printf("[%d/%d] %s: pominięto (plan bez zajęć)", n, total, p.ID)
+				case res.unchanged:
+					sameN.Add(1)
+					log.Printf("[%d/%d] %s: bez zmian (304)", n, total, p.ID)
 				case res.pending:
 					pendN.Add(1)
 					log.Printf("[%d/%d] %s: wstrzymano podejrzany spadek (%d -> %d), potwierdzenie %d/%d",
@@ -155,8 +162,8 @@ dispatch:
 
 	fail := failN.Load()
 	blocked := blockedN.Load()
-	log.Printf("odświeżanie: gotowe - %d ok, %d pominiętych, %d wstrzymanych, %d zablokowanych przez WAF, %d błędów, %d/%d planów",
-		okN.Load(), skipN.Load(), pendN.Load(), blocked, fail, done.Load(), total)
+	log.Printf("odświeżanie: gotowe - %d ok, %d bez zmian, %d pominiętych, %d wstrzymanych, %d zablokowanych przez WAF, %d błędów, %d/%d planów",
+		okN.Load(), sameN.Load(), skipN.Load(), pendN.Load(), blocked, fail, done.Load(), total)
 	if blocked > 0 {
 		return fmt.Errorf("%d z %d planów niedostępnych: %w", blocked, total, wat.ErrBlocked)
 	}
@@ -194,7 +201,27 @@ func (u *Updater) update(cfg config.PlanConfig) (updateResult, error) {
 }
 
 func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
-	body, err := u.fetcher.FetchHTML(cfg.URL)
+	old, err := u.store.Load(cfg.ID)
+	if err != nil {
+		old = model.Plan{}
+		if !errors.Is(err, fs.ErrNotExist) {
+			log.Printf("plan %s: nie można odczytać poprzednich danych: %v", cfg.ID, err)
+		}
+	}
+
+	var prev wat.Validators
+	if len(old.Events) > 0 && old.DropStreak == 0 {
+		prev = wat.Validators{ETag: old.ETag, LastModified: old.LastMod}
+	}
+
+	body, got, err := u.fetcher.FetchPage(cfg.URL, prev)
+	if errors.Is(err, wat.ErrNotModified) {
+		old.FetchedAt = time.Now().In(warsawLoc).Format(timeLayout)
+		if err := u.store.Save(cfg.ID, old); err != nil {
+			return updateResult{}, fmt.Errorf("zapis: %w", err)
+		}
+		return updateResult{events: len(old.Events), unchanged: true}, nil
+	}
 	if err != nil {
 		return updateResult{}, fmt.Errorf("pobieranie: %w", err)
 	}
@@ -202,14 +229,6 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 	events, err := wat.Parse(cfg.Format, bytes.NewReader(body), cfg.StartYear)
 	if err != nil {
 		return updateResult{}, fmt.Errorf("parsowanie: %w", err)
-	}
-
-	old, err := u.store.Load(cfg.ID)
-	if err != nil {
-		old = model.Plan{}
-		if !errors.Is(err, fs.ErrNotExist) {
-			log.Printf("plan %s: nie można odczytać poprzednich danych: %v", cfg.ID, err)
-		}
 	}
 
 	if len(events) == 0 {
@@ -251,7 +270,7 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 			cfg.ID, len(diff.Added), len(diff.Removed), len(diff.Modified))
 	}
 
-	plan := model.Plan{Events: events, FetchedAt: now, ModifiedAt: modifiedAt}
+	plan := model.Plan{Events: events, FetchedAt: now, ModifiedAt: modifiedAt, ETag: got.ETag, LastMod: got.LastModified}
 	if err := u.store.Save(cfg.ID, plan); err != nil {
 		return updateResult{}, fmt.Errorf("zapis: %w", err)
 	}

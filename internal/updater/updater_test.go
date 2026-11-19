@@ -271,3 +271,66 @@ func TestWAFBlockIsPerHost(t *testing.T) {
 		}
 	}
 }
+
+func TestConditionalFetchKeepsPlanOn304(t *testing.T) {
+	var etag atomic.Value
+	etag.Store(`"v1"`)
+	var full, notModified atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cur := etag.Load().(string)
+		if r.Header.Get("If-None-Match") == cur {
+			notModified.Add(1)
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		full.Add(1)
+		w.Header().Set("ETag", cur)
+		w.Header().Set("Last-Modified", "Mon, 16 Nov 2026 10:00:00 GMT")
+		_, _ = fmt.Fprint(w, planHTML(10))
+	}))
+	t.Cleanup(srv.Close)
+
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	fetcher, err := wat.NewFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+	u := NewUpdater(st, fetcher)
+	cfg := config.PlanConfig{ID: "TST26XX1S0", URL: srv.URL, StartYear: 2026}
+
+	if err := u.Update(cfg); err != nil {
+		t.Fatalf("pierwsze pobranie: %v", err)
+	}
+	first := loadPlan(t, st, cfg.ID)
+	if first.ETag != `"v1"` || first.LastMod == "" || len(first.Events) != 10 {
+		t.Fatalf("po pierwszym pobraniu: etag %q last-mod %q zajęć %d", first.ETag, first.LastMod, len(first.Events))
+	}
+
+	first.FetchedAt = "2026-01-01 00:00:00"
+	if err := st.Save(cfg.ID, first); err != nil {
+		t.Fatal(err)
+	}
+	res, err := u.update(cfg)
+	if err != nil || !res.unchanged {
+		t.Fatalf("drugie pobranie: res %+v err %v, chcę 304", res, err)
+	}
+	second := loadPlan(t, st, cfg.ID)
+	if second.FetchedAt == "2026-01-01 00:00:00" || len(second.Events) != 10 || second.ModifiedAt != first.ModifiedAt {
+		t.Fatalf("po 304: %+v", second)
+	}
+
+	etag.Store(`"v2"`)
+	if res, err := u.update(cfg); err != nil || res.unchanged {
+		t.Fatalf("po zmianie strony: res %+v err %v", res, err)
+	}
+	if got := loadPlan(t, st, cfg.ID).ETag; got != `"v2"` {
+		t.Fatalf("etag po zmianie %q", got)
+	}
+	if full.Load() != 2 || notModified.Load() != 1 {
+		t.Fatalf("pełnych pobrań %d, 304: %d", full.Load(), notModified.Load())
+	}
+}

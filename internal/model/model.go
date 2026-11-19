@@ -19,6 +19,8 @@ type Plan struct {
 	ModifiedAt string  `json:"modified_at"`
 	DropCount  int     `json:"drop_count,omitempty"`
 	DropStreak int     `json:"drop_streak,omitempty"`
+	ETag       string  `json:"etag,omitempty"`
+	LastMod    string  `json:"last_modified,omitempty"`
 }
 
 func SortEvents(events []Event) {

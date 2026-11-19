@@ -83,6 +83,13 @@ and fetches only the plan a user actually opens:
 PLANWAT_ON_DEMAND=1 PLANWAT_WORKERS=1 PLANWAT_FETCH_INTERVAL=2s go run cmd/watplan/main.go
 ```
 
+In on-demand mode a slow background loop also runs. Once a day it reads each
+faculty's group list from `sources.json`, adds new groups and reports a moved list
+(404) in `/api/status`. Every 30 minutes it fetches plans that have no data yet,
+one every 90 seconds, skipping hosts that are blocked. Refreshes send `ETag` and
+`If-Modified-Since`, so an unchanged page costs a `304` with no body. Set
+`PLANWAT_NO_BACKGROUND=1` to turn the loop off.
+
 On Render, set those as environment variables. If the Render IP is already blocked,
 on-demand mode alone will not unblock it. In that case:
 

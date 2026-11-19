@@ -305,6 +305,8 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		"mode":          mode,
 		"blocked_hosts": blocked,
 		"proxy":         s.updater.ProxyHost(),
+		"faculties":     s.updater.SourceStatus(),
+		"missing_plans": s.updater.MissingPlans(),
 		"now":           time.Now().In(warsawLoc).Format(timeLayout),
 	})
 }

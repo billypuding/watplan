@@ -68,10 +68,13 @@ func main() {
 	}
 
 	var sources []config.Source
-	if !offline && !onDemand {
+	if !offline {
 		sources, err = config.LoadSources(sourcesFile)
 		if err != nil {
-			log.Fatal(err)
+			if !onDemand {
+				log.Fatal(err)
+			}
+			log.Printf("brak listy wydziałów (%v), w tle pobiorę tylko brakujące plany", err)
 		}
 	}
 
@@ -111,6 +114,9 @@ func main() {
 
 	if !offline && !onDemand {
 		go upd.RunWithDiscovery(ctx, sources, static, reg, plansFile, refreshInterval)
+	}
+	if onDemand && !envBool("PLANWAT_NO_BACKGROUND") {
+		go upd.Maintain(ctx, sources, reg, updater.MaintainOptions{})
 	}
 
 	srv := &http.Server{

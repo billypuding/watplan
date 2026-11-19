@@ -35,11 +35,14 @@ func (u *Updater) discover(sources []config.Source, static, prev []config.PlanCo
 		if errors.Is(err, wat.ErrBlocked) {
 			blocked = true
 		}
+		now := time.Now().In(warsawLoc).Format(timeLayout)
 		if err != nil || len(plans) == 0 {
 			if err != nil {
-				log.Printf("discover %q: błąd: %v (zostawiam poprzednie plany tego wydziału)", src.Faculty, err)
+				logDiscoveryError(src, err)
+				u.recordSource(src.Faculty, FacultyStatus{Checked: now, Error: describeDiscoveryError(src, err)})
 			} else {
 				log.Printf("discover %q: nie znaleziono żadnych planów (zostawiam poprzednie plany tego wydziału)", src.Faculty)
+				u.recordSource(src.Faculty, FacultyStatus{Checked: now, Error: "lista grup jest pusta"})
 			}
 			for _, p := range prev {
 				if p.Faculty == src.Faculty {
@@ -52,6 +55,7 @@ func (u *Updater) discover(sources []config.Source, static, prev []config.PlanCo
 		}
 
 		log.Printf("discover %q: znaleziono %d planów", src.Faculty, len(plans))
+		u.recordSource(src.Faculty, FacultyStatus{Groups: len(plans), Checked: now})
 		for _, p := range plans {
 			byID[p.ID] = p
 		}
