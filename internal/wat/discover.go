@@ -22,6 +22,8 @@ var (
 	wcyPlainID   = regexp.MustCompile(`^[A-Za-z0-9]+$`)
 	wcySubID     = regexp.MustCompile(`^([A-Za-z0-9]+)\*([A-Za-z0-9]+)$`)
 	wrappedIDRe  = regexp.MustCompile(`^\(([A-Za-z0-9]+)\)`)
+	courseFileRe = regexp.MustCompile(`^\d[A-Z]{2}(\d{2})[A-Z]{2}$`)
+	namedFileRe  = regexp.MustCompile(`^([A-Z]{3})_([A-Z][a-z]+)$`)
 	attrValueRe  = regexp.MustCompile(`(?i)(?:href|src|value|url|file|path)\s*=\s*["']([^"']+)["']`)
 	rawHtmFileRe = regexp.MustCompile(`(?i)\b([a-z0-9_/-]+\.html?)\b`)
 )
@@ -178,13 +180,21 @@ func planFromURL(u *url.URL, src config.Source) (config.PlanConfig, bool) {
 		name = w[1]
 	}
 
-	m := planFileRe.FindStringSubmatch(name)
-	if m == nil {
+	id, display := strings.ToUpper(name), ""
+	yy := 0
+	switch {
+	case planFileRe.MatchString(name):
+		yy, _ = strconv.Atoi(planFileRe.FindStringSubmatch(name)[2])
+	case courseFileRe.MatchString(name):
+		yy, _ = strconv.Atoi(courseFileRe.FindStringSubmatch(name)[1])
+	case namedFileRe.MatchString(name) && namedFileRe.FindStringSubmatch(name)[1] == src.Faculty:
+		id = strings.ReplaceAll(id, "_", "-")
+		display = strings.ReplaceAll(name, "_", " ")
+	default:
 		return config.PlanConfig{}, false
 	}
-	yy, err := strconv.Atoi(m[2])
-	if err != nil {
-		return config.PlanConfig{}, false
+	if display == "" {
+		display = id
 	}
 
 	startYear := 2000 + yy
@@ -196,10 +206,9 @@ func planFromURL(u *url.URL, src config.Source) (config.PlanConfig, bool) {
 	planURL.Path = planPath
 	planURL.RawQuery = ""
 
-	id := strings.ToUpper(name)
 	return config.PlanConfig{
 		ID:        id,
-		Name:      id,
+		Name:      display,
 		URL:       planURL.String(),
 		StartYear: startYear,
 		Faculty:   src.Faculty,
