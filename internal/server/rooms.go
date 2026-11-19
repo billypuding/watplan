@@ -1,12 +1,14 @@
 package server
 
 import (
+	"log"
 	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/model"
@@ -148,6 +150,14 @@ func (s *Server) withRooms(fn func(*roomIndex)) {
 	}
 	s.rooms.mu.Unlock()
 	s.withRooms(fn)
+}
+
+func (s *Server) Warm() {
+	started := time.Now()
+	rooms := 0
+	s.withRooms(func(idx *roomIndex) { rooms = len(idx.rooms) })
+	s.semesters()
+	log.Printf("indeks sal gotowy: %d sal, %v", rooms, time.Since(started).Round(time.Millisecond))
 }
 
 func (idx *roomIndex) busyOn(date string) map[roomKey][]span {

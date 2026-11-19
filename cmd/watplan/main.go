@@ -156,16 +156,18 @@ func main() {
 		})
 	}
 
-	handler, err := server.NewServer(reg, st, upd, server.Options{
+	srvApp := server.NewServer(reg, st, upd, server.Options{
 		Push:          pushSvc,
 		DB:            db,
 		Offline:       offline,
 		OnDemand:      onDemand,
 		CanonicalHost: os.Getenv("PLANWAT_CANONICAL_HOST"),
-	}).Handler()
+	})
+	handler, err := srvApp.Handler()
 	if err != nil {
 		log.Fatal(err)
 	}
+	go srvApp.Warm()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
