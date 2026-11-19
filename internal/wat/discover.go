@@ -20,6 +20,8 @@ var (
 	planFileRe   = regexp.MustCompile(`(?i)^([A-Z]{3})(\d{2})[A-Z0-9]{2,}$`)
 	wcyGroupRe   = regexp.MustCompile(`grupa_id=([^"&#\s]+)`)
 	wcyPlainID   = regexp.MustCompile(`^[A-Za-z0-9]+$`)
+	wcySubID     = regexp.MustCompile(`^([A-Za-z0-9]+)\*([A-Za-z0-9]+)$`)
+	wrappedIDRe  = regexp.MustCompile(`^\(([A-Za-z0-9]+)\)`)
 	attrValueRe  = regexp.MustCompile(`(?i)(?:href|src|value|url|file|path)\s*=\s*["']([^"']+)["']`)
 	rawHtmFileRe = regexp.MustCompile(`(?i)\b([a-z0-9_/-]+\.html?)\b`)
 )
@@ -172,6 +174,9 @@ func planFromURL(u *url.URL, src config.Source) (config.PlanConfig, bool) {
 	}
 
 	name := strings.TrimSuffix(file, path.Ext(file))
+	if w := wrappedIDRe.FindStringSubmatch(name); w != nil {
+		name = w[1]
+	}
 
 	m := planFileRe.FindStringSubmatch(name)
 	if m == nil {
@@ -216,22 +221,42 @@ func (f *Fetcher) discoverWCY(base *url.URL, src config.Source) ([]config.PlanCo
 	}
 	prefix := strings.ToUpper(src.Prefix)
 	seen := map[string]bool{}
+	seenRaw := map[string]bool{}
 	var plans []config.PlanConfig
 	for _, m := range wcyGroupRe.FindAllSubmatch(body, -1) {
 		raw, err := url.QueryUnescape(string(m[1]))
-		if err != nil || !wcyPlainID.MatchString(raw) {
+		if err != nil {
 			continue
 		}
-		id := strings.ToUpper(raw)
-		if seen[id] || (prefix != "" && !strings.HasPrefix(id, prefix)) {
+		var id string
+		switch {
+		case wcyPlainID.MatchString(raw):
+			id = strings.ToUpper(raw)
+			raw = id
+		case wcySubID.MatchString(raw):
+			sm := wcySubID.FindStringSubmatch(raw)
+			id = strings.ToUpper(sm[1] + "-" + sm[2])
+		default:
 			continue
+		}
+		if seenRaw[raw] || (prefix != "" && !strings.HasPrefix(id, prefix)) {
+			continue
+		}
+		seenRaw[raw] = true
+		stem := id
+		for n := 2; seen[id]; n++ {
+			id = fmt.Sprintf("%s-%d", stem, n)
 		}
 		seen[id] = true
+		name := id
+		if raw != id {
+			name = raw
+		}
 		planURL := *base
-		planURL.RawQuery = "grupa_id=" + url.QueryEscape(id)
+		planURL.RawQuery = "grupa_id=" + url.QueryEscape(raw)
 		plans = append(plans, config.PlanConfig{
 			ID:        id,
-			Name:      id,
+			Name:      name,
 			URL:       planURL.String(),
 			StartYear: src.StartYear,
 			Faculty:   src.Faculty,

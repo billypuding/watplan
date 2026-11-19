@@ -41,6 +41,20 @@ func TestPlanFromURLPDFLinks(t *testing.T) {
 			wantOK:  true,
 		},
 		{
+			name:    "wrapped postgraduate group",
+			raw:     "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/(WME26A1N5)_-_SP_BRDiRzS.htm",
+			src:     config.Source{Faculty: "WIM", StartYear: 2026},
+			wantID:  "WME26A1N5",
+			wantURL: "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/(WME26A1N5)_-_SP_BRDiRzS.htm",
+			wantOK:  true,
+		},
+		{
+			name:   "wrapped room ignored",
+			raw:    "https://www.wim.wat.edu.pl/wp-content/uploads/rozklady/zima/(2.01)_54A.htm",
+			src:    config.Source{Faculty: "WIM", StartYear: 2026},
+			wantOK: false,
+		},
+		{
 			name:   "pdf without flag ignored",
 			raw:    "https://wel.wat.edu.pl/planyzajec/zima/WEL24EX1S0.pdf",
 			src:    config.Source{Faculty: "WEL", StartYear: 2026},

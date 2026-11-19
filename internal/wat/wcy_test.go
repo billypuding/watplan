@@ -129,7 +129,7 @@ func TestDiscoverWCYFiltersByPrefix(t *testing.T) {
 	cases := []struct {
 		prefix string
 		want   int
-	}{{"WCY", 162}, {"WME", 16}, {"", 178}}
+	}{{"WCY", 180}, {"WME", 16}, {"", 196}}
 	for _, c := range cases {
 		plans, err := f.DiscoverPlans(config.Source{Faculty: "WCY", IndexURL: srv.URL + "/pl/rozklad", Format: FormatWCY, Prefix: c.prefix, StartYear: 2026})
 		if err != nil {
@@ -142,10 +142,38 @@ func TestDiscoverWCYFiltersByPrefix(t *testing.T) {
 			if p.ID == "WCY26" || p.ID == "WCY25" {
 				t.Errorf("prefix %q: ucięty kod podgrupy %q", c.prefix, p.ID)
 			}
-			if !strings.HasPrefix(p.ID, c.prefix) || p.Format != FormatWCY || p.URL != srv.URL+"/pl/rozklad?grupa_id="+p.ID {
+			if !strings.HasPrefix(p.ID, c.prefix) || p.Format != FormatWCY || !strings.HasPrefix(p.URL, srv.URL+"/pl/rozklad?grupa_id=") {
 				t.Errorf("prefix %q: zły plan %+v", c.prefix, p)
 				break
 			}
+		}
+	}
+
+	plans, err := f.DiscoverPlans(config.Source{Faculty: "WCY", IndexURL: srv.URL + "/pl/rozklad", Format: FormatWCY, Prefix: "WCY", StartYear: 2026})
+	if err != nil {
+		t.Fatal(err)
+	}
+	byID := map[string]config.PlanConfig{}
+	for _, p := range plans {
+		if _, dup := byID[p.ID]; dup {
+			t.Errorf("zdublowane ID %q", p.ID)
+		}
+		byID[p.ID] = p
+	}
+	want := map[string]struct{ name, url string }{
+		"WCY20IT1S0":  {"WCY20IT1S0", srv.URL + "/pl/rozklad?grupa_id=WCY20IT1S0"},
+		"WCY26-FIZ1A": {"WCY26*Fiz1a", srv.URL + "/pl/rozklad?grupa_id=WCY26%2AFiz1a"},
+		"WCY26-BD":    {"WCY26*BD", srv.URL + "/pl/rozklad?grupa_id=WCY26%2ABD"},
+		"WCY26-BD-2":  {"WCY26*Bd", srv.URL + "/pl/rozklad?grupa_id=WCY26%2ABd"},
+	}
+	for id, w := range want {
+		p, ok := byID[id]
+		if !ok {
+			t.Errorf("brak planu %q", id)
+			continue
+		}
+		if p.Name != w.name || p.URL != w.url {
+			t.Errorf("%s: name %q url %q, chcę %q %q", id, p.Name, p.URL, w.name, w.url)
 		}
 	}
 }
