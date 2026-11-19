@@ -14,6 +14,7 @@ import (
 	"time"
 	_ "time/tzdata"
 
+	"github.com/billypuding/watplan/internal/alert"
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/model"
 	"github.com/billypuding/watplan/internal/store"
@@ -49,6 +50,7 @@ type Updater struct {
 
 	onChange func(config.PlanConfig, model.Change)
 	clock    func() time.Time
+	alert    *alert.Notifier
 }
 
 const (

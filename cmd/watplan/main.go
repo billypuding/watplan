@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/billypuding/watplan/internal/alert"
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/durable"
 	"github.com/billypuding/watplan/internal/model"
@@ -101,6 +102,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var alerts *alert.Notifier
+	if hook := os.Getenv("PLANWAT_ALERT_WEBHOOK"); hook != "" {
+		alerts = alert.New(hook)
+		log.Printf("powiadomienia o awariach włączone")
+	}
+
 	var db *durable.Queue
 	if dbURL := os.Getenv("PLANWAT_DB_URL"); dbURL != "" {
 		turso, err := durable.OpenTurso(dbURL, os.Getenv("PLANWAT_DB_TOKEN"))
@@ -108,6 +115,7 @@ func main() {
 			log.Printf("baza niedostępna (%v), działam na samych plikach", err)
 		} else {
 			db = durable.NewQueue(turso)
+			db.SetAlert(alerts)
 			started := time.Now()
 			restored, uploaded, err := st.Restore(db)
 			if err != nil {
@@ -141,7 +149,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		fetcher.SetAlert(alerts)
 		upd = updater.NewUpdater(st, fetcher)
+		upd.SetAlert(alerts)
 	}
 
 	for _, spec := range imports {

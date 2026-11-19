@@ -122,6 +122,16 @@ The app re-sends its subscription every time it opens, so a lost
 `push.json` heals itself, but to keep subscriptions and change history across
 deploys put `PLANWAT_PUSH_FILE` and `PLANWAT_DATA` on a persistent disk.
 
+### Alerts about broken fetching
+
+Set `PLANWAT_ALERT_WEBHOOK` to a Discord channel webhook URL (Server settings →
+Integrations → Webhooks → New Webhook → Copy URL). The server posts a message
+when something breaks and another when it recovers: the proxy rejecting
+connections (for example `402 Payment Required`), WAT's firewall blocking a
+faculty host, a faculty's group list failing or disappearing, and writes to
+Turso failing. An unchanged problem is repeated at most every 6 hours. Summer
+lists that are not published yet do not alert.
+
 ### Keeping data across deploys (Turso)
 
 Render wipes the disk on every deploy. To keep plans, change history and push

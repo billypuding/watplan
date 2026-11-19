@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"golang.org/x/net/html/charset"
+
+	"github.com/billypuding/watplan/internal/alert"
 )
 
 const (
@@ -61,6 +63,8 @@ type Fetcher struct {
 	listings   map[string]listing
 	staleUntil map[string]time.Time
 
+	alert *alert.Notifier
+
 	proxyMu    sync.Mutex
 	proxyError string
 	proxyAt    time.Time
@@ -76,6 +80,10 @@ func (f *Fetcher) proxyPaused() (time.Time, bool) {
 		return time.Time{}, false
 	}
 	return f.proxyUntil, true
+}
+
+func (f *Fetcher) SetAlert(n *alert.Notifier) {
+	f.alert = n
 }
 
 func (f *Fetcher) ProxyError() (string, time.Time) {
@@ -169,6 +177,7 @@ func (f *Fetcher) markBlocked(host string) {
 	f.blockedUntil[host] = until
 	f.blockMu.Unlock()
 	log.Printf("WAF blokuje %s - wstrzymuję zapytania do tej domeny do %s", host, until.Format("15:04"))
+	f.alert.Problem("waf:"+host, fmt.Sprintf("WAT (Incapsula) blokuje pobieranie z %s. Serwer ponawia co godzinę i da znać, gdy blokada zejdzie.", host))
 }
 
 func (f *Fetcher) BlockedHosts() map[string]time.Time {
@@ -336,6 +345,7 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators) (fetched, error) 
 			f.proxyUntil = time.Now().Add(proxyPause)
 			f.proxyMu.Unlock()
 			log.Printf("proxy %s odrzuciło połączenie: %s - wstrzymuję pobieranie do %s", f.proxyURL.Host, status, time.Now().Add(proxyPause).Format("15:04"))
+			f.alert.Problem("proxy", fmt.Sprintf("Proxy %s odrzuca połączenia: %s. Sprawdź konto u dostawcy proxy. Pobieranie z WAT stoi.", f.proxyURL.Host, status))
 			return fetched{}, fmt.Errorf("%w: %s %s - sprawdź konto u dostawcy proxy albo usuń PLANWAT_PROXY", ErrProxy, f.proxyURL.Host, status)
 		}
 		return fetched{}, err
@@ -346,6 +356,7 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators) (fetched, error) 
 		f.proxyMu.Lock()
 		f.proxyError = ""
 		f.proxyMu.Unlock()
+		f.alert.Resolved("proxy", fmt.Sprintf("Proxy %s znów działa.", f.proxyURL.Host))
 	}
 
 	if resp.StatusCode == http.StatusNotModified && !prev.empty() {
@@ -389,6 +400,7 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators) (fetched, error) 
 		log.Printf("fetch %s: strona blokady WAF (status %d)", targetUrl, resp.StatusCode)
 		return fetched{}, fmt.Errorf("%w (status %d)", ErrBlocked, resp.StatusCode)
 	}
+	f.alert.Resolved("waf:"+hostOf(targetUrl), "WAT znów wpuszcza pobieranie z "+hostOf(targetUrl)+".")
 	return fetched{data: body, validators: got}, nil
 }
 

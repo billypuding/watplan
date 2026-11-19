@@ -12,6 +12,8 @@ import (
 	"time"
 
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
+
+	"github.com/billypuding/watplan/internal/alert"
 )
 
 type Mirror interface {
@@ -91,6 +93,11 @@ type Queue struct {
 	failMu sync.Mutex
 	failed string
 	saved  int
+	alert  *alert.Notifier
+}
+
+func (q *Queue) SetAlert(n *alert.Notifier) {
+	q.alert = n
 }
 
 func NewQueue(target Mirror) *Queue {
@@ -137,7 +144,11 @@ func (q *Queue) run() {
 				q.saved++
 			}
 			q.failMu.Unlock()
+			if err == nil {
+				q.alert.Resolved("db", "Zapis do bazy znów działa.")
+			}
 			if err != nil {
+				q.alert.Problem("db", "Zapis do bazy Turso nie działa: "+err.Error())
 				log.Printf("baza: zapis %s: %v", key, err)
 				q.mu.Lock()
 				if _, newer := q.wait[key]; !newer {

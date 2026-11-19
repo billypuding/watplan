@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/billypuding/watplan/internal/alert"
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/model"
 	"github.com/billypuding/watplan/internal/store"
@@ -183,5 +185,34 @@ func TestCheckSourcesRejectsLastYearSummer(t *testing.T) {
 	}
 	if got := u.SourceStatus()["WIM lato"].Error; got != "na stronie są jeszcze plany z poprzedniego roku" {
 		t.Fatalf("status %q", got)
+	}
+}
+
+func TestFacultyStatusSendsAlerts(t *testing.T) {
+	var mu sync.Mutex
+	var msgs []string
+	u := NewUpdater(nil, nil)
+	u.SetAlert(alert.NewFunc(func(text string) error { mu.Lock(); msgs = append(msgs, text); mu.Unlock(); return nil }))
+
+	u.recordSource("WEL lato", FacultyStatus{Checked: "a", Error: "jeszcze nie opublikowano (404)"})
+	u.recordSource("WIM lato", FacultyStatus{Checked: "a", Error: "na stronie są jeszcze plany z poprzedniego roku"})
+	u.recordSource("WCY", FacultyStatus{Checked: "a", Error: "WAT (Incapsula) blokuje pobieranie listy grup"})
+	u.recordSource("WCY", FacultyStatus{Checked: "b", Groups: 180})
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		mu.Lock()
+		n := len(msgs)
+		mu.Unlock()
+		if n >= 2 {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	time.Sleep(50 * time.Millisecond)
+	mu.Lock()
+	defer mu.Unlock()
+	if len(msgs) != 2 || !strings.Contains(msgs[0], "WCY") || !strings.Contains(msgs[1], "180 grup") {
+		t.Fatalf("wiadomości %q", msgs)
 	}
 }

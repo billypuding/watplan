@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"strings"
 	"time"
 
+	"github.com/billypuding/watplan/internal/alert"
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/wat"
 )
@@ -85,6 +87,24 @@ func (u *Updater) recordSource(faculty string, st FacultyStatus) {
 		st.New += prev.New
 	}
 	u.sources[faculty] = st
+	u.alertSource(faculty, st)
+}
+
+func (u *Updater) SetAlert(n *alert.Notifier) {
+	u.alert = n
+}
+
+func (u *Updater) alertSource(key string, st FacultyStatus) {
+	if u.alert == nil {
+		return
+	}
+	switch {
+	case st.Error == "":
+		u.alert.Resolved("faculty:"+key, fmt.Sprintf("%s: lista grup znów się pobiera (%d grup).", key, st.Groups))
+	case strings.HasPrefix(st.Error, "jeszcze nie opublikowano") || strings.HasPrefix(st.Error, "na stronie są jeszcze plany"):
+	default:
+		u.alert.Problem("faculty:"+key, fmt.Sprintf("%s: %s", key, st.Error))
+	}
 }
 
 func sourceKey(src config.Source) string {
