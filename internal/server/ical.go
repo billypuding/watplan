@@ -16,6 +16,7 @@ const icsRefresh = "PT3H"
 
 type icsOptions struct {
 	alarm   int
+	hide    map[string]bool
 	baseURL string
 	stamp   time.Time
 }
@@ -112,6 +113,9 @@ func buildICS(plan config.PlanConfig, events []model.Event, opts icsOptions) []b
 	for _, e := range sorted {
 		key := e.Subject + "|" + e.Type
 		counter[key]++
+		if opts.hide[e.Subject] {
+			continue
+		}
 
 		uid := eventUID(plan.ID, e)
 		seen[uid]++

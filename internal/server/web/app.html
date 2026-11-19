@@ -10,6 +10,7 @@
 <meta property="og:site_name" content="watplan.me">
 <meta property="og:title" content="WATplan – szybki plan zajęć WAT">
 <meta property="og:description" content="Za darmo i bez logowania. Wpisz grupę i od razu widzisz, gdzie masz zajęcia.">
+<meta name="robots" content="noindex, follow">
 <link rel="canonical" href="https://watplan.me/app">
 <link rel="icon" href="/favicon.ico?v=3" sizes="48x48">
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png?v=3">
@@ -19,7 +20,7 @@
 <meta name="apple-mobile-web-app-title" content="WATplan">
 <link rel="preload" href="/fonts/geist-latin.woff2?v=1" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/geist-latin-ext.woff2?v=1" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/style.css?v=13">
+<link rel="stylesheet" href="/style.css?v=15">
 <script src="/theme.js"></script>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="20fefe3e-d94a-4560-9026-171fd09c2730"></script>
 </head>
@@ -44,6 +45,8 @@
   <nav id="favBar" class="fav-bar" aria-label="Ulubione plany" hidden></nav>
 
   <p id="staleBanner" class="stale-banner hidden" role="status"></p>
+
+  <button id="changeChip" class="change-chip hidden" type="button"></button>
 
   <main id="view" class="view" aria-live="polite"></main>
 
@@ -104,6 +107,22 @@
     <label class="switch"><input type="checkbox" id="optDimPast"><span>Przyciemnij zajęcia, które już się skończyły</span></label>
   </section>
 
+  <section class="setting subjects" id="subjectsSection" hidden>
+    <h3>Moje przedmioty</h3>
+    <p class="hint" id="subjectsHint"></p>
+    <details class="subject-fold">
+      <summary id="subjectsSummary">Pokaż przedmioty</summary>
+      <div class="subject-list" id="subjectsList"></div>
+    </details>
+  </section>
+
+  <section class="setting changes-setting">
+    <h3>Zmiany w planie</h3>
+    <p class="hint" id="pushHint">WATplan zapisuje każdą zauważoną zmianę: przeniesione, odwołane i nowe zajęcia oraz zmiany sal.</p>
+    <label class="switch hidden" id="pushRow"><input type="checkbox" id="pushToggle"><span>Powiadamiaj o zmianach w tej grupie</span></label>
+    <button id="openChanges" class="ghost-btn" type="button">Historia zmian</button>
+  </section>
+
   <section class="setting cal">
     <h3>Plan w kalendarzu</h3>
     <p class="hint">Subskrypcja sama się aktualizuje, gdy WAT zmieni plan.</p>
@@ -146,7 +165,26 @@
   <div id="seriesBody" class="series-body"></div>
 </dialog>
 
+<dialog id="changesModal" class="fullscreen">
+  <div class="series-head">
+    <button class="round-btn" type="button" data-close aria-label="Wróć">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div class="series-title">
+      <h2>Zmiany w planie</h2>
+      <p id="changesSub"></p>
+    </div>
+  </div>
+  <div class="series-body">
+    <label class="changes-pick">
+      <span>Grupa</span>
+      <select id="changesPlan"></select>
+    </label>
+    <div id="changesBody"></div>
+  </div>
+</dialog>
+
 <script defer src="/groups.js?v=2"></script>
-<script defer src="/app.js?v=11"></script>
+<script defer src="/app.js?v=13"></script>
 </body>
 </html>

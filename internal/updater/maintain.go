@@ -26,6 +26,8 @@ type MaintainOptions struct {
 	DiscoverEvery time.Duration
 	FetchGap      time.Duration
 	RetryAfter    time.Duration
+	Watched       func() []string
+	WatchEvery    time.Duration
 }
 
 func (o MaintainOptions) withDefaults() MaintainOptions {
@@ -43,6 +45,9 @@ func (o MaintainOptions) withDefaults() MaintainOptions {
 	}
 	if o.RetryAfter <= 0 {
 		o.RetryAfter = 24 * time.Hour
+	}
+	if o.WatchEvery <= 0 {
+		o.WatchEvery = 2 * time.Hour
 	}
 	return o
 }
@@ -109,6 +114,9 @@ func (u *Updater) Maintain(ctx context.Context, sources []config.Source, reg *co
 			lastDiscover = time.Now()
 		}
 		if !u.fillMissing(ctx, reg, failed, opts) {
+			return
+		}
+		if !u.refreshWatched(ctx, reg, opts) {
 			return
 		}
 		if !sleepCtx(ctx, opts.Round) {
@@ -201,6 +209,41 @@ func (u *Updater) fillMissing(ctx context.Context, reg *config.Registry, failed 
 	}
 	if len(todo) > 0 {
 		log.Printf("w tle: pobrano %d z %d brakujących planów", fetched, len(todo))
+	}
+	return true
+}
+
+func (u *Updater) refreshWatched(ctx context.Context, reg *config.Registry, opts MaintainOptions) bool {
+	if opts.Watched == nil {
+		return true
+	}
+	checked := 0
+	for _, id := range opts.Watched() {
+		p, ok := reg.Get(id)
+		if !ok || u.fetcher.Blocked(p.URL) {
+			continue
+		}
+		if stored, err := u.store.Load(id); err == nil {
+			if at, err := time.ParseInLocation(timeLayout, stored.FetchedAt, warsawLoc); err == nil && time.Since(at) < opts.WatchEvery {
+				continue
+			}
+		}
+		res, err := u.update(p)
+		switch {
+		case err != nil:
+			log.Printf("obserwowany %s: %v", id, err)
+		case res.unchanged:
+			log.Printf("obserwowany %s: bez zmian (304)", id)
+		default:
+			log.Printf("obserwowany %s: sprawdzono, %d zajęć", id, res.events)
+		}
+		checked++
+		if !sleepCtx(ctx, opts.FetchGap) {
+			return false
+		}
+	}
+	if checked > 0 {
+		log.Printf("w tle: sprawdzono %d obserwowanych planów", checked)
 	}
 	return true
 }

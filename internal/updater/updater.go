@@ -46,6 +46,15 @@ type Updater struct {
 	locks   map[string]*sync.Mutex
 	sources map[string]FacultyStatus
 	missing atomic.Int64
+
+	onChange func(config.PlanConfig, model.Change)
+	clock    func() time.Time
+}
+
+const historyKeep = 40
+
+func (u *Updater) OnChange(fn func(config.PlanConfig, model.Change)) {
+	u.onChange = fn
 }
 
 type updateResult struct {
@@ -269,10 +278,27 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 		log.Printf("plan %s: zmiany (dodane %d, usunięte %d, zmienione %d)",
 			cfg.ID, len(diff.Added), len(diff.Removed), len(diff.Modified))
 	}
+	var change model.Change
+	if len(old.Events) > 0 && !diff.Empty() {
+		clock := u.clock
+		if clock == nil {
+			clock = time.Now
+		}
+		today := clock().In(warsawLoc).Format("2006-01-02")
+		change = model.Changes(old.Events, events, today, now)
+	}
 
 	plan := model.Plan{Events: events, FetchedAt: now, ModifiedAt: modifiedAt, ETag: got.ETag, LastMod: got.LastModified}
 	if err := u.store.Save(cfg.ID, plan); err != nil {
 		return updateResult{}, fmt.Errorf("zapis: %w", err)
+	}
+	if !change.Empty() {
+		if err := u.store.AddHistory(cfg.ID, change, historyKeep); err != nil {
+			log.Printf("plan %s: zapis historii zmian: %v", cfg.ID, err)
+		}
+		if u.onChange != nil {
+			go u.onChange(cfg, change)
+		}
 	}
 	return updateResult{events: len(events)}, nil
 }

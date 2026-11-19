@@ -1,6 +1,9 @@
 package wat
 
 import (
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 
@@ -131,5 +134,33 @@ func TestPlanFromURLPDFLinks(t *testing.T) {
 				t.Errorf("Faculty = %q, chcę %q", plan.Faculty, c.src.Faculty)
 			}
 		})
+	}
+}
+
+func TestDiscoverFallsBackToSiblingIndex(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/planzajec/zima/index.html" {
+			_, _ = w.Write([]byte(`<a href="WLO26AX1S1.htm">WLO26AX1S1</a>`))
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	t.Cleanup(srv.Close)
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	f, err := NewFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+	plans, err := f.DiscoverPlans(config.Source{Faculty: "WLO", IndexURL: srv.URL + "/planzajec/zima/index.xml", StartYear: 2026})
+	if err != nil {
+		t.Fatalf("DiscoverPlans: %v", err)
+	}
+	if len(plans) != 1 || plans[0].ID != "WLO26AX1S1" || plans[0].URL != srv.URL+"/planzajec/zima/WLO26AX1S1.htm" {
+		t.Fatalf("plany %+v", plans)
+	}
+
+	_, err = f.DiscoverPlans(config.Source{Faculty: "WLO", IndexURL: srv.URL + "/inne/index.xml", StartYear: 2026})
+	if !errors.Is(err, ErrGone) {
+		t.Fatalf("bez obu plików chcę ErrGone, mam %v", err)
 	}
 }

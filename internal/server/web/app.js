@@ -14,7 +14,7 @@ const LONG_GAP_MIN = 30;
 const NOTICE_MS = 5000;
 const TICK_MS = 15000;
 const SETTINGS_KEY = 'settings';
-const SETTINGS_VERSION = 2;
+const SETTINGS_VERSION = 3;
 
 const $ = (id) => document.getElementById(id);
 const app = $('app');
@@ -60,7 +60,7 @@ let noticeTimer = null;
 let status = 'idle';
 let statusMessage = '';
 
-const defaults = { v: SETTINGS_VERSION, theme: 'auto', view: 'agenda', live: true, dimPast: true, calAlarm: false };
+const defaults = { v: SETTINGS_VERSION, theme: 'auto', view: 'auto', live: true, dimPast: true, calAlarm: false };
 
 function loadSettings() {
     let stored = {};
@@ -69,9 +69,9 @@ function loadSettings() {
     const merged = { ...defaults, ...(legacyTheme ? { theme: legacyTheme } : {}), ...stored };
     if (merged.v !== SETTINGS_VERSION) {
         merged.v = SETTINGS_VERSION;
-        merged.view = 'agenda';
+        merged.view = 'auto';
     }
-    if (!['agenda', 'week', 'month'].includes(merged.view)) merged.view = 'agenda';
+    if (!['auto', 'agenda', 'week', 'month'].includes(merged.view)) merged.view = 'auto';
     return merged;
 }
 
@@ -84,6 +84,9 @@ const saveSettings = () => safeSet(SETTINGS_KEY, JSON.stringify(settings));
 const urlView = { day: 'agenda', dzien: 'agenda', agenda: 'agenda', week: 'week', month: 'month' }[new URLSearchParams(window.location.search).get('view')];
 if (urlView) settings.view = urlView;
 
+const wideQuery = window.matchMedia('(min-width: 900px)');
+const currentView = () => settings.view === 'auto' ? (wideQuery.matches ? 'week' : 'agenda') : settings.view;
+
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
 function applyTheme() {
     const theme = settings.theme === 'auto' ? (darkQuery.matches ? 'dark' : 'light') : settings.theme;
@@ -95,7 +98,8 @@ function syncSettingsUI() {
     document.querySelectorAll('.segmented').forEach(group => {
         const key = group.dataset.setting;
         group.querySelectorAll('button').forEach(btn => {
-            btn.setAttribute('aria-pressed', String(btn.dataset.value === settings[key]));
+            const value = key === 'view' ? currentView() : settings[key];
+            btn.setAttribute('aria-pressed', String(btn.dataset.value === value));
         });
     });
     optLive.checked = settings.live;
@@ -115,6 +119,12 @@ document.querySelectorAll('.segmented button').forEach(btn => {
 
 optLive.addEventListener('change', () => { settings.live = optLive.checked; saveSettings(); tickLive(); });
 optDimPast.addEventListener('change', () => { settings.dimPast = optDimPast.checked; saveSettings(); tickLive(); });
+
+wideQuery.addEventListener('change', () => {
+    if (settings.view !== 'auto') return;
+    syncSettingsUI();
+    render();
+});
 
 applyTheme();
 syncSettingsUI();
@@ -237,7 +247,7 @@ function tint(node, hex) {
 
 const SMALL_WORDS = new Set(['i', 'w', 'z', 'do', 'na', 'we', 'ze', 'o', 'od', 'dla', 'oraz', 'a', '-']);
 function abbreviate(subject) {
-    const words = subject.split(/\s+/).filter(Boolean);
+    const words = subject.replace(/[()[\]{},.;:]/g, ' ').split(/\s+/).filter(Boolean);
     const big = words.filter(w => !SMALL_WORDS.has(w.toLowerCase()) && !/^\d+$/.test(w) && !/^[IVX]+$/.test(w));
     const nums = words.filter(w => /^\d+$/.test(w) || /^[IVX]+$/.test(w));
     let ab;
@@ -245,7 +255,7 @@ function abbreviate(subject) {
         const w = big[0] || subject;
         ab = w === w.toUpperCase() ? w.slice(0, 5) : w.slice(0, 3);
     } else {
-        ab = words.filter(w => !/^\d+$/.test(w)).map(w => {
+        ab = words.filter(w => !/^\d+$/.test(w) && !/^[IVX]+$/.test(w)).map(w => {
             if (SMALL_WORDS.has(w.toLowerCase())) return w === '-' ? '' : w[0].toLowerCase();
             return w[0].toUpperCase();
         }).join('');
@@ -295,18 +305,57 @@ async function fetchJSON(url, options) {
 
 const seriesKey = (e) => `${e.subject}\u0000${e.type || ''}`;
 
+let planEvents = [];
+
+function loadHidden() {
+    try { return JSON.parse(safeGet('hiddenSubjects') || '{}') || {}; } catch (_) { return {}; }
+}
+const hiddenSubjects = (planId) => new Set(loadHidden()[planId] || []);
+function setHiddenSubjects(planId, set) {
+    const all = loadHidden();
+    if (set.size) all[planId] = [...set].sort(); else delete all[planId];
+    safeSet('hiddenSubjects', JSON.stringify(all));
+}
+
 function indexEvents(events) {
+    planEvents = events;
     eventsByDate = {};
     seriesByKey = {};
+    const hidden = hiddenSubjects(currentPlanId);
     const sorted = events.slice().sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
-    for (const e of sorted) {
-        (eventsByDate[e.date] ||= []).push(e);
-        (seriesByKey[seriesKey(e)] ||= []).push(e);
-    }
+    for (const e of sorted) (seriesByKey[seriesKey(e)] ||= []).push(e);
     for (const list of Object.values(seriesByKey)) {
         list.forEach((e, i) => { e._n = i + 1; e._total = list.length; });
     }
-    allEvents = sorted;
+    const visible = sorted.filter(e => !hidden.has(e.subject));
+    for (const e of visible) (eventsByDate[e.date] ||= []).push(e);
+    allEvents = visible;
+}
+
+function renderSubjects() {
+    const counts = new Map();
+    for (const e of planEvents) counts.set(e.subject, (counts.get(e.subject) || 0) + 1);
+    const hidden = hiddenSubjects(currentPlanId);
+    const names = [...counts.keys()].sort((a, b) => a.localeCompare(b, 'pl'));
+    subjectsSection.hidden = names.length === 0;
+    $('subjectsSummary').textContent = `Pokaż przedmioty (${names.length})`;
+    subjectsHint.textContent = hidden.size
+        ? `Ukryte: ${hidden.size}. Nie pokazują się w planie ani w subskrypcji kalendarza.`
+        : 'Odznacz przedmioty, na które nie chodzisz, np. lektorat innej grupy.';
+    subjectsList.replaceChildren(...names.map(name => {
+        const input = h('input', { type: 'checkbox' });
+        input.checked = !hidden.has(name);
+        input.addEventListener('change', () => {
+            const set = hiddenSubjects(currentPlanId);
+            if (input.checked) set.delete(name); else set.add(name);
+            setHiddenSubjects(currentPlanId, set);
+            indexEvents(planEvents);
+            renderSubjects();
+            syncCalendar();
+            render();
+        });
+        return h('label', { class: 'switch subject' }, input, h('span', null, name), h('small', null, String(counts.get(name))));
+    }));
 }
 
 function pickInitialDate() {
@@ -467,6 +516,7 @@ async function loadPlan() {
         if (requestId !== loadCounter) return;
         storePlan(planId, text);
         scheduleStaleRecheck(planId, data.fetched_at);
+        loadChangeChip(planId);
         if (cached && cached.raw === text) return;
         applyPlanData(data);
     } catch (err) {
@@ -510,7 +560,7 @@ function updateStaleBanner(fetchedAt) {
 }
 
 function render() {
-    app.classList.toggle('wide', settings.view === 'week' && status === 'ready');
+    app.classList.toggle('wide', currentView() === 'week' && status === 'ready');
     todayBtn.classList.toggle('hidden', status !== 'ready' || !selectedDate || !todayOffScreen());
     refreshButton.classList.toggle('hidden', !currentPlanId);
     if (status === 'loading') { view.replaceChildren(h('div', { class: 'message' }, 'Ładowanie...')); return; }
@@ -527,15 +577,15 @@ function render() {
     if (allEvents.length === 0) { view.replaceChildren(h('div', { class: 'message' }, 'Brak zajęć w planie')); return; }
     if (!selectedDate) selectedDate = pickInitialDate();
 
-    if (settings.view === 'week') renderWeek();
-    else if (settings.view === 'month') renderMonth();
+    if (currentView() === 'week') renderWeek();
+    else if (currentView() === 'month') renderMonth();
     else renderAgenda();
     tickLive();
 }
 
 function todayOffScreen() {
     const today = todayISO();
-    if (settings.view === 'week') return mondayOf(selectedDate) !== mondayOf(today);
+    if (currentView() === 'week') return mondayOf(selectedDate) !== mondayOf(today);
     return selectedDate !== today;
 }
 
@@ -660,15 +710,28 @@ function renderWeek() {
 
     const grid = h('div', { class: 'week-grid', style: `--days:${days}` });
     const today = todayISO();
+    const lastRow = maxSlot - minSlot + 2;
+    for (let s = minSlot; s <= maxSlot; s++) {
+        grid.append(h('div', { class: 'wk-line', style: `grid-row:${s - minSlot + 2};grid-column:2 / ${days + 2}` }));
+    }
+    const todayCol = dates.slice(0, days).indexOf(today);
+    if (todayCol >= 0) grid.append(h('div', { class: 'wk-today', style: `grid-row:1 / ${lastRow + 1};grid-column:${todayCol + 2}` }));
     for (let i = 0; i < days; i++) {
         const iso = dates[i];
+        const n = (eventsByDate[iso] || []).length;
+        const date = parseISO(iso);
         grid.append(h('div', { class: 'wk-head' + (iso === today ? ' today' : ''), style: `grid-row:1;grid-column:${i + 2}` },
-            h('b', null, DAY_SHORT[i]), h('span', null, parseISO(iso).getDate())));
+            h('b', { class: 'short' }, DAY_SHORT[i]),
+            h('b', { class: 'long' }, DAY_NAMES[i]),
+            h('span', { class: 'dd' }, h('span', { class: 'num' }, date.getDate()), h('span', { class: 'long' }, ` ${MONTHS_SHORT[date.getMonth()]}`)),
+            h('small', { class: 'long' }, n ? classesWord(n) : 'wolne')));
     }
     for (let s = minSlot; s <= maxSlot; s++) {
-        const [st] = SLOTS[s];
+        const [st, en] = SLOTS[s];
         const [hh, mm] = st.split(':');
-        grid.append(h('div', { class: 'wk-time', style: `grid-row:${s - minSlot + 2};grid-column:1` }, h('span', null, hh), h('span', null, mm)));
+        grid.append(h('div', { class: 'wk-time', style: `grid-row:${s - minSlot + 2};grid-column:1` },
+            h('span', { class: 'short' }, hh), h('span', { class: 'short' }, mm),
+            h('b', { class: 'long' }, st), h('span', { class: 'long' }, en)));
     }
 
     const buckets = {};
@@ -697,17 +760,21 @@ function emptyWeek(mondayISO) {
 
 function weekCell(e) {
     const [start, end] = eventRange(e);
+    const { main: room, more } = splitRooms(e.room);
     const cell = h('button', {
         type: 'button', class: 'wk-cell tint', 'data-start': start, 'data-end': end,
         title: `${e.start}–${e.end} ${e.subject}${e.room ? ', sala ' + e.room : ''}${e.teacher ? ', ' + e.teacher : ''}`,
-        'aria-label': `${e.subject}, ${typeLabel(e.type)}, ${e.start}. Pokaż wszystkie`,
+        'aria-label': `${e.subject}, ${typeLabel(e.type)}, ${e.start}–${e.end}${e.room ? ', sala ' + e.room : ''}. Pokaż wszystkie`,
         onclick: () => openSeries(e),
     },
+        h('span', { class: 'time sub' }, `${e.start}–${e.end}`),
         h('span', { class: 'ab' }, abbreviate(e.subject)),
         h('span', { class: 'full' }, e.subject),
         h('span', { class: 'meta sub' },
-            h('span', null, `${typeShort(e.type)} ${e._n}/${e._total}`),
-            e.room ? h('span', null, e.room) : null),
+            h('span', { class: 'kind' }, h('span', { class: 'dot' }), `${typeShort(e.type)} ${e._n}/${e._total}`),
+            room ? h('span', { class: 'room' }, svg(ICON_BUILDING, 13), room, more ? ` +${more}` : null) : null,
+            e.teacher ? h('span', { class: 'teacher' }, svg(ICON_USER, 13), e.teacher) : null),
+        h('span', { class: 'wk-live' }, h('span', { class: 'fill' })),
     );
     return tint(cell, e.color);
 }
@@ -867,8 +934,8 @@ function stepMonth(dir) {
 }
 
 function stepByView(dir) {
-    if (settings.view === 'month') stepMonth(dir);
-    else if (settings.view === 'week') step(7 * dir);
+    if (currentView() === 'month') stepMonth(dir);
+    else if (currentView() === 'week') step(7 * dir);
     else step(dir);
 }
 
@@ -925,8 +992,11 @@ const calCopy = $('calCopy');
 const calAlarm = $('calAlarm');
 
 function calendarURL() {
-    const path = `/cal/${encodeURIComponent(currentPlanId)}.ics` + (settings.calAlarm ? '?alarm=15' : '');
-    return window.location.origin + path;
+    const params = new URLSearchParams();
+    if (settings.calAlarm) params.set('alarm', '15');
+    for (const name of hiddenSubjects(currentPlanId)) params.append('hide', name);
+    const query = params.toString();
+    return window.location.origin + `/cal/${encodeURIComponent(currentPlanId)}.ics` + (query ? '?' + query : '');
 }
 
 function syncCalendar() {
@@ -967,7 +1037,263 @@ downloadIcsBtn.addEventListener('click', () => {
     window.location.href = url + (url.includes('?') ? '&' : '?') + 'download=1';
 });
 
-settingsBtn.addEventListener('click', syncCalendar);
+const subjectsSection = $('subjectsSection');
+const subjectsList = $('subjectsList');
+const subjectsHint = $('subjectsHint');
+
+settingsBtn.addEventListener('click', () => { syncCalendar(); renderSubjects(); });
+
+const changeChip = $('changeChip');
+const changesModal = $('changesModal');
+const changesPlan = $('changesPlan');
+const changesBody = $('changesBody');
+const changesSub = $('changesSub');
+const openChangesBtn = $('openChanges');
+const pushRow = $('pushRow');
+const pushToggle = $('pushToggle');
+const pushHint = $('pushHint');
+const CHIP_DAYS = 7;
+
+async function fetchChanges(planId) {
+    return fetchJSON('/api/changes/' + encodeURIComponent(planId));
+}
+
+function parseStamp(text) {
+    const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(text || '');
+    return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) : null;
+}
+
+function agoText(date) {
+    const min = Math.max(0, Math.round((warsawNow() - date) / 60000));
+    if (min < 60) return min <= 1 ? 'przed chwilą' : `${min} min temu`;
+    const hrs = Math.round(min / 60);
+    if (hrs < 24) return `${hrs} godz. temu`;
+    const days = Math.round(hrs / 24);
+    return days === 1 ? 'wczoraj' : `${days} dni temu`;
+}
+
+function stampText(date) {
+    return `${date.getDate()} ${MONTHS_GEN[date.getMonth()]}, ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+const changeCount = (c) => (c.added || []).length + (c.removed || []).length + (c.moved || []).length + (c.changed || []).length;
+
+async function loadChangeChip(planId) {
+    try {
+        const data = await fetchChanges(planId);
+        if (planId !== currentPlanId) return;
+        const last = (data.changes || [])[0];
+        const at = last && parseStamp(last.at);
+        if (!at || warsawNow() - at > CHIP_DAYS * 86400000) { changeChip.classList.add('hidden'); return; }
+        const n = changeCount(last);
+        changeChip.replaceChildren(h('span', { class: 'pulse' }), h('b', null, `Plan zmieniony ${agoText(at)}`),
+            h('span', null, `${n} ${plural(n, 'zmiana', 'zmiany', 'zmian')} · zobacz`));
+        changeChip.classList.remove('hidden');
+    } catch (_) {
+        changeChip.classList.add('hidden');
+    }
+}
+
+function eventWhen(e) {
+    return `${shortDate(e.date)}, ${e.start}–${e.end}`;
+}
+
+function eventName(e) {
+    return e.type ? `${e.subject} · ${typeLabel(e.type)}` : e.subject;
+}
+
+function jumpTo(date) {
+    changesModal.close();
+    if (!date) return;
+    selectedDate = date;
+    render();
+}
+
+function changeItem(kind, label, title, lines, date) {
+    return h('li', null, h('button', { type: 'button', class: 'chg-item ' + kind, onclick: () => jumpTo(date) },
+        h('span', { class: 'chg-kind' }, label),
+        h('b', null, title),
+        lines.map(line => h('span', { class: 'chg-line' }, line))));
+}
+
+function detailParts(before, after) {
+    const parts = [];
+    if (before.room !== after.room) parts.push(h('span', null, 'sala ', h('s', null, before.room || 'brak'), ' → ', h('b', null, after.room || 'brak')));
+    if (before.end !== after.end) parts.push(h('span', null, 'koniec ', h('s', null, before.end), ' → ', h('b', null, after.end)));
+    if (before.teacher !== after.teacher) parts.push(h('span', null, 'prowadzący ', h('s', null, before.teacher || 'brak'), ' → ', h('b', null, after.teacher || 'brak')));
+    return parts.length ? parts : [h('span', null, 'zmienione szczegóły')];
+}
+
+function renderChangeEntry(c) {
+    const at = parseStamp(c.at);
+    const counts = [
+        [(c.moved || []).length, 'przeniesione'], [(c.changed || []).length, 'zmienione'],
+        [(c.removed || []).length, 'odwołane'], [(c.added || []).length, 'nowe'],
+    ].filter(([n]) => n > 0);
+    const items = [];
+    for (const m of c.moved || []) items.push(changeItem('moved', 'Przeniesione', eventName(m.after),
+        [h('span', null, h('s', null, eventWhen(m.before))), h('span', null, '→ ', h('b', null, eventWhen(m.after)))], m.after.date));
+    for (const m of c.changed || []) items.push(changeItem('changed', 'Zmiana', eventName(m.after),
+        [eventWhen(m.after), ...detailParts(m.before, m.after)], m.after.date));
+    for (const e of c.removed || []) items.push(changeItem('removed', 'Odwołane', eventName(e),
+        [h('s', null, eventWhen(e)), e.room ? `sala ${e.room}` : null].filter(Boolean), e.date));
+    for (const e of c.added || []) items.push(changeItem('added', 'Nowe', eventName(e),
+        [eventWhen(e), e.room ? `sala ${e.room}` : null].filter(Boolean), e.date));
+    return h('section', { class: 'chg-entry' },
+        h('header', null,
+            h('b', null, at ? stampText(at) : c.at),
+            h('span', null, at ? agoText(at) : '')),
+        h('div', { class: 'chg-counts' }, counts.map(([n, label]) => h('span', { class: 'chg-count' }, `${n} ${label}`))),
+        h('ol', { class: 'chg-list' }, items));
+}
+
+function changesPlans() {
+    const ids = [];
+    const add = (id, name) => { if (id && !ids.some(x => x.id === id)) ids.push({ id, name: name || id }); };
+    add(currentPlanId, (allPlans.find(p => p.id === currentPlanId) || {}).name);
+    for (const f of WatGroups.favorites()) add(f.id, f.name);
+    for (const id of pushPlans()) add(id);
+    return ids;
+}
+
+async function renderChanges(planId) {
+    changesPlan.replaceChildren(...changesPlans().map(p => {
+        const opt = h('option', { value: p.id }, p.name);
+        if (p.id === planId) opt.selected = true;
+        return opt;
+    }));
+    changesSub.textContent = '';
+    changesBody.replaceChildren(h('div', { class: 'message' }, 'Ładowanie...'));
+    try {
+        const data = await fetchChanges(planId);
+        if (changesPlan.value !== planId) return;
+        const list = data.changes || [];
+        const checked = parseStamp(data.fetched_at);
+        changesSub.textContent = checked ? `Sprawdzono ${agoText(checked)}` : '';
+        const total = list.reduce((n, c) => n + changeCount(c), 0);
+        const summary = h('div', { class: 'chg-summary' },
+            h('div', null, h('b', null, String(list.length)), h('span', null, plural(list.length, 'aktualizacja', 'aktualizacje', 'aktualizacji'))),
+            h('div', null, h('b', null, String(total)), h('span', null, plural(total, 'zmiana', 'zmiany', 'zmian'))),
+            h('div', null, h('b', null, list[0] ? agoText(parseStamp(list[0].at)) : '—'), h('span', null, 'ostatnia zmiana')));
+        if (list.length === 0) {
+            changesBody.replaceChildren(summary, h('div', { class: 'empty-day' },
+                h('b', null, 'Brak zapisanych zmian'),
+                'WATplan zapisuje zmiany, gdy zauważy je przy odświeżaniu planu. Włącz powiadomienia, żeby dowiedzieć się o nich od razu.'));
+            return;
+        }
+        changesBody.replaceChildren(summary, ...list.map(renderChangeEntry));
+    } catch (err) {
+        changesBody.replaceChildren(h('div', { class: 'message error' }, err.message));
+    }
+}
+
+function openChanges(planId) {
+    if (!planId) { setNotice('Najpierw wybierz grupę z planem', true); return; }
+    if (settingsModal.open) settingsModal.close();
+    renderChanges(planId);
+    if (!changesModal.open) changesModal.showModal();
+    changesModal.scrollTo(0, 0);
+}
+
+changesPlan.addEventListener('change', () => renderChanges(changesPlan.value));
+changeChip.addEventListener('click', () => openChanges(currentPlanId));
+openChangesBtn.addEventListener('click', () => openChanges(currentPlanId));
+changesModal.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) changesModal.close(); });
+
+const pushSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let pushKey = null;
+
+function pushPlans() {
+    try { const list = JSON.parse(safeGet('pushPlans') || '[]'); return Array.isArray(list) ? list.filter(x => typeof x === 'string') : []; } catch (_) { return []; }
+}
+
+async function loadPushKey() {
+    if (pushKey !== null) return pushKey;
+    try {
+        const res = await fetch('/api/push/key');
+        pushKey = res.ok ? ((await res.json()).key || '') : '';
+    } catch (_) { pushKey = ''; }
+    return pushKey;
+}
+
+function keyBytes(base64) {
+    const padded = (base64 + '='.repeat((4 - base64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+    return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
+}
+
+async function syncPush(plans) {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (plans.length === 0) {
+        if (sub) {
+            await fetch('/api/push/unsubscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => undefined);
+            await sub.unsubscribe().catch(() => undefined);
+        }
+        return;
+    }
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(await loadPushKey()) });
+    await fetchJSON('/api/push/subscribe', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: sub.toJSON(), plans }),
+    });
+}
+
+async function syncPushUI() {
+    const key = await loadPushKey();
+    if (!key) { pushRow.classList.add('hidden'); return; }
+    pushRow.classList.remove('hidden');
+    const on = Boolean(currentPlanId) && pushPlans().includes(currentPlanId) && pushSupported && Notification.permission === 'granted';
+    pushToggle.checked = on;
+    pushToggle.disabled = !currentPlanId || !pushSupported;
+    if (!pushSupported) {
+        pushHint.textContent = isIOS
+            ? 'Na iPhonie powiadomienia działają po dodaniu WATplan do ekranu początkowego: Udostępnij → Do ekranu początkowego. Potem włącz je tutaj.'
+            : 'Ta przeglądarka nie obsługuje powiadomień.';
+    } else if (Notification.permission === 'denied') {
+        pushHint.textContent = 'Powiadomienia są zablokowane w ustawieniach przeglądarki dla watplan.me.';
+    } else {
+        pushHint.textContent = 'Powiadomienie przyjdzie, gdy WAT przeniesie, odwoła lub doda zajęcia albo zmieni salę. Wszystkie zmiany znajdziesz w historii.';
+    }
+}
+
+pushToggle.addEventListener('change', async () => {
+    const plans = new Set(pushPlans());
+    const enable = pushToggle.checked;
+    pushToggle.disabled = true;
+    try {
+        if (enable) {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') throw new Error('Bez zgody przeglądarki nie wyślemy powiadomień');
+            plans.add(currentPlanId);
+        } else {
+            plans.delete(currentPlanId);
+        }
+        const list = [...plans].slice(0, 10);
+        await syncPush(list);
+        safeSet('pushPlans', JSON.stringify(list));
+        setNotice(enable ? `Powiadomienia o zmianach w ${currentPlanId} włączone` : 'Powiadomienia wyłączone', false);
+    } catch (err) {
+        pushToggle.checked = !enable;
+        setNotice(err.message || 'Nie udało się zmienić powiadomień', true);
+    } finally {
+        syncPushUI();
+    }
+});
+
+settingsBtn.addEventListener('click', syncPushUI);
+
+if (pushSupported && pushPlans().length && Notification.permission === 'granted') {
+    loadPushKey().then(key => { if (key) syncPush(pushPlans()).catch(() => undefined); });
+}
+
+if (new URLSearchParams(window.location.search).has('changes')) {
+    const url = new URL(window.location);
+    url.searchParams.delete('changes');
+    window.history.replaceState(window.history.state, '', url);
+    setTimeout(() => openChanges(currentPlanId), 0);
+}
+
 
 loadPlans();
 

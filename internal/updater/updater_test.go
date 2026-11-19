@@ -334,3 +334,47 @@ func TestConditionalFetchKeepsPlanOn304(t *testing.T) {
 		t.Fatalf("pełnych pobrań %d, 304: %d", full.Load(), notModified.Load())
 	}
 }
+
+func TestUpdateRecordsChangeHistoryAndNotifies(t *testing.T) {
+	var body atomic.Value
+	body.Store(planHTML(10))
+	u, st, cfg := newTestUpdater(t, &body)
+	u.clock = func() time.Time { return time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC) }
+	got := make(chan model.Change, 1)
+	u.OnChange(func(p config.PlanConfig, c model.Change) {
+		if p.ID == cfg.ID {
+			got <- c
+		}
+	})
+
+	if err := u.Update(cfg); err != nil {
+		t.Fatal(err)
+	}
+	if h, _ := st.History(cfg.ID); len(h) != 0 {
+		t.Fatalf("pierwsze pobranie zapisało historię: %+v", h)
+	}
+
+	body.Store(planHTML(9))
+	if err := u.Update(cfg); err != nil {
+		t.Fatal(err)
+	}
+	h, err := st.History(cfg.ID)
+	if err != nil || len(h) != 1 || len(h[0].Removed) != 1 || h[0].Removed[0].Date != "2026-03-09" {
+		t.Fatalf("historia po usunięciu zajęć: %+v err %v", h, err)
+	}
+	select {
+	case c := <-got:
+		if c.Count() != 1 {
+			t.Fatalf("powiadomienie o %d zmianach", c.Count())
+		}
+	case <-time.After(time.Second):
+		t.Fatal("brak powiadomienia o zmianie")
+	}
+
+	if err := u.Update(cfg); err != nil {
+		t.Fatal(err)
+	}
+	if h, _ := st.History(cfg.ID); len(h) != 1 {
+		t.Fatalf("plan bez zmian dopisał historię: %d wpisów", len(h))
+	}
+}

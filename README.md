@@ -99,6 +99,29 @@ on-demand mode alone will not unblock it. In that case:
 - move fetching to a machine on a network that WAT allows and publish the updated
   `data/` directory to the hosting provider.
 
+### Push notifications about plan changes
+
+When the server notices a change in a plan (moved, cancelled or new classes, a
+new room), it saves it to `data/<ID>.history.json` (shown in the app under
+"Zmiany w planie") and sends a Web Push notification to everyone who turned
+notifications on for that group. Plans with subscribers are rechecked every
+2 hours in the background loop.
+
+Generate the keys once and set them as environment variables:
+
+```bash
+go run cmd/watplan/main.go -vapid-keys
+```
+
+- `PLANWAT_VAPID_PUBLIC`, `PLANWAT_VAPID_PRIVATE`: the generated keys. Without
+  them notifications are off and the switch is hidden in the app.
+- `PLANWAT_VAPID_SUBJECT`: contact for push services (default `mailto:awalczak@duck.com`).
+- `PLANWAT_PUSH_FILE`: where subscriptions are stored (default `data/push.json`).
+
+The app re-sends its subscription every time it opens, so a lost
+`push.json` heals itself, but to keep subscriptions and change history across
+deploys put `PLANWAT_PUSH_FILE` and `PLANWAT_DATA` on a persistent disk.
+
 Note that Render's filesystem is ephemeral: plans fetched at runtime disappear on
 the next deploy or restart. The committed `data/` directory is the permanent cache.
 

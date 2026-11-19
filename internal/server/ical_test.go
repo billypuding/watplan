@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -140,5 +141,21 @@ func TestICSFoldKeepsMultibyteCharacters(t *testing.T) {
 	}
 	if strings.ReplaceAll(folded, "\r\n ", "") != line {
 		t.Fatal("zawinięcie zmienia treść")
+	}
+}
+
+func TestCalendarFeedHidesSubjectsButKeepsNumbering(t *testing.T) {
+	h := calendarHandler(t)
+	rec := getCal(h, "/cal/WMT26AX3S1.ics?hide="+url.QueryEscape("Język obcy, poziom B2; grupa \\ 2"), nil)
+	body := strings.ReplaceAll(rec.Body.String(), "\r\n ", "")
+	if strings.Count(body, "BEGIN:VEVENT") != 2 || strings.Contains(body, "Język obcy") {
+		t.Fatalf("ukryty przedmiot dalej w kalendarzu:\n%s", body)
+	}
+	if !strings.Contains(body, `Wykład 2/2`) {
+		t.Fatal("ukrycie innego przedmiotu zmieniło numerację")
+	}
+	hidden := getCal(h, "/cal/WMT26AX3S1.ics?hide=Matematyka+2", nil).Body.String()
+	if strings.Count(hidden, "BEGIN:VEVENT") != 1 {
+		t.Fatalf("po ukryciu matematyki zostało %d zajęć", strings.Count(hidden, "BEGIN:VEVENT"))
 	}
 }

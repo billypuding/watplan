@@ -10,11 +10,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/billypuding/watplan/internal/config"
+	"github.com/billypuding/watplan/internal/model"
+	"github.com/billypuding/watplan/internal/push"
 	"github.com/billypuding/watplan/internal/server"
 	"github.com/billypuding/watplan/internal/store"
 	"github.com/billypuding/watplan/internal/updater"
@@ -37,8 +40,18 @@ func main() {
 		imports = append(imports, value)
 		return nil
 	})
+	vapidFlag := flag.Bool("vapid-keys", false, "wygeneruj klucze VAPID do powiadomień push, wypisz je i zakończ")
 	discoverFlag := flag.String("discover", "", "wyszukaj grupy wydziału (np. WIG) według sources.json, zapisz je w plans.json i zakończ")
 	flag.Parse()
+
+	if *vapidFlag {
+		public, private, err := push.GenerateKeys()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("PLANWAT_VAPID_PUBLIC=%s\nPLANWAT_VAPID_PRIVATE=%s\n", public, private)
+		return
+	}
 
 	offline := *offlineFlag || envBool("PLANWAT_OFFLINE")
 	onDemand := !offline && (*onDemandFlag || envBool("PLANWAT_ON_DEMAND"))
@@ -80,9 +93,20 @@ func main() {
 
 	reg := config.NewRegistry(static)
 
-	st, err := store.NewStore(envOr("PLANWAT_DATA", defaultDataDir))
+	dataDir := envOr("PLANWAT_DATA", defaultDataDir)
+	st, err := store.NewStore(dataDir)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	var pushSvc *push.Service
+	if public, private := os.Getenv("PLANWAT_VAPID_PUBLIC"), os.Getenv("PLANWAT_VAPID_PRIVATE"); public != "" && private != "" {
+		pushFile := envOr("PLANWAT_PUSH_FILE", filepath.Join(dataDir, "push.json"))
+		pushSvc, err = push.New(public, private, envOr("PLANWAT_VAPID_SUBJECT", "mailto:awalczak@duck.com"), pushFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("powiadomienia push włączone (%d subskrypcji, %s)", pushSvc.Count(), pushFile)
 	}
 
 	var upd *updater.Updater
@@ -100,7 +124,14 @@ func main() {
 		}
 	}
 
+	if upd != nil && pushSvc != nil {
+		upd.OnChange(func(p config.PlanConfig, c model.Change) {
+			pushSvc.Notify(p.ID, push.Describe(p.ID, p.Name, c))
+		})
+	}
+
 	handler, err := server.NewServer(reg, st, upd, server.Options{
+		Push:          pushSvc,
 		Offline:       offline,
 		OnDemand:      onDemand,
 		CanonicalHost: os.Getenv("PLANWAT_CANONICAL_HOST"),
@@ -116,7 +147,11 @@ func main() {
 		go upd.RunWithDiscovery(ctx, sources, static, reg, plansFile, refreshInterval)
 	}
 	if onDemand && !envBool("PLANWAT_NO_BACKGROUND") {
-		go upd.Maintain(ctx, sources, reg, updater.MaintainOptions{})
+		opts := updater.MaintainOptions{}
+		if pushSvc != nil {
+			opts.Watched = pushSvc.Watched
+		}
+		go upd.Maintain(ctx, sources, reg, opts)
 	}
 
 	srv := &http.Server{

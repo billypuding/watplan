@@ -44,7 +44,14 @@ func (f *Fetcher) DiscoverPlans(src config.Source) ([]config.PlanConfig, error) 
 	found := map[string]config.PlanConfig{}
 	visited := map[string]bool{}
 
-	if err := f.crawl(base, base, src, src.Depth, visited, found); err != nil {
+	err = f.crawl(base, base, src, src.Depth, visited, found)
+	if alt := siblingIndex(base); err != nil && errors.Is(err, ErrGone) && alt != nil {
+		log.Printf("discover %s: %s zniknął, próbuję %s", src.Faculty, base, alt)
+		if altErr := f.crawl(alt, alt, src, src.Depth, visited, found); altErr == nil {
+			err = nil
+		}
+	}
+	if err != nil {
 		return nil, err
 	}
 
@@ -213,6 +220,22 @@ func planFromURL(u *url.URL, src config.Source) (config.PlanConfig, bool) {
 		StartYear: startYear,
 		Faculty:   src.Faculty,
 	}, true
+}
+
+func siblingIndex(u *url.URL) *url.URL {
+	dir, file := path.Split(u.Path)
+	var other string
+	switch strings.ToLower(file) {
+	case "index.xml":
+		other = "index.html"
+	case "index.html", "index.htm":
+		other = "index.xml"
+	default:
+		return nil
+	}
+	alt := *u
+	alt.Path = dir + other
+	return &alt
 }
 
 func isPage(u *url.URL) bool {

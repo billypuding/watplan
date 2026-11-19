@@ -57,3 +57,32 @@ self.addEventListener('fetch', (event) => {
     }
     event.respondWith(staleWhileRevalidate(event, request, request));
 });
+
+self.addEventListener('push', (event) => {
+    let data = {};
+    try { data = event.data ? event.data.json() : {}; } catch (_) { data = { body: event.data ? event.data.text() : '' }; }
+    const title = data.title || 'Zmiana w planie';
+    event.waitUntil(self.registration.showNotification(title, {
+        body: data.body || '',
+        tag: data.tag || 'plan',
+        renotify: true,
+        icon: '/favicon-192.png?v=3',
+        badge: '/favicon-192.png?v=3',
+        data: { url: data.url || '/app' },
+    }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const target = new URL((event.notification.data && event.notification.data.url) || '/app', self.location.origin).href;
+    event.waitUntil((async () => {
+        const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        for (const client of windows) {
+            if (new URL(client.url).pathname === '/app' && 'navigate' in client) {
+                await client.focus();
+                return client.navigate(target);
+            }
+        }
+        return self.clients.openWindow(target);
+    })());
+});

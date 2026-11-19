@@ -20,6 +20,7 @@ import (
 
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/model"
+	"github.com/billypuding/watplan/internal/push"
 	"github.com/billypuding/watplan/internal/store"
 	"github.com/billypuding/watplan/internal/updater"
 	"github.com/billypuding/watplan/internal/wat"
@@ -46,6 +47,8 @@ var warsawLoc = func() *time.Location {
 }()
 
 type Options struct {
+	Push *push.Service
+
 	Offline bool
 
 	OnDemand bool
@@ -93,6 +96,10 @@ func (s *Server) Handler() (http.Handler, error) {
 	mux.HandleFunc("/api/plan/", withGzip(s.handlePlan))
 	mux.HandleFunc("/api/refresh", s.handleRefresh)
 	mux.HandleFunc("/api/status", s.handleStatus)
+	mux.HandleFunc("/api/changes/", withGzip(s.handleChanges))
+	mux.HandleFunc("/api/push/key", s.handlePushKey)
+	mux.HandleFunc("/api/push/subscribe", s.handlePushSubscribe)
+	mux.HandleFunc("/api/push/unsubscribe", s.handlePushUnsubscribe)
 	mux.HandleFunc("/cal/", withGzip(s.handleCalendar))
 
 	appPage, err := fs.ReadFile(static, "app.html")
@@ -234,6 +241,101 @@ func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig) ([]byte
 	return data, true
 }
 
+func (s *Server) handlePushKey(w http.ResponseWriter, r *http.Request) {
+	if s.options.Push == nil {
+		writeError(w, http.StatusNotFound, "powiadomienia są wyłączone na tym serwerze")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"key": s.options.Push.PublicKey()})
+}
+
+func (s *Server) handlePushSubscribe(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "wymagana metoda POST")
+		return
+	}
+	if s.options.Push == nil {
+		writeError(w, http.StatusNotFound, "powiadomienia są wyłączone na tym serwerze")
+		return
+	}
+	var req struct {
+		Subscription push.Subscription `json:"subscription"`
+		Plans        []string          `json:"plans"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, 16<<10)).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "nieprawidłowe dane")
+		return
+	}
+	sub := req.Subscription
+	sub.Plans = nil
+	for _, id := range req.Plans {
+		if _, ok := s.registry.Get(id); ok {
+			sub.Plans = append(sub.Plans, id)
+		}
+	}
+	if err := s.options.Push.Subscribe(sub); err != nil {
+		if errors.Is(err, push.ErrInvalid) {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		log.Printf("push: zapis subskrypcji: %v", err)
+		writeError(w, http.StatusInternalServerError, "nie udało się zapisać subskrypcji")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"plans": sub.Plans})
+}
+
+func (s *Server) handlePushUnsubscribe(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "wymagana metoda POST")
+		return
+	}
+	if s.options.Push == nil {
+		writeError(w, http.StatusNotFound, "powiadomienia są wyłączone na tym serwerze")
+		return
+	}
+	var req struct {
+		Endpoint string `json:"endpoint"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, 4<<10)).Decode(&req); err != nil || req.Endpoint == "" {
+		writeError(w, http.StatusBadRequest, "nieprawidłowe dane")
+		return
+	}
+	if err := s.options.Push.Unsubscribe(req.Endpoint); err != nil {
+		log.Printf("push: usuwanie subskrypcji: %v", err)
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (s *Server) handleChanges(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "wymagana metoda GET")
+		return
+	}
+	id := strings.TrimPrefix(r.URL.Path, "/api/changes/")
+	plan, ok := s.registry.Get(id)
+	if !ok {
+		writeError(w, http.StatusNotFound, "nie znaleziono planu")
+		return
+	}
+	list, err := s.store.History(plan.ID)
+	if err != nil {
+		log.Printf("historia zmian %s: %v", plan.ID, err)
+		writeError(w, http.StatusInternalServerError, "błąd odczytu historii zmian")
+		return
+	}
+	if list == nil {
+		list = []model.Change{}
+	}
+	resp := map[string]any{"plan": plan.ID, "changes": list}
+	if stored, err := s.store.Load(plan.ID); err == nil {
+		resp["fetched_at"] = stored.FetchedAt
+		resp["modified_at"] = stored.ModifiedAt
+	}
+	w.Header().Set("Cache-Control", "no-cache")
+	writeJSON(w, http.StatusOK, resp)
+}
+
 func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		writeError(w, http.StatusMethodNotAllowed, "wymagana metoda GET")
@@ -277,7 +379,14 @@ func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		stamp = time.Now()
 	}
-	body := buildICS(plan, stored.Events, icsOptions{alarm: alarm, baseURL: s.baseURL(r), stamp: stamp})
+	hide := map[string]bool{}
+	for _, name := range r.URL.Query()["hide"] {
+		if len(hide) >= 100 {
+			break
+		}
+		hide[name] = true
+	}
+	body := buildICS(plan, stored.Events, icsOptions{alarm: alarm, hide: hide, baseURL: s.baseURL(r), stamp: stamp})
 
 	sum := sha1.Sum(body)
 	etag := `"` + hex.EncodeToString(sum[:10]) + `"`
@@ -393,6 +502,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		"blocked_hosts": blocked,
 		"proxy":         s.updater.ProxyHost(),
 		"faculties":     s.updater.SourceStatus(),
+		"push":          s.options.Push != nil,
 		"missing_plans": s.updater.MissingPlans(),
 		"now":           time.Now().In(warsawLoc).Format(timeLayout),
 	})

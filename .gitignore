@@ -11,3 +11,7 @@
 CLAUDE.md
 PRODUCT.md
 DESIGN.md
+
+# lokalne dane serwera
+data/*.history.json
+data/push.json
