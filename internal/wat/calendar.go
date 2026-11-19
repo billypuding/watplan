@@ -65,6 +65,7 @@ var slotMap = map[string]timeSlot{
 
 func findDays(grid [][]Cell, legendCol, startYear int) ([]dayBlock, error) {
 	var blocks []dayBlock
+	mismatched, firstMismatch := 0, ""
 
 	for _, row := range grid {
 		if len(row) == 0 {
@@ -104,7 +105,10 @@ func findDays(grid [][]Cell, legendCol, startYear int) ([]dayBlock, error) {
 
 			date := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 			if date.Weekday() != weekday {
-				log.Printf("błąd daty %s: nie wypada w dniu %q", date.Format(dateLayout), row[0].Text)
+				if mismatched == 0 {
+					firstMismatch = fmt.Sprintf("%s nie wypada w dniu %q", date.Format(dateLayout), row[0].Text)
+				}
+				mismatched++
 				continue
 			}
 			block.Dates[cell.Col] = date
@@ -115,6 +119,10 @@ func findDays(grid [][]Cell, legendCol, startYear int) ([]dayBlock, error) {
 		}
 
 		blocks = append(blocks, block)
+	}
+
+	if mismatched > 0 {
+		log.Printf("pominięto %d dat niezgodnych z dniem tygodnia (np. %s)", mismatched, firstMismatch)
 	}
 
 	for i := range blocks {

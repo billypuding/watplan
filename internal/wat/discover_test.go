@@ -196,3 +196,29 @@ func TestDiscoverReusesListingOn304(t *testing.T) {
 		t.Fatalf("pełnych %d, 304: %d", full, notModified)
 	}
 }
+
+func TestCheckCurrentRemembersStaleVerdict(t *testing.T) {
+	hits := 0
+	old := `<table><tr><td>pon.</td><td>&nbsp</td><td>02 III</td><td>09 III</td><td>&nbsp</td><td>&nbsp</td></tr>` +
+		`<tr><td>pon.</td><td>1-2</td><td>Fizyka</td><td>Fizyka</td><td>&nbsp</td><td>&nbsp</td></tr></table>`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		_, _ = w.Write([]byte(old))
+	}))
+	t.Cleanup(srv.Close)
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	f, err := NewFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := config.Source{Faculty: "WIM", IndexURL: srv.URL + "/lato/index.xml", Semester: "lato"}
+	plans := []config.PlanConfig{{ID: "WME21MC1S0", URL: srv.URL + "/lato/WME21MC1S0.htm", StartYear: 2026}}
+	for i := 0; i < 3; i++ {
+		if err := f.CheckCurrent(src, plans); !errors.Is(err, ErrStaleSource) {
+			t.Fatalf("próba %d: %v", i, err)
+		}
+	}
+	if hits != 1 {
+		t.Fatalf("pobrań planu %d, chcę 1 (werdykt zapamiętany)", hits)
+	}
+}

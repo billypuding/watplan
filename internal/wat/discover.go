@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 
@@ -364,7 +365,30 @@ func (f *Fetcher) discoverWCY(base *url.URL, src config.Source) ([]config.PlanCo
 
 var ErrStaleSource = errors.New("plany z poprzedniego roku akademickiego")
 
+const staleRecheck = 24 * time.Hour
+
 func (f *Fetcher) CheckCurrent(src config.Source, plans []config.PlanConfig) error {
+	f.listMu.Lock()
+	until, known := f.staleUntil[src.IndexURL]
+	f.listMu.Unlock()
+	if known && time.Now().Before(until) {
+		return ErrStaleSource
+	}
+	err := f.checkCurrent(plans)
+	f.listMu.Lock()
+	defer f.listMu.Unlock()
+	if f.staleUntil == nil {
+		f.staleUntil = map[string]time.Time{}
+	}
+	if errors.Is(err, ErrStaleSource) {
+		f.staleUntil[src.IndexURL] = time.Now().Add(staleRecheck)
+	} else {
+		delete(f.staleUntil, src.IndexURL)
+	}
+	return err
+}
+
+func (f *Fetcher) checkCurrent(plans []config.PlanConfig) error {
 	const samples = 2
 	tried := 0
 	var lastErr error
