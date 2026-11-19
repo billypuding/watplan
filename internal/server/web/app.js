@@ -165,6 +165,7 @@ const ICON_BUILDING = '<path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path
 const ICON_USER = '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>';
 const ICON_LEFT = '<path d="m15 18-6-6 6-6"/>';
 const ICON_RIGHT = '<path d="m9 18 6-6-6-6"/>';
+const ICON_DOWN = '<path d="m6 9 6 6 6-6"/>';
 const ICON_CHECK = '<path d="M20 6 9 17l-5-5"/>';
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -306,6 +307,59 @@ async function fetchJSON(url, options) {
 const seriesKey = (e) => `${e.subject}\u0000${e.type || ''}`;
 
 let planEvents = [];
+let planWeeks = [];
+
+function weekNumber(mondayISO) {
+    const i = planWeeks.indexOf(mondayISO);
+    if (i >= 0) return `tydzień ${i + 1}/${planWeeks.length}`;
+    if (!planWeeks.length) return 'tydzień bez zajęć';
+    if (mondayISO < planWeeks[0]) return 'przed semestrem';
+    if (mondayISO > planWeeks[planWeeks.length - 1]) return 'po semestrze';
+    return 'tydzień bez zajęć';
+}
+
+function weekRange(mondayISO) {
+    const monday = parseISO(mondayISO);
+    const sunday = addDays(monday, 6);
+    return monday.getMonth() === sunday.getMonth()
+        ? `${monday.getDate()}–${sunday.getDate()} ${MONTHS_GEN[sunday.getMonth()]}`
+        : `${monday.getDate()} ${MONTHS_SHORT[monday.getMonth()]} – ${sunday.getDate()} ${MONTHS_SHORT[sunday.getMonth()]}`;
+}
+
+function weekCount(mondayISO) {
+    let n = 0;
+    for (let i = 0; i < 7; i++) n += (eventsByDate[addDaysISO(mondayISO, i)] || []).length;
+    return n;
+}
+
+function openWeekPicker() {
+    if (!planWeeks.length) return;
+    const current = mondayOf(selectedDate);
+    const thisWeek = mondayOf(todayISO());
+    let month = '';
+    const items = [];
+    planWeeks.forEach((monday, i) => {
+        const d = parseISO(monday);
+        const m = `${d.getFullYear()}-${d.getMonth()}`;
+        if (m !== month) {
+            month = m;
+            items.push(h('li', { class: 'series-month' }, `${MONTHS_NOM[d.getMonth()]} ${d.getFullYear()}`));
+        }
+        const n = weekCount(monday);
+        const cls = ['wk-pick', monday === current && 'sel', monday === thisWeek && 'now', monday < thisWeek && 'done'].filter(Boolean).join(' ');
+        items.push(h('li', null, h('button', {
+            type: 'button', class: cls, 'aria-current': monday === current ? 'true' : null,
+            onclick: () => { weekModal.close(); selectedDate = monday === thisWeek ? todayISO() : (nextDateWithEvents(addDaysISO(monday, -1), 1) || monday); render(); },
+        },
+            h('span', { class: 'idx' }, String(i + 1)),
+            h('span', { class: 'when' }, h('b', null, weekRange(monday)), h('span', null, n ? classesWord(n) : 'bez zajęć')),
+            monday === thisWeek ? h('span', { class: 'tag' }, 'Ten tydzień') : null)));
+    });
+    weekList.replaceChildren(h('ol', { class: 'wk-pick-list' }, items));
+    weekModal.showModal();
+    const sel = weekList.querySelector('.sel');
+    if (sel) sel.scrollIntoView({ block: 'center' });
+}
 
 function loadHidden() {
     try { return JSON.parse(safeGet('hiddenSubjects') || '{}') || {}; } catch (_) { return {}; }
@@ -327,6 +381,7 @@ function indexEvents(events) {
     for (const list of Object.values(seriesByKey)) {
         list.forEach((e, i) => { e._n = i + 1; e._total = list.length; });
     }
+    planWeeks = [...new Set(sorted.map(e => mondayOf(e.date)))].sort();
     const visible = sorted.filter(e => !hidden.has(e.subject));
     for (const e of visible) (eventsByDate[e.date] ||= []).push(e);
     allEvents = visible;
@@ -580,6 +635,7 @@ function render() {
     if (currentView() === 'week') renderWeek();
     else if (currentView() === 'month') renderMonth();
     else renderAgenda();
+    placeChangeChip();
     tickLive();
 }
 
@@ -592,9 +648,11 @@ function todayOffScreen() {
 function renderAgenda() {
     const d = parseISO(selectedDate);
     const count = (eventsByDate[selectedDate] || []).length;
-    const sub = `${longDate(selectedDate)} · tydzień ${isoWeek(d)}` + (count ? ` · ${classesWord(count)}` : '');
     view.replaceChildren(
-        h('div', { class: 'day-title' }, h('h1', null, DAY_NAMES[dayIndex(d)]), h('p', null, sub)),
+        h('div', { class: 'day-title' }, h('h1', null, DAY_NAMES[dayIndex(d)]), h('p', null,
+            `${longDate(selectedDate)} · `,
+            h('button', { type: 'button', class: 'week-link', onclick: openWeekPicker, 'aria-haspopup': 'dialog' }, weekNumber(mondayOf(selectedDate))),
+            count ? ` · ${classesWord(count)}` : '')),
         weekStrip(),
         dayList(selectedDate),
     );
@@ -695,10 +753,7 @@ function renderWeek() {
     const events = dates.flatMap(d => eventsByDate[d] || []);
     const days = events.some(e => dayIndex(parseISO(e.date)) >= 5) ? 7 : 5;
 
-    const range = monday.getMonth() === sunday.getMonth()
-        ? `${monday.getDate()}–${sunday.getDate()} ${MONTHS_GEN[sunday.getMonth()]}`
-        : `${monday.getDate()} ${MONTHS_SHORT[monday.getMonth()]} – ${sunday.getDate()} ${MONTHS_SHORT[sunday.getMonth()]}`;
-    const nav = navRow(range, `tydzień ${isoWeek(monday)} · ${classesWord(events.length)}`, -7, 7);
+    const nav = navRow(weekRange(mondayISO), `${weekNumber(mondayISO)} · ${classesWord(events.length)}`, -7, 7, openWeekPicker);
 
     if (events.length === 0) {
         view.replaceChildren(nav, emptyWeek(mondayISO));
@@ -810,11 +865,15 @@ function renderMonth() {
         dayList(selectedDate));
 }
 
-function navRow(title, subtitle, prev, next) {
+function navRow(title, subtitle, prev, next, onLabel) {
     const go = (dir) => () => (typeof dir === 'number' ? step(dir) : stepMonth(dir === 'nextMonth' ? 1 : -1));
+    const label = onLabel
+        ? h('button', { type: 'button', class: 'nav-label pick', onclick: onLabel, 'aria-haspopup': 'dialog', 'aria-label': `${title}, ${subtitle}. Wybierz tydzień` },
+            h('b', null, title, svg(ICON_DOWN, 16)), h('small', null, subtitle))
+        : h('div', { class: 'nav-label' }, h('b', null, title), h('small', null, subtitle));
     return h('div', { class: 'nav-row' },
         h('button', { type: 'button', class: 'round-btn', 'aria-label': 'Wstecz', onclick: go(prev) }, svg(ICON_LEFT, 20)),
-        h('div', { class: 'nav-label' }, h('b', null, title), h('small', null, subtitle)),
+        label,
         h('button', { type: 'button', class: 'round-btn', 'aria-label': 'Dalej', onclick: go(next) }, svg(ICON_RIGHT, 20)),
     );
 }
@@ -963,7 +1022,9 @@ view.addEventListener('touchend', (e) => {
 }, { passive: true });
 
 settingsBtn.addEventListener('click', () => settingsModal.showModal());
-for (const dlg of [settingsModal, groupModal]) {
+const weekModal = $('weekModal');
+const weekList = $('weekList');
+for (const dlg of [settingsModal, groupModal, weekModal]) {
     dlg.addEventListener('click', (e) => { if (e.target === dlg || e.target.closest('[data-close]')) dlg.close(); });
 }
 
@@ -1078,6 +1139,11 @@ function stampText(date) {
 
 const changeCount = (c) => (c.added || []).length + (c.removed || []).length + (c.moved || []).length + (c.changed || []).length;
 
+function placeChangeChip() {
+    const anchor = view.querySelector('.day-title, .nav-row');
+    if (anchor) anchor.after(changeChip);
+}
+
 async function loadChangeChip(planId) {
     try {
         const data = await fetchChanges(planId);
@@ -1086,9 +1152,10 @@ async function loadChangeChip(planId) {
         const at = last && parseStamp(last.at);
         if (!at || warsawNow() - at > CHIP_DAYS * 86400000) { changeChip.classList.add('hidden'); return; }
         const n = changeCount(last);
-        changeChip.replaceChildren(h('span', { class: 'pulse' }), h('b', null, `Plan zmieniony ${agoText(at)}`),
-            h('span', null, `${n} ${plural(n, 'zmiana', 'zmiany', 'zmian')} · zobacz`));
+        changeChip.replaceChildren(h('span', { class: 'pulse' }),
+            `${n} ${plural(n, 'zmiana', 'zmiany', 'zmian')} w planie · ${agoText(at)}`);
         changeChip.classList.remove('hidden');
+        placeChangeChip();
     } catch (_) {
         changeChip.classList.add('hidden');
     }
