@@ -2,6 +2,7 @@ package wat
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -47,6 +48,8 @@ func (v Validators) empty() bool {
 	return v.ETag == "" && v.LastModified == ""
 }
 
+type proxyKey struct{}
+
 type Fetcher struct {
 	client *http.Client
 
@@ -68,6 +71,7 @@ type Fetcher struct {
 	proxies    []*url.URL
 	active     int
 	proxyBad   []time.Time
+	proxyPause time.Duration
 	proxyError string
 	proxyAt    time.Time
 }
@@ -130,6 +134,15 @@ func NewFetcher() (*Fetcher, error) {
 		blockBackoff = d
 	}
 
+	proxyPause := defaultProxyPause
+	if v := os.Getenv("PLANWAT_PROXY_BLOCK_BACKOFF"); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil || d < 0 {
+			return nil, fmt.Errorf("zły PLANWAT_PROXY_BLOCK_BACKOFF %q (np. 30m, 1h)", v)
+		}
+		proxyPause = d
+	}
+
 	f := &Fetcher{
 		client:       client,
 		minInterval:  minInterval,
@@ -137,9 +150,15 @@ func NewFetcher() (*Fetcher, error) {
 		blockedUntil: make(map[string]time.Time),
 		proxies:      proxies,
 		proxyBad:     make([]time.Time, len(proxies)),
+		proxyPause:   proxyPause,
 	}
 	if len(proxies) > 0 {
-		transport.Proxy = func(*http.Request) (*url.URL, error) { return f.currentProxy(), nil }
+		transport.Proxy = func(req *http.Request) (*url.URL, error) {
+			if p, ok := req.Context().Value(proxyKey{}).(*url.URL); ok {
+				return p, nil
+			}
+			return f.currentProxy(), nil
+		}
 	}
 	return f, nil
 }
@@ -335,20 +354,25 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators) (fetched, error) 
 
 	f.pace()
 	used := f.currentProxy()
+	if used != nil {
+		req = req.WithContext(context.WithValue(req.Context(), proxyKey{}, used))
+	}
 	resp, err := f.client.Do(req)
 	if err != nil {
 		if status, ok := f.proxyRejection(err); ok {
 			return fetched{}, f.proxyFailed(used, status)
 		}
+		if used != nil && isTimeout(err) {
+			return fetched{}, f.proxyTimedOut(used, hostOf(targetUrl), err)
+		}
 		return fetched{}, err
 	}
 	defer resp.Body.Close()
 
-	if used != nil {
-		f.proxyWorked(used)
-	}
-
 	if resp.StatusCode == http.StatusNotModified && !prev.empty() {
+		if used != nil {
+			f.proxyWorked(used)
+		}
 		return fetched{validators: prev}, ErrNotModified
 	}
 
@@ -362,7 +386,13 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators) (fetched, error) 
 			snippet,
 		)
 		if isWAFBlock(resp, snippet) {
+			if used != nil {
+				return fetched{}, f.proxyBlockedByWAF(used, hostOf(targetUrl), fmt.Sprintf("HTTP %d", resp.StatusCode))
+			}
 			return fetched{}, fmt.Errorf("%w (status %d)", ErrBlocked, resp.StatusCode)
+		}
+		if used != nil {
+			f.proxyWorked(used)
 		}
 		return fetched{}, &statusError{status: resp.StatusCode}
 	}
@@ -387,7 +417,13 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators) (fetched, error) 
 
 	if isWAFBlockBody(body) {
 		log.Printf("fetch %s: strona blokady WAF (status %d)", targetUrl, resp.StatusCode)
+		if used != nil {
+			return fetched{}, f.proxyBlockedByWAF(used, hostOf(targetUrl), "strona blokady")
+		}
 		return fetched{}, fmt.Errorf("%w (status %d)", ErrBlocked, resp.StatusCode)
+	}
+	if used != nil {
+		f.proxyWorked(used)
 	}
 	f.alert.Resolved("waf:"+hostOf(targetUrl), "WAT znów wpuszcza pobieranie z "+hostOf(targetUrl)+".")
 	return fetched{data: body, validators: got}, nil

@@ -67,10 +67,12 @@ You can also route traffic through a working proxy:
 PLANWAT_PROXY=http://user:pass@host:port go run cmd/watplan/main.go
 ```
 
-`PLANWAT_PROXY_BACKUP` takes a second proxy in the same format. It is used only
-when the main proxy fails (for example `402 Payment Required` or no connection):
-the server switches to it, goes back to the main proxy after 30 minutes, and pauses
-fetching when both fail. A block from WAT's firewall does not switch proxies.
+`PLANWAT_PROXY_BACKUP` takes a second proxy in the same format. The server switches
+to it when the main proxy rejects the connection (`402 Payment Required`, `407`,
+no connection), times out, or when WAT blocks the main proxy's IP (`403`/Incapsula).
+It goes back to the main proxy after `PLANWAT_PROXY_BLOCK_BACKOFF` (default `30m`)
+and pauses fetching only when neither proxy can get through. If both proxies are
+blocked by WAT, the domain is paused for `PLANWAT_BLOCK_BACKOFF` (default `1h`).
 
 Do not restart the app in a loop while the block is active. Wait for it to expire or
 change the public IP; repeated requests only make the block last longer.
