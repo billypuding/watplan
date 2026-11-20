@@ -81,8 +81,8 @@ The server does the fetching, so the phone's network does not matter: WAT sees t
 hosting provider's egress IP. Fetching ~580 plans in the background from a shared
 cloud IP is a good way to get that IP blocked.
 
-For a hosted instance, use on-demand mode. It serves the plans committed in `data/`
-and fetches only the plan a user actually opens:
+For a hosted instance, use on-demand mode. It serves the plans restored from Turso
+(see below) and fetches only the plan a user actually opens:
 
 ```bash
 PLANWAT_ON_DEMAND=1 PLANWAT_WORKERS=1 PLANWAT_FETCH_INTERVAL=2s go run cmd/watplan/main.go
@@ -101,8 +101,9 @@ on-demand mode alone will not unblock it. In that case:
 - create the service in a different Render region to get a new egress IP (and keep
   on-demand mode enabled), or
 - set `PLANWAT_PROXY` to a proxy with a clean IP, or
-- move fetching to a machine on a network that WAT allows and publish the updated
-  `data/` directory to the hosting provider.
+- move fetching to a machine on a network that WAT allows; with `PLANWAT_DB_URL`
+  set there too, the plans it fetches land in Turso and the hosted server picks
+  them up on its next start.
 
 ### Push notifications about plan changes
 
@@ -151,7 +152,9 @@ every write in the background. `/api/status` shows the state under `db`.
 Without these variables the server works on local files only.
 
 Note that Render's filesystem is ephemeral: plans fetched at runtime disappear on
-the next deploy or restart. The committed `data/` directory is the permanent cache.
+the next deploy or restart. Turso is the permanent store; `data/` is only a local
+cache and is not committed. To get the plans locally, run once with
+`PLANWAT_DB_URL` and `PLANWAT_DB_TOKEN` set: the server restores them into `data/`.
 
 
 ## Tests
