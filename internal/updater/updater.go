@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"net"
 	"os"
 	"strconv"
 	"sync"
@@ -188,8 +189,28 @@ dispatch:
 }
 
 func (u *Updater) Update(cfg config.PlanConfig) error {
-	_, err := u.update(cfg)
+	_, err := u.updateMode(cfg, wat.FetchAuto)
 	return err
+}
+
+func (u *Updater) UpdateManual(cfg config.PlanConfig) error {
+	_, err := u.updateMode(cfg, wat.FetchViaProxy)
+	if err == nil {
+		return nil
+	}
+	if !manualFallback(err) {
+		return err
+	}
+	log.Printf("plan %s: pobieranie przez proxy nie udało się (%v), próbuję przez API", cfg.ID, err)
+	return u.Update(cfg)
+}
+
+func manualFallback(err error) bool {
+	if errors.Is(err, wat.ErrBlocked) || errors.Is(err, wat.ErrProxy) {
+		return true
+	}
+	var ne net.Error
+	return errors.As(err, &ne) && ne.Timeout()
 }
 
 func (u *Updater) Ensure(cfg config.PlanConfig) error {
@@ -208,13 +229,21 @@ func (u *Updater) Ensure(cfg config.PlanConfig) error {
 }
 
 func (u *Updater) update(cfg config.PlanConfig) (updateResult, error) {
+	return u.updateMode(cfg, wat.FetchAuto)
+}
+
+func (u *Updater) updateMode(cfg config.PlanConfig, mode wat.FetchMode) (updateResult, error) {
 	lock := u.planLock(cfg.ID)
 	lock.Lock()
 	defer lock.Unlock()
-	return u.updateLocked(cfg)
+	return u.updateLockedMode(cfg, mode)
 }
 
 func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
+	return u.updateLockedMode(cfg, wat.FetchAuto)
+}
+
+func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (updateResult, error) {
 	old, err := u.store.Load(cfg.ID)
 	if err != nil {
 		old = model.Plan{}
@@ -228,7 +257,7 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 		prev = wat.Validators{ETag: old.ETag, LastModified: old.LastMod}
 	}
 
-	events, got, err := u.fetchEvents(cfg, prev)
+	events, got, err := u.fetchEvents(cfg, prev, mode)
 	if errors.Is(err, wat.ErrNotModified) {
 		old.FetchedAt = time.Now().In(warsawLoc).Format(timeLayout)
 		if err := u.store.Save(cfg.ID, old); err != nil {
@@ -306,8 +335,15 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 	return updateResult{events: len(events)}, nil
 }
 
-func (u *Updater) fetchEvents(cfg config.PlanConfig, prev wat.Validators) ([]model.Event, wat.Validators, error) {
-	body, got, err := u.fetcher.FetchPage(cfg.URL, prev)
+func (u *Updater) fetchPage(target string, prev wat.Validators, mode wat.FetchMode) ([]byte, wat.Validators, error) {
+	if mode == wat.FetchViaProxy {
+		return u.fetcher.FetchPageViaProxy(target, prev)
+	}
+	return u.fetcher.FetchPage(target, prev)
+}
+
+func (u *Updater) fetchEvents(cfg config.PlanConfig, prev wat.Validators, mode wat.FetchMode) ([]model.Event, wat.Validators, error) {
+	body, got, err := u.fetchPage(cfg.URL, prev, mode)
 	if errors.Is(err, wat.ErrNotModified) {
 		return nil, got, err
 	}
@@ -327,7 +363,7 @@ func (u *Updater) fetchEvents(cfg config.PlanConfig, prev wat.Validators) ([]mod
 	}
 
 	for _, src := range cfg.Extra {
-		body, _, err := u.fetcher.FetchPage(src.URL, wat.Validators{})
+		body, _, err := u.fetchPage(src.URL, wat.Validators{}, mode)
 		if errors.Is(err, wat.ErrGone) {
 			continue
 		}

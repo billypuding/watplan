@@ -77,6 +77,31 @@ blocked by WAT, the domain is paused for `PLANWAT_BLOCK_BACKOFF` (default `1h`).
 Do not restart the app in a loop while the block is active. Wait for it to expire or
 change the public IP; repeated requests only make the block last longer.
 
+### Scraping API instead of a proxy
+
+If WAT blocks the hosting IP and proxies, PlanWat can fetch through a scraping API.
+The API does the outbound request and returns the plan HTML:
+
+```bash
+PLANWAT_SCRAPER_PROVIDER=scrapingant
+PLANWAT_SCRAPER_KEY=...
+PLANWAT_SCRAPER_PROXY_TYPE=datacenter
+PLANWAT_SCRAPER_COUNTRY=PL
+PLANWAT_SCRAPER_BROWSER=false
+```
+
+Supported providers: `scrapingant`, `scrapingbee`, `scraperapi`. Background
+refreshes use the scraping API. A manual refresh (`POST /api/refresh`) first tries
+`PLANWAT_PROXY`/`PLANWAT_PROXY_BACKUP` for speed, then falls back to the scraping API
+if the proxy is blocked or times out. If no provider is configured, both paths use
+the proxy/direct connection.
+
+ScrapingAnt's free plan includes 10,000 credits a month; a plain datacenter request
+costs 1 credit, while residential costs 25. Use `PLANWAT_ON_DEMAND=1` and
+`PLANWAT_NO_BACKGROUND=1` to avoid spending credits on bulk refreshes.
+
+For tests, `PLANWAT_SCRAPER_API_URL` overrides the provider endpoint.
+
 ## Hosting on Render (or another cloud)
 
 The server does the fetching, so the phone's network does not matter: WAT sees the

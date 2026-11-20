@@ -505,7 +505,7 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.updater.Update(plan); err != nil {
+	if err := s.updater.UpdateManual(plan); err != nil {
 		log.Printf("ręczne odświeżanie planu %s: %v", plan.ID, err)
 		s.writeUpdateError(w, err)
 		return

@@ -86,7 +86,7 @@ func (f *Fetcher) proxyFailed(used *url.URL, status string) error {
 	return fmt.Errorf("%w: %s %s - sprawdź konto u dostawcy proxy", ErrProxy, used.Host, status)
 }
 
-func (f *Fetcher) proxyBlockedByWAF(used *url.URL, host, reason string) error {
+func (f *Fetcher) proxyBlockedByWAF(used *url.URL, reason string) error {
 	f.proxyMu.Lock()
 	now := time.Now()
 	f.proxyError, f.proxyAt = fmt.Sprintf("%s WAT %s", used.Host, reason), now
@@ -104,11 +104,11 @@ func (f *Fetcher) proxyBlockedByWAF(used *url.URL, host, reason string) error {
 		return fmt.Errorf("%w: %s", errProxySwitched, backup)
 	}
 
-	log.Printf("proxy %s zablokowane przez WAT (%s) - brak zapasowego proxy, wstrzymuję %s", used.Host, reason, host)
+	log.Printf("proxy %s zablokowane przez WAT (%s) - brak zapasowego proxy", used.Host, reason)
 	return fmt.Errorf("%w (%s, proxy %s)", ErrBlocked, reason, used.Host)
 }
 
-func (f *Fetcher) proxyTimedOut(used *url.URL, host string, cause error) error {
+func (f *Fetcher) proxyTimedOut(used *url.URL, cause error) error {
 	f.proxyMu.Lock()
 	now := time.Now()
 	f.proxyError, f.proxyAt = used.Host+" timeout", now
@@ -126,7 +126,7 @@ func (f *Fetcher) proxyTimedOut(used *url.URL, host string, cause error) error {
 		return fmt.Errorf("%w: %s", errProxySwitched, backup)
 	}
 
-	log.Printf("proxy %s nie odpowiedziało w czasie - brak zapasowego proxy, wstrzymuję %s", used.Host, host)
+	log.Printf("proxy %s nie odpowiedziało w czasie - brak zapasowego proxy", used.Host)
 	return fmt.Errorf("%w: proxy %s nie odpowiedziało w czasie (%v)", ErrBlocked, used.Host, cause)
 }
 

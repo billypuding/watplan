@@ -67,6 +67,10 @@ type Fetcher struct {
 
 	alert *alert.Notifier
 
+	scraper       *scraperConfig
+	scraperClient *http.Client
+	scraperMu     sync.Mutex
+
 	proxyMu    sync.Mutex
 	proxies    []*url.URL
 	active     int
@@ -110,10 +114,29 @@ func NewFetcher() (*Fetcher, error) {
 		log.Printf("proxy %s (%s)", proxyURL.Host, name)
 	}
 
+	scraper, err := loadScraperConfig()
+	if err != nil {
+		return nil, err
+	}
 	client := &http.Client{
 		Timeout:   fetchTimeout,
 		Jar:       jar,
 		Transport: transport,
+	}
+
+	var scraperClient *http.Client
+	if scraper != nil {
+		log.Printf("pobieranie w tle przez %s (proxy_type=%s, country=%s, browser=%t)", scraper.provider, scraper.proxyType, scraper.country, scraper.browser)
+		if len(proxies) > 0 {
+			log.Printf("ręczne pobieranie przez proxy %s", proxies[0].Host)
+		}
+		scraperTransport := http.DefaultTransport.(*http.Transport).Clone()
+		scraperTransport.Proxy = nil
+		scraperClient = &http.Client{
+			Timeout:   60 * time.Second,
+			Jar:       jar,
+			Transport: scraperTransport,
+		}
 	}
 
 	minInterval := defaultMinInterval
@@ -144,13 +167,15 @@ func NewFetcher() (*Fetcher, error) {
 	}
 
 	f := &Fetcher{
-		client:       client,
-		minInterval:  minInterval,
-		blockBackoff: blockBackoff,
-		blockedUntil: make(map[string]time.Time),
-		proxies:      proxies,
-		proxyBad:     make([]time.Time, len(proxies)),
-		proxyPause:   proxyPause,
+		client:        client,
+		minInterval:   minInterval,
+		blockBackoff:  blockBackoff,
+		blockedUntil:  make(map[string]time.Time),
+		scraper:       scraper,
+		scraperClient: scraperClient,
+		proxies:       proxies,
+		proxyBad:      make([]time.Time, len(proxies)),
+		proxyPause:    proxyPause,
 	}
 	if len(proxies) > 0 {
 		transport.Proxy = func(req *http.Request) (*url.URL, error) {
@@ -227,32 +252,57 @@ func (f *Fetcher) pace() {
 	}
 }
 
+type FetchMode int
+
+const (
+	FetchAuto FetchMode = iota
+	FetchViaProxy
+)
+
+func (f *Fetcher) usesScraper(mode FetchMode) bool {
+	return f.scraper != nil && mode != FetchViaProxy
+}
+
 func (f *Fetcher) FetchHTML(targetUrl string) ([]byte, error) {
 	body, _, err := f.FetchPage(targetUrl, Validators{})
 	return body, err
 }
 
 func (f *Fetcher) Blocked(targetUrl string) bool {
-	if _, paused := f.proxyPaused(); paused {
-		return true
+	if f.scraper == nil {
+		if _, paused := f.proxyPaused(); paused {
+			return true
+		}
 	}
 	_, blocked := f.hostBlocked(hostOf(targetUrl))
 	return blocked
 }
 
 func (f *Fetcher) FetchPage(targetUrl string, prev Validators) ([]byte, Validators, error) {
+	return f.fetchPage(targetUrl, prev, FetchAuto)
+}
+
+func (f *Fetcher) FetchPageViaProxy(targetUrl string, prev Validators) ([]byte, Validators, error) {
+	return f.fetchPage(targetUrl, prev, FetchViaProxy)
+}
+
+func (f *Fetcher) fetchPage(targetUrl string, prev Validators, mode FetchMode) ([]byte, Validators, error) {
 	host := hostOf(targetUrl)
-	if until, paused := f.proxyPaused(); paused {
-		status, _ := f.ProxyError()
-		return nil, Validators{}, fmt.Errorf("%w: %s (pobieranie wstrzymane do %s)", ErrProxy, status, until.Format("15:04"))
+	if !f.usesScraper(mode) {
+		if until, paused := f.proxyPaused(); paused {
+			status, _ := f.ProxyError()
+			return nil, Validators{}, fmt.Errorf("%w: %s (pobieranie wstrzymane do %s)", ErrProxy, status, until.Format("15:04"))
+		}
 	}
-	if until, blocked := f.hostBlocked(host); blocked {
-		return nil, Validators{}, fmt.Errorf("%w (%s wstrzymane do %s)", ErrBlocked, host, until.Format("15:04"))
+	if mode != FetchViaProxy {
+		if until, blocked := f.hostBlocked(host); blocked {
+			return nil, Validators{}, fmt.Errorf("%w (%s wstrzymane do %s)", ErrBlocked, host, until.Format("15:04"))
+		}
 	}
 
 	var lastErr error
 	for attempt := 1; attempt <= fetchAttempts; attempt++ {
-		body, got, err := f.fetchOnce(targetUrl, prev)
+		body, got, err := f.fetchOnce(targetUrl, prev, mode)
 		if err == nil {
 			return body, got, nil
 		}
@@ -263,8 +313,13 @@ func (f *Fetcher) FetchPage(targetUrl string, prev Validators) ([]byte, Validato
 		if errors.Is(err, errProxySwitched) {
 			continue
 		}
+		if mode == FetchViaProxy && isTimeout(err) {
+			break
+		}
 		if errors.Is(err, ErrBlocked) {
-			f.markBlocked(host)
+			if mode != FetchViaProxy {
+				f.markBlocked(host)
+			}
 			break
 		}
 		if attempt == fetchAttempts || !retryable(err) {
@@ -327,8 +382,8 @@ func retryable(err error) bool {
 	return true
 }
 
-func (f *Fetcher) fetchOnce(targetUrl string, prev Validators) ([]byte, Validators, error) {
-	body, err := f.fetchBody(targetUrl, prev)
+func (f *Fetcher) fetchOnce(targetUrl string, prev Validators, mode FetchMode) ([]byte, Validators, error) {
+	body, err := f.fetchBody(targetUrl, prev, mode)
 	return body.data, body.validators, err
 }
 
@@ -337,33 +392,68 @@ type fetched struct {
 	validators Validators
 }
 
-func (f *Fetcher) fetchBody(targetUrl string, prev Validators) (fetched, error) {
-	req, err := http.NewRequest(http.MethodGet, targetUrl, nil)
+func withoutRequestURL(err error) error {
+	var ue *url.Error
+	if errors.As(err, &ue) && ue.Err != nil {
+		return ue.Err
+	}
+	return err
+}
+
+func (f *Fetcher) fetchBody(targetUrl string, prev Validators, mode FetchMode) (fetched, error) {
+	useScraper := f.usesScraper(mode)
+	var (
+		req *http.Request
+		err error
+	)
+	if useScraper {
+		req, err = f.scraper.request(targetUrl)
+	} else {
+		req, err = http.NewRequest(http.MethodGet, targetUrl, nil)
+	}
 	if err != nil {
 		return fetched{}, err
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
 	req.Header.Set("Accept-Language", "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7")
-	if prev.ETag != "" {
-		req.Header.Set("If-None-Match", prev.ETag)
-	}
-	if prev.LastModified != "" {
-		req.Header.Set("If-Modified-Since", prev.LastModified)
+	if !useScraper {
+		if prev.ETag != "" {
+			req.Header.Set("If-None-Match", prev.ETag)
+		}
+		if prev.LastModified != "" {
+			req.Header.Set("If-Modified-Since", prev.LastModified)
+		}
 	}
 
 	f.pace()
-	used := f.currentProxy()
-	if used != nil {
-		req = req.WithContext(context.WithValue(req.Context(), proxyKey{}, used))
+	var used *url.URL
+	if !useScraper {
+		used = f.currentProxy()
+		if used != nil {
+			req = req.WithContext(context.WithValue(req.Context(), proxyKey{}, used))
+		}
 	}
-	resp, err := f.client.Do(req)
+	if useScraper {
+		f.scraperMu.Lock()
+		defer f.scraperMu.Unlock()
+	}
+	httpClient := f.client
+	if useScraper {
+		httpClient = f.scraperClient
+	}
+	resp, err := httpClient.Do(req)
 	if err != nil {
-		if status, ok := f.proxyRejection(err); ok {
-			return fetched{}, f.proxyFailed(used, status)
+		if used != nil {
+			if status, ok := f.proxyRejection(err); ok {
+				return fetched{}, f.proxyFailed(used, status)
+			}
+		}
+		if useScraper {
+			return fetched{}, fmt.Errorf("scraper %s: %w", f.scraper.provider, withoutRequestURL(err))
 		}
 		if used != nil && isTimeout(err) {
-			return fetched{}, f.proxyTimedOut(used, hostOf(targetUrl), err)
+			return fetched{}, f.proxyTimedOut(used, err)
 		}
 		return fetched{}, err
 	}
@@ -387,7 +477,7 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators) (fetched, error) 
 		)
 		if isWAFBlock(resp, snippet) {
 			if used != nil {
-				return fetched{}, f.proxyBlockedByWAF(used, hostOf(targetUrl), fmt.Sprintf("HTTP %d", resp.StatusCode))
+				return fetched{}, f.proxyBlockedByWAF(used, fmt.Sprintf("HTTP %d", resp.StatusCode))
 			}
 			return fetched{}, fmt.Errorf("%w (status %d)", ErrBlocked, resp.StatusCode)
 		}
@@ -418,7 +508,7 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators) (fetched, error) 
 	if isWAFBlockBody(body) {
 		log.Printf("fetch %s: strona blokady WAF (status %d)", targetUrl, resp.StatusCode)
 		if used != nil {
-			return fetched{}, f.proxyBlockedByWAF(used, hostOf(targetUrl), "strona blokady")
+			return fetched{}, f.proxyBlockedByWAF(used, "strona blokady")
 		}
 		return fetched{}, fmt.Errorf("%w (status %d)", ErrBlocked, resp.StatusCode)
 	}
