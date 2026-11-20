@@ -48,8 +48,7 @@ func (v Validators) empty() bool {
 }
 
 type Fetcher struct {
-	client   *http.Client
-	proxyURL *url.URL
+	client *http.Client
 
 	minInterval time.Duration
 	paceMu      sync.Mutex
@@ -66,20 +65,11 @@ type Fetcher struct {
 	alert *alert.Notifier
 
 	proxyMu    sync.Mutex
+	proxies    []*url.URL
+	active     int
+	proxyBad   []time.Time
 	proxyError string
 	proxyAt    time.Time
-	proxyUntil time.Time
-}
-
-const proxyPause = 30 * time.Minute
-
-func (f *Fetcher) proxyPaused() (time.Time, bool) {
-	f.proxyMu.Lock()
-	defer f.proxyMu.Unlock()
-	if f.proxyURL == nil || time.Now().After(f.proxyUntil) {
-		return time.Time{}, false
-	}
-	return f.proxyUntil, true
 }
 
 func (f *Fetcher) SetAlert(n *alert.Notifier) {
@@ -102,15 +92,18 @@ func NewFetcher() (*Fetcher, error) {
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 
-	var configuredProxy *url.URL
-	if proxyStr := os.Getenv("PLANWAT_PROXY"); proxyStr != "" {
-		proxyURL, err := url.Parse(proxyStr)
-		if err != nil {
-			return nil, fmt.Errorf("invalid proxy url: %w", err)
+	var proxies []*url.URL
+	for _, name := range []string{"PLANWAT_PROXY", "PLANWAT_PROXY_BACKUP"} {
+		raw := os.Getenv(name)
+		if raw == "" {
+			continue
 		}
-		transport.Proxy = http.ProxyURL(proxyURL)
-		configuredProxy = proxyURL
-		log.Printf("pobieranie przez proxy %s (PLANWAT_PROXY)", proxyURL.Host)
+		proxyURL, err := url.Parse(raw)
+		if err != nil || proxyURL.Host == "" {
+			return nil, fmt.Errorf("zły adres proxy w %s", name)
+		}
+		proxies = append(proxies, proxyURL)
+		log.Printf("proxy %s (%s)", proxyURL.Host, name)
 	}
 
 	client := &http.Client{
@@ -137,13 +130,18 @@ func NewFetcher() (*Fetcher, error) {
 		blockBackoff = d
 	}
 
-	return &Fetcher{
+	f := &Fetcher{
 		client:       client,
-		proxyURL:     configuredProxy,
 		minInterval:  minInterval,
 		blockBackoff: blockBackoff,
 		blockedUntil: make(map[string]time.Time),
-	}, nil
+		proxies:      proxies,
+		proxyBad:     make([]time.Time, len(proxies)),
+	}
+	if len(proxies) > 0 {
+		transport.Proxy = func(*http.Request) (*url.URL, error) { return f.currentProxy(), nil }
+	}
+	return f, nil
 }
 
 func hostOf(rawURL string) string {
@@ -227,7 +225,7 @@ func (f *Fetcher) FetchPage(targetUrl string, prev Validators) ([]byte, Validato
 	host := hostOf(targetUrl)
 	if until, paused := f.proxyPaused(); paused {
 		status, _ := f.ProxyError()
-		return nil, Validators{}, fmt.Errorf("%w: %s %s (pobieranie wstrzymane do %s)", ErrProxy, f.proxyURL.Host, status, until.Format("15:04"))
+		return nil, Validators{}, fmt.Errorf("%w: %s (pobieranie wstrzymane do %s)", ErrProxy, status, until.Format("15:04"))
 	}
 	if until, blocked := f.hostBlocked(host); blocked {
 		return nil, Validators{}, fmt.Errorf("%w (%s wstrzymane do %s)", ErrBlocked, host, until.Format("15:04"))
@@ -242,6 +240,9 @@ func (f *Fetcher) FetchPage(targetUrl string, prev Validators) ([]byte, Validato
 		lastErr = err
 		if errors.Is(err, ErrNotModified) {
 			return nil, prev, err
+		}
+		if errors.Is(err, errProxySwitched) {
+			continue
 		}
 		if errors.Is(err, ErrBlocked) {
 			f.markBlocked(host)
@@ -270,15 +271,8 @@ func (e *statusError) Is(target error) bool {
 	return target == ErrGone && (e.status == http.StatusNotFound || e.status == http.StatusGone)
 }
 
-func (f *Fetcher) ProxyHost() string {
-	if f.proxyURL == nil {
-		return ""
-	}
-	return f.proxyURL.Host
-}
-
 func (f *Fetcher) proxyRejection(err error) (string, bool) {
-	if f.proxyURL == nil {
+	if len(f.proxies) == 0 {
 		return "", false
 	}
 	var ue *url.Error
@@ -290,6 +284,9 @@ func (f *Fetcher) proxyRejection(err error) (string, bool) {
 		if st := http.StatusText(code); st != "" && st == text {
 			return fmt.Sprintf("%d %s", code, st), true
 		}
+	}
+	if strings.Contains(text, "proxyconnect") {
+		return "brak połączenia z proxy", true
 	}
 	return "", false
 }
@@ -337,26 +334,18 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators) (fetched, error) 
 	}
 
 	f.pace()
+	used := f.currentProxy()
 	resp, err := f.client.Do(req)
 	if err != nil {
 		if status, ok := f.proxyRejection(err); ok {
-			f.proxyMu.Lock()
-			f.proxyError, f.proxyAt = status, time.Now()
-			f.proxyUntil = time.Now().Add(proxyPause)
-			f.proxyMu.Unlock()
-			log.Printf("proxy %s odrzuciło połączenie: %s - wstrzymuję pobieranie do %s", f.proxyURL.Host, status, time.Now().Add(proxyPause).Format("15:04"))
-			f.alert.Problem("proxy", fmt.Sprintf("Proxy %s odrzuca połączenia: %s. Sprawdź konto u dostawcy proxy. Pobieranie z WAT stoi.", f.proxyURL.Host, status))
-			return fetched{}, fmt.Errorf("%w: %s %s - sprawdź konto u dostawcy proxy albo usuń PLANWAT_PROXY", ErrProxy, f.proxyURL.Host, status)
+			return fetched{}, f.proxyFailed(used, status)
 		}
 		return fetched{}, err
 	}
 	defer resp.Body.Close()
 
-	if f.proxyURL != nil {
-		f.proxyMu.Lock()
-		f.proxyError = ""
-		f.proxyMu.Unlock()
-		f.alert.Resolved("proxy", fmt.Sprintf("Proxy %s znów działa.", f.proxyURL.Host))
+	if used != nil {
+		f.proxyWorked(used)
 	}
 
 	if resp.StatusCode == http.StatusNotModified && !prev.empty() {

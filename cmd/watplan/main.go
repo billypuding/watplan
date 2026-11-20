@@ -110,16 +110,38 @@ func main() {
 
 	var db *durable.Queue
 	if dbURL := os.Getenv("PLANWAT_DB_URL"); dbURL != "" {
-		turso, err := durable.OpenTurso(dbURL, os.Getenv("PLANWAT_DB_TOKEN"))
+		var turso *durable.Turso
+		var err error
+		for attempt := 1; attempt <= 3; attempt++ {
+			turso, err = durable.OpenTurso(dbURL, os.Getenv("PLANWAT_DB_TOKEN"))
+			if err == nil {
+				break
+			}
+			log.Printf("baza: próba %d/3 nieudana: %v", attempt, err)
+			if attempt < 3 {
+				time.Sleep(10 * time.Second)
+			}
+		}
 		if err != nil {
 			log.Printf("baza niedostępna (%v), działam na samych plikach", err)
+			alerts.Problem("db", "Serwer wystartował bez bazy Turso: "+err.Error())
 		} else {
 			db = durable.NewQueue(turso)
 			db.SetAlert(alerts)
 			started := time.Now()
-			restored, uploaded, err := st.Restore(db)
+			var restored, uploaded int
+			for attempt := 1; attempt <= 3; attempt++ {
+				restored, uploaded, err = st.Restore(db)
+				if err == nil {
+					break
+				}
+				log.Printf("odtwarzanie z bazy, próba %d/3: %v", attempt, err)
+				if attempt < 3 {
+					time.Sleep(10 * time.Second)
+				}
+			}
 			if err != nil {
-				log.Printf("odtwarzanie z bazy: %v", err)
+				alerts.Problem("db", "Nie udało się odtworzyć planów z bazy: "+err.Error())
 			}
 			st.SetMirror(db)
 			log.Printf("baza: odtworzono %d planów, do wysłania %d, %v", restored, uploaded, time.Since(started).Round(time.Millisecond))

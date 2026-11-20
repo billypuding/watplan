@@ -546,7 +546,7 @@ func (s *Server) dbStatus() map[string]any {
 		return map[string]any{"enabled": false}
 	}
 	failed, saved := s.options.DB.Status()
-	return map[string]any{"enabled": true, "saved": saved, "error": failed}
+	return map[string]any{"enabled": true, "saved": saved, "error": failed, "plans_at_start": s.store.RemotePlans()}
 }
 
 func proxyErrorText(u *updater.Updater) string {

@@ -14,11 +14,12 @@ import (
 )
 
 type Store struct {
-	dir    string
-	mu     sync.RWMutex
-	mirror durable.Mirror
-	onSave []func(string, model.Plan)
-	hookMu sync.Mutex
+	dir         string
+	mu          sync.RWMutex
+	mirror      durable.Mirror
+	remotePlans int
+	onSave      []func(string, model.Plan)
+	hookMu      sync.Mutex
 }
 
 func (s *Store) OnSave(fn func(id string, plan model.Plan)) {
@@ -41,6 +42,12 @@ const (
 	historyPrefix = "history"
 )
 
+func (s *Store) RemotePlans() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.remotePlans
+}
+
 func (s *Store) SetMirror(m durable.Mirror) {
 	s.mu.Lock()
 	s.mirror = m
@@ -52,6 +59,9 @@ func (s *Store) Restore(m durable.Mirror) (restored, uploaded int, err error) {
 	if err != nil {
 		return 0, 0, err
 	}
+	s.mu.Lock()
+	s.remotePlans = len(remote)
+	s.mu.Unlock()
 	seen := map[string]bool{}
 	for key, data := range remote {
 		id := durable.TrimKey(planPrefix, key)
