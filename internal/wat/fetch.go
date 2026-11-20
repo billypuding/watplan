@@ -450,7 +450,7 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators, mode FetchMode) (
 			}
 		}
 		if useScraper {
-			return fetched{}, fmt.Errorf("scraper %s: %w", f.scraper.provider, withoutRequestURL(err))
+			return fetched{}, fmt.Errorf("scraper %s: %w", f.scraper.provider, f.scraper.redact(withoutRequestURL(err)))
 		}
 		if used != nil && isTimeout(err) {
 			return fetched{}, f.proxyTimedOut(used, err)

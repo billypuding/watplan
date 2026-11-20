@@ -73,7 +73,6 @@ func (c *scraperConfig) request(target string) (*http.Request, error) {
 	switch c.provider {
 	case "scrapingant":
 		q.Set("url", target)
-		q.Set("x-api-key", c.apiKey)
 		q.Set("browser", strconv.FormatBool(c.browser))
 		q.Set("proxy_type", c.proxyType)
 		if c.country != "" {
@@ -104,10 +103,35 @@ func (c *scraperConfig) request(target string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	if c.provider == "scrapingbee" {
+	switch c.provider {
+	case "scrapingant":
+		req.Header.Set("x-api-key", c.apiKey)
+	case "scrapingbee":
 		req.Header.Set("Authorization", "Bearer "+c.apiKey)
 	}
 	return req, nil
+}
+
+type redactedError struct {
+	text string
+	err  error
+}
+
+func (e *redactedError) Error() string { return e.text }
+
+func (e *redactedError) Unwrap() error { return e.err }
+
+func (c *scraperConfig) redact(err error) error {
+	if err == nil || c.apiKey == "" {
+		return err
+	}
+	text := err.Error()
+	clean := strings.ReplaceAll(text, c.apiKey, "***")
+	clean = strings.ReplaceAll(clean, url.QueryEscape(c.apiKey), "***")
+	if clean == text {
+		return err
+	}
+	return &redactedError{text: clean, err: err}
 }
 
 func envOrDefault(key, fallback string) string {

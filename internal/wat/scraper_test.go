@@ -10,8 +10,10 @@ import (
 
 func TestScrapingAntGateway(t *testing.T) {
 	var got url.Values
+	var gotKey string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		got = r.URL.Query()
+		gotKey = r.Header.Get("x-api-key")
 		_, _ = w.Write([]byte("<html>plan</html>"))
 	}))
 	t.Cleanup(srv.Close)
@@ -41,7 +43,6 @@ func TestScrapingAntGateway(t *testing.T) {
 
 	want := map[string]string{
 		"url":           "https://wml.wat.edu.pl/plan.htm?grupa_id=WMT26AX3S1",
-		"x-api-key":     "test-key",
 		"browser":       "false",
 		"proxy_type":    "datacenter",
 		"proxy_country": "PL",
@@ -50,6 +51,36 @@ func TestScrapingAntGateway(t *testing.T) {
 		if got.Get(key) != value {
 			t.Errorf("%s = %q, chcę %q", key, got.Get(key), value)
 		}
+	}
+	if gotKey != "test-key" {
+		t.Errorf("nagłówek x-api-key = %q", gotKey)
+	}
+	if got.Has("x-api-key") {
+		t.Error("klucz trafił do adresu zapytania")
+	}
+}
+
+func TestScraperErrorsHideKey(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	dead := srv.URL
+	srv.Close()
+
+	t.Setenv("PLANWAT_SCRAPER_PROVIDER", "scraperapi")
+	t.Setenv("PLANWAT_SCRAPER_KEY", "sekret/klucz+123")
+	t.Setenv("PLANWAT_SCRAPER_API_URL", dead+"/?api_key=sekret/klucz+123")
+	t.Setenv("PLANWAT_PROXY", "")
+	t.Setenv("PLANWAT_PROXY_BACKUP", "")
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	f, err := NewFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = f.FetchHTML("https://wml.wat.edu.pl/plan.htm")
+	if err == nil {
+		t.Fatal("pobranie z martwego serwera się udało")
+	}
+	if strings.Contains(err.Error(), "sekret") {
+		t.Fatalf("klucz w błędzie: %v", err)
 	}
 }
 
