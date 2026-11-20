@@ -68,6 +68,34 @@ type Server struct {
 	lastStale   map[string]time.Time
 	rooms       roomsCache
 	semester    semesterCache
+	dbMu        sync.RWMutex
+	ready       <-chan struct{}
+}
+
+const readyWait = 25 * time.Second
+
+func (s *Server) SetDB(q *durable.Queue) {
+	s.dbMu.Lock()
+	s.options.DB = q
+	s.dbMu.Unlock()
+}
+
+func (s *Server) SetReady(ch <-chan struct{}) {
+	s.ready = ch
+}
+
+func (s *Server) waitReady(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if s.ready != nil {
+			select {
+			case <-s.ready:
+			case <-time.After(readyWait):
+			case <-r.Context().Done():
+				return
+			}
+		}
+		next(w, r)
+	}
 }
 
 func NewServer(registry *config.Registry, store *store.Store, updater *updater.Updater, options Options) *Server {
@@ -99,17 +127,17 @@ func (s *Server) Handler() (http.Handler, error) {
 	}
 
 	mux.HandleFunc("/api/plans", withGzip(s.handlePlans))
-	mux.HandleFunc("/api/plan/", withGzip(s.handlePlan))
-	mux.HandleFunc("/api/refresh", s.handleRefresh)
+	mux.HandleFunc("/api/plan/", s.waitReady(withGzip(s.handlePlan)))
+	mux.HandleFunc("/api/refresh", s.waitReady(s.handleRefresh))
 	mux.HandleFunc("/api/status", s.handleStatus)
-	mux.HandleFunc("/api/changes/", withGzip(s.handleChanges))
-	mux.HandleFunc("/api/rooms", withGzip(s.handleRooms))
-	mux.HandleFunc("/api/semester", s.handleSemester)
-	mux.HandleFunc("/api/makeup", withGzip(s.handleMakeup))
+	mux.HandleFunc("/api/changes/", s.waitReady(withGzip(s.handleChanges)))
+	mux.HandleFunc("/api/rooms", s.waitReady(withGzip(s.handleRooms)))
+	mux.HandleFunc("/api/semester", s.waitReady(s.handleSemester))
+	mux.HandleFunc("/api/makeup", s.waitReady(withGzip(s.handleMakeup)))
 	mux.HandleFunc("/api/push/key", s.handlePushKey)
 	mux.HandleFunc("/api/push/subscribe", s.handlePushSubscribe)
 	mux.HandleFunc("/api/push/unsubscribe", s.handlePushUnsubscribe)
-	mux.HandleFunc("/cal/", withGzip(s.handleCalendar))
+	mux.HandleFunc("/cal/", s.waitReady(withGzip(s.handleCalendar)))
 
 	appPage, err := fs.ReadFile(static, "app.html")
 	if err != nil {
@@ -477,7 +505,7 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.updater.Update(plan); err != nil {
+	if err := s.updater.UpdateManual(plan); err != nil {
 		log.Printf("ręczne odświeżanie planu %s: %v", plan.ID, err)
 		s.writeUpdateError(w, err)
 		return
@@ -542,10 +570,13 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) dbStatus() map[string]any {
-	if s.options.DB == nil {
+	s.dbMu.RLock()
+	db := s.options.DB
+	s.dbMu.RUnlock()
+	if db == nil {
 		return map[string]any{"enabled": false}
 	}
-	failed, saved := s.options.DB.Status()
+	failed, saved := db.Status()
 	return map[string]any{"enabled": true, "saved": saved, "error": failed, "plans_at_start": s.store.RemotePlans()}
 }
 

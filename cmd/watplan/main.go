@@ -108,59 +108,12 @@ func main() {
 		log.Printf("powiadomienia o awariach włączone")
 	}
 
-	var db *durable.Queue
-	if dbURL := os.Getenv("PLANWAT_DB_URL"); dbURL != "" {
-		var turso *durable.Turso
-		var err error
-		for attempt := 1; attempt <= 3; attempt++ {
-			turso, err = durable.OpenTurso(dbURL, os.Getenv("PLANWAT_DB_TOKEN"))
-			if err == nil {
-				break
-			}
-			log.Printf("baza: próba %d/3 nieudana: %v", attempt, err)
-			if attempt < 3 {
-				time.Sleep(10 * time.Second)
-			}
-		}
-		if err != nil {
-			log.Printf("baza niedostępna (%v), działam na samych plikach", err)
-			alerts.Problem("db", "Serwer wystartował bez bazy Turso: "+err.Error())
-		} else {
-			db = durable.NewQueue(turso)
-			db.SetAlert(alerts)
-			started := time.Now()
-			var restored, uploaded int
-			for attempt := 1; attempt <= 3; attempt++ {
-				restored, uploaded, err = st.Restore(db)
-				if err == nil {
-					break
-				}
-				log.Printf("odtwarzanie z bazy, próba %d/3: %v", attempt, err)
-				if attempt < 3 {
-					time.Sleep(10 * time.Second)
-				}
-			}
-			if err != nil {
-				alerts.Problem("db", "Nie udało się odtworzyć planów z bazy: "+err.Error())
-			}
-			st.SetMirror(db)
-			log.Printf("baza: odtworzono %d planów, do wysłania %d, %v", restored, uploaded, time.Since(started).Round(time.Millisecond))
-		}
-	}
-
 	var pushSvc *push.Service
 	if public, private := os.Getenv("PLANWAT_VAPID_PUBLIC"), os.Getenv("PLANWAT_VAPID_PRIVATE"); public != "" && private != "" {
 		pushFile := envOr("PLANWAT_PUSH_FILE", filepath.Join(dataDir, "push.json"))
 		pushSvc, err = push.New(public, private, envOr("PLANWAT_VAPID_SUBJECT", "mailto:awalczak@duck.com"), pushFile)
 		if err != nil {
 			log.Fatal(err)
-		}
-		if db != nil {
-			if added, err := pushSvc.Restore(db); err != nil {
-				log.Printf("odtwarzanie subskrypcji z bazy: %v", err)
-			} else if added > 0 {
-				log.Printf("baza: odtworzono %d subskrypcji", added)
-			}
 		}
 		log.Printf("powiadomienia push włączone (%d subskrypcji, %s)", pushSvc.Count(), pushFile)
 	}
@@ -190,7 +143,6 @@ func main() {
 
 	srvApp := server.NewServer(reg, st, upd, server.Options{
 		Push:          pushSvc,
-		DB:            db,
 		Offline:       offline,
 		OnDemand:      onDemand,
 		CanonicalHost: os.Getenv("PLANWAT_CANONICAL_HOST"),
@@ -199,20 +151,86 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	go srvApp.Warm()
+	restore := func() {
+		dbURL := os.Getenv("PLANWAT_DB_URL")
+		if dbURL == "" {
+			return
+		}
+		var turso *durable.Turso
+		var err error
+		for attempt := 1; attempt <= 3; attempt++ {
+			turso, err = durable.OpenTurso(dbURL, os.Getenv("PLANWAT_DB_TOKEN"))
+			if err == nil {
+				break
+			}
+			log.Printf("baza: próba %d/3 nieudana: %v", attempt, err)
+			if attempt < 3 {
+				time.Sleep(10 * time.Second)
+			}
+		}
+		if err != nil {
+			log.Printf("baza niedostępna (%v), działam na samych plikach", err)
+			alerts.Problem("db", "Serwer wystartował bez bazy Turso: "+err.Error())
+		} else {
+			db := durable.NewQueue(turso)
+			db.SetAlert(alerts)
+			started := time.Now()
+			var restored, uploaded int
+			for attempt := 1; attempt <= 3; attempt++ {
+				restored, uploaded, err = st.Restore(db)
+				if err == nil {
+					break
+				}
+				log.Printf("odtwarzanie z bazy, próba %d/3: %v", attempt, err)
+				if attempt < 3 {
+					time.Sleep(10 * time.Second)
+				}
+			}
+			if err != nil {
+				alerts.Problem("db", "Nie udało się odtworzyć planów z bazy: "+err.Error())
+			}
+			st.SetMirror(db)
+			srvApp.SetDB(db)
+			log.Printf("baza: odtworzono %d planów, do wysłania %d, %v", restored, uploaded, time.Since(started).Round(time.Millisecond))
+			if pushSvc != nil {
+				if added, err := pushSvc.Restore(db); err != nil {
+					log.Printf("odtwarzanie subskrypcji z bazy: %v", err)
+				} else if added > 0 {
+					log.Printf("baza: odtworzono %d subskrypcji", added)
+				}
+			}
+		}
+	}
+	ready := make(chan struct{})
+	srvApp.SetReady(ready)
+	go func() {
+		defer close(ready)
+		restore()
+	}()
+
+	go func() {
+		<-ready
+		srvApp.Warm()
+	}()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	if !offline && !onDemand {
-		go upd.RunWithDiscovery(ctx, sources, static, reg, plansFile, refreshInterval)
+		go func() {
+			<-ready
+			upd.RunWithDiscovery(ctx, sources, static, reg, plansFile, refreshInterval)
+		}()
 	}
 	if onDemand && !envBool("PLANWAT_NO_BACKGROUND") {
 		opts := updater.MaintainOptions{}
 		if pushSvc != nil {
 			opts.Watched = pushSvc.Watched
 		}
-		go upd.Maintain(ctx, sources, reg, opts)
+		go func() {
+			<-ready
+			upd.Maintain(ctx, sources, reg, opts)
+		}()
 	}
 
 	srv := &http.Server{

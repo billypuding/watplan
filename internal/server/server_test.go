@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/model"
@@ -257,5 +258,47 @@ func TestPlanETagGives304(t *testing.T) {
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("inny ETag: status %d", rec.Code)
+	}
+}
+
+func TestPlanRequestsWaitForRestoreButPagesDoNot(t *testing.T) {
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := NewServer(config.NewRegistry([]config.PlanConfig{{ID: "TST26XX1S0"}}), st, nil, Options{Offline: true})
+	ready := make(chan struct{})
+	srv.SetReady(ready)
+	h, err := srv.Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	page := httptest.NewRecorder()
+	h.ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/app", nil))
+	if page.Code != http.StatusOK {
+		t.Fatalf("strona aplikacji w czasie odtwarzania: %d", page.Code)
+	}
+
+	done := make(chan int, 1)
+	go func() {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/plan/TST26XX1S0", nil))
+		done <- rec.Code
+	}()
+	select {
+	case code := <-done:
+		t.Fatalf("plan odpowiedział (%d) przed końcem odtwarzania", code)
+	case <-time.After(100 * time.Millisecond):
+	}
+	_ = st.Save("TST26XX1S0", model.Plan{FetchedAt: "2026-11-20 10:00:00", Events: []model.Event{{Date: "2026-11-20", Start: "08:00", End: "09:35", Subject: "X"}}})
+	close(ready)
+	select {
+	case code := <-done:
+		if code != http.StatusOK {
+			t.Fatalf("po odtworzeniu: %d", code)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("plan nie odpowiedział po odtworzeniu")
 	}
 }
