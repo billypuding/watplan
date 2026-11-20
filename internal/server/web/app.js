@@ -1500,18 +1500,117 @@ const printArea = $('printArea');
 const ROOM_RE = /^(.+?)\/?\s+(\d{1,3}[A-Z]?|[A-Z])$/;
 
 toolsModal.addEventListener('click', (e) => { if (e.target === toolsModal || e.target.closest('[data-close]')) toolsModal.close(); });
-for (const dlg of [roomsModal, compareModal]) {
+const examsModal = $('examsModal');
+const examsBody = $('examsBody');
+const examsSub = $('examsSub');
+
+for (const dlg of [roomsModal, compareModal, examsModal]) {
     dlg.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) dlg.close(); });
 }
 toolsBtn.addEventListener('click', () => toolsModal.showModal());
 toolsModal.querySelectorAll('[data-tool]').forEach(btn => btn.addEventListener('click', () => {
     toolsModal.close();
     const tool = btn.dataset.tool;
-    if (tool === 'rooms') openRooms();
+    if (tool === 'exams') openExams();
+    else if (tool === 'rooms') openRooms();
     else if (tool === 'compare') openCompare();
     else if (tool === 'changes') openChanges(currentPlanId);
     else if (tool === 'print') printMonth();
 }));
+
+const SESSION_RE = /^\s*sesja/i;
+const isSessionMarker = (e) => SESSION_RE.test(e.subject);
+const isExam = (e) => !isSessionMarker(e) && (/egzamin|zaliczenie/i.test(e.type || '') || /egzamin|\begz\.|\(e\)\s*$|_e\s*$/i.test(e.subject));
+
+function daysUntil(iso) {
+    return Math.round((parseISO(iso) - parseISO(todayISO())) / 86400000);
+}
+
+function countdown(iso) {
+    const n = daysUntil(iso);
+    if (n === 0) return 'dziś';
+    if (n === 1) return 'jutro';
+    if (n < 0) return n === -1 ? 'wczoraj' : `${-n} dni temu`;
+    return `za ${n} ${plural(n, 'dzień', 'dni', 'dni')}`;
+}
+
+function dateRangeText(from, to) {
+    const a = parseISO(from), b = parseISO(to);
+    if (from === to) return `${a.getDate()} ${MONTHS_GEN[a.getMonth()]}`;
+    if (a.getMonth() === b.getMonth()) return `${a.getDate()}–${b.getDate()} ${MONTHS_GEN[b.getMonth()]}`;
+    return `${a.getDate()} ${MONTHS_SHORT[a.getMonth()]} – ${b.getDate()} ${MONTHS_SHORT[b.getMonth()]}`;
+}
+
+function sessionPeriods() {
+    const byName = new Map();
+    for (const e of allEvents.filter(isSessionMarker)) {
+        const name = e.subject.trim().replace(/^./, c => c.toUpperCase());
+        const p = byName.get(name) || { name, from: e.date, to: e.date };
+        if (e.date < p.from) p.from = e.date;
+        if (e.date > p.to) p.to = e.date;
+        byName.set(name, p);
+    }
+    return [...byName.values()].sort((a, b) => a.from.localeCompare(b.from));
+}
+
+function renderExams() {
+    const today = todayISO();
+    const exams = allEvents.filter(isExam);
+    const upcoming = exams.filter(e => e.date >= today);
+    const past = exams.filter(e => e.date < today);
+    const periods = sessionPeriods();
+    const sections = [];
+
+    examsSub.textContent = upcoming.length
+        ? `Najbliższy egzamin ${countdown(upcoming[0].date)}`
+        : (periods.length ? `Sesja: ${dateRangeText(periods[0].from, periods[periods.length - 1].to)}` : 'Na podstawie planu Twojej grupy');
+
+    if (periods.length) {
+        sections.push(h('section', { class: 'ex-periods' }, periods.map(p => h('div', { class: 'ex-period' + (p.to < today ? ' done' : '') },
+            h('b', null, p.name), h('span', null, dateRangeText(p.from, p.to)),
+            h('small', null, p.to < today ? 'zakończona' : p.from <= today ? 'trwa' : countdown(p.from))))));
+    }
+
+    const examRow = (e) => h('li', { class: 'ex-item' + (e.date < today ? ' done' : '') },
+        h('div', { class: 'ex-date' }, h('b', null, String(parseISO(e.date).getDate())), h('span', null, MONTHS_SHORT[parseISO(e.date).getMonth()])),
+        h('div', { class: 'ex-main' },
+            h('b', null, e.subject),
+            h('span', null, [`${shortDate(e.date)}, ${e.start}–${e.end}`, splitRooms(e.room).main && `sala ${splitRooms(e.room).main}`].filter(Boolean).join(' · '))),
+        h('span', { class: 'ex-left' + (daysUntil(e.date) <= 3 && e.date >= today ? ' soon' : '') }, countdown(e.date)));
+
+    sections.push(h('h3', { class: 'ex-h' }, 'Egzaminy'));
+    if (exams.length) {
+        sections.push(h('ol', { class: 'ex-list' }, upcoming.map(examRow), past.map(examRow)));
+    } else {
+        sections.push(h('p', { class: 'hint' }, 'W planie tej grupy nie ma jeszcze egzaminów. Wydziały często dopisują je bliżej sesji, a WATplan pokaże je tutaj od razu po pojawieniu się w planie.'));
+    }
+
+    const series = new Map();
+    for (const e of allEvents) {
+        if (isExam(e) || isSessionMarker(e)) continue;
+        const key = seriesKey(e);
+        const s = series.get(key) || { e, last: e, left: 0 };
+        if (e.date > s.last.date || (e.date === s.last.date && e.start > s.last.start)) s.last = e;
+        if (eventRange(e)[1] > warsawNow().getTime()) s.left++;
+        series.set(key, s);
+    }
+    const lasts = [...series.values()].sort((a, b) => (a.last.date + a.last.start).localeCompare(b.last.date + b.last.start));
+    if (lasts.length) {
+        sections.push(h('h3', { class: 'ex-h' }, 'Ostatnie zajęcia z przedmiotów'),
+            h('p', { class: 'hint' }, 'Zwykle wtedy jest zaliczenie albo ostatnia szansa na odrobienie.'),
+            h('ol', { class: 'ex-lasts' }, lasts.map(s => h('li', { class: s.left === 0 ? 'done' : '' },
+                h('span', { class: 'ex-main' }, h('b', null, s.e.subject), h('span', null, typeLabel(s.e.type))),
+                h('span', { class: 'ex-when' }, h('b', null, shortDate(s.last.date)), h('span', null, s.left === 0 ? 'zakończone' : `${plural(s.left, 'zostały', 'zostały', 'zostało')} ${s.left}`))))));
+    }
+    examsBody.replaceChildren(...sections);
+}
+
+function openExams() {
+    if (!currentPlanId || planEvents.length === 0) { setNotice('Najpierw wybierz grupę z planem', true); return; }
+    renderExams();
+    examsModal.showModal();
+    examsModal.scrollTo(0, 0);
+}
 
 function buildingOf(room) {
     for (const part of String(room || '').split(/\s*[;,]\s*/)) {

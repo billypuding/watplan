@@ -20,7 +20,7 @@
 <meta name="apple-mobile-web-app-title" content="WATplan">
 <link rel="preload" href="/fonts/geist-latin.woff2?v=1" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/geist-latin-ext.woff2?v=1" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/style.css?v=22">
+<link rel="stylesheet" href="/style.css?v=23">
 <script src="/theme.js"></script>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="20fefe3e-d94a-4560-9026-171fd09c2730"></script>
 </head>
@@ -176,11 +176,25 @@
     </button>
   </div>
   <div class="tool-list">
+    <button class="tool-item" type="button" data-tool="exams"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg><span><b>Sesja i egzaminy</b><small>Egzaminy, terminy sesji i ostatnie zajęcia</small></span></button>
     <button class="tool-item" type="button" data-tool="rooms"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M2 21h20"/><path d="M13 12h.01"/><path d="M16 9h2a2 2 0 0 1 2 2v10"/></svg><span><b>Wolne sale</b><small>Sale bez zajęć w wybranym bloku</small></span></button>
     <button class="tool-item" type="button" data-tool="compare"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="7" height="16" rx="2"/><rect x="14" y="4" width="7" height="16" rx="2"/></svg><span><b>Porównaj grupy</b><small>Plany obok siebie i wspólny wolny czas</small></span></button>
     <button class="tool-item" type="button" data-tool="changes"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v4l3 2"/><path d="M3.05 11a9 9 0 1 1 .5 4"/><path d="M3 4v5h5"/></svg><span><b>Historia zmian</b><small>Przeniesione, odwołane i nowe zajęcia</small></span></button>
     <button class="tool-item" type="button" data-tool="print"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg><span><b>Miesiąc do PDF</b><small>Zapisz albo wydrukuj plan miesiąca</small></span></button>
   </div>
+</dialog>
+
+<dialog id="examsModal" class="fullscreen">
+  <div class="series-head">
+    <button class="round-btn" type="button" data-close aria-label="Wróć">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div class="series-title">
+      <h2>Sesja i egzaminy</h2>
+      <p id="examsSub"></p>
+    </div>
+  </div>
+  <div class="series-body" id="examsBody"></div>
 </dialog>
 
 <dialog id="roomsModal" class="fullscreen">
@@ -254,6 +268,6 @@
 </dialog>
 
 <script defer src="/groups.js?v=2"></script>
-<script defer src="/app.js?v=20"></script>
+<script defer src="/app.js?v=21"></script>
 </body>
 </html>

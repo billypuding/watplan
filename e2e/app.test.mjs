@@ -159,6 +159,17 @@ test('gdzie odrobić szuka zajęć w innych grupach rocznika', { skip }, async (
     assert.match(await page.text('.makeup-results'), /WMT26/);
 });
 
+test('sesja i egzaminy pokazuje ostatnie zajęcia z przedmiotów', { skip }, async () => {
+    await page.goto(app());
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    await page.click('#toolsBtn');
+    await page.click('[data-tool="exams"]');
+    await page.waitFor(`document.getElementById('examsModal').open && document.querySelectorAll('.ex-lasts li').length > 0`);
+    assert.ok(await page.eval(`[...document.querySelectorAll('.ex-h')].some(h => h.textContent === 'Egzaminy')`));
+    assert.match(await page.text('.ex-lasts li .ex-when b'), /\d/);
+    assert.deepEqual(page.errors, []);
+});
+
 test('miesiąc do PDF buduje arkusz wydruku', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
