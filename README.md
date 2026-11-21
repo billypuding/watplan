@@ -100,6 +100,16 @@ ScrapingAnt's free plan includes 10,000 credits a month; a plain datacenter requ
 costs 1 credit, while residential costs 25. Use `PLANWAT_ON_DEMAND=1` and
 `PLANWAT_NO_BACKGROUND=1` to avoid spending credits on bulk refreshes.
 
+Manual refreshes can also use a browser-fingerprint curl through `PLANWAT_PROXY`:
+
+```bash
+PLANWAT_CURL_IMPERSONATE=/usr/local/bin/curl_chrome116
+```
+
+The binary is a `curl-impersonate` build. It is used only for manual refreshes;
+background refreshes still use the scraping API. If the curl request is blocked
+or fails, the refresh falls back to the scraping API.
+
 For tests, `PLANWAT_SCRAPER_API_URL` overrides the provider endpoint.
 
 ## Hosting on Render (or another cloud)

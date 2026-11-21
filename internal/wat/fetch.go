@@ -67,9 +67,10 @@ type Fetcher struct {
 
 	alert *alert.Notifier
 
-	scraper       *scraperConfig
-	scraperClient *http.Client
-	scraperMu     sync.Mutex
+	scraper         *scraperConfig
+	scraperClient   *http.Client
+	scraperMu       sync.Mutex
+	curlImpersonate string
 
 	proxyMu    sync.Mutex
 	proxies    []*url.URL
@@ -118,6 +119,22 @@ func NewFetcher() (*Fetcher, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	curlImpersonate := strings.TrimSpace(os.Getenv("PLANWAT_CURL_IMPERSONATE"))
+	if curlImpersonate != "" {
+		if len(proxies) == 0 {
+			return nil, fmt.Errorf("PLANWAT_CURL_IMPERSONATE wymaga ustawionego PLANWAT_PROXY")
+		}
+		info, err := os.Stat(curlImpersonate)
+		if err != nil {
+			return nil, fmt.Errorf("PLANWAT_CURL_IMPERSONATE: %w", err)
+		}
+		if info.Mode()&0o111 == 0 {
+			return nil, fmt.Errorf("PLANWAT_CURL_IMPERSONATE %s nie jest wykonywalny", curlImpersonate)
+		}
+		log.Printf("ręczne pobieranie przez curl-impersonate %s", curlImpersonate)
+	}
+
 	client := &http.Client{
 		Timeout:   fetchTimeout,
 		Jar:       jar,
@@ -167,15 +184,16 @@ func NewFetcher() (*Fetcher, error) {
 	}
 
 	f := &Fetcher{
-		client:        client,
-		minInterval:   minInterval,
-		blockBackoff:  blockBackoff,
-		blockedUntil:  make(map[string]time.Time),
-		scraper:       scraper,
-		scraperClient: scraperClient,
-		proxies:       proxies,
-		proxyBad:      make([]time.Time, len(proxies)),
-		proxyPause:    proxyPause,
+		client:          client,
+		minInterval:     minInterval,
+		blockBackoff:    blockBackoff,
+		blockedUntil:    make(map[string]time.Time),
+		scraper:         scraper,
+		scraperClient:   scraperClient,
+		curlImpersonate: curlImpersonate,
+		proxies:         proxies,
+		proxyBad:        make([]time.Time, len(proxies)),
+		proxyPause:      proxyPause,
 	}
 	if len(proxies) > 0 {
 		transport.Proxy = func(req *http.Request) (*url.URL, error) {
@@ -288,7 +306,8 @@ func (f *Fetcher) FetchPageViaProxy(targetUrl string, prev Validators) ([]byte, 
 
 func (f *Fetcher) fetchPage(targetUrl string, prev Validators, mode FetchMode) ([]byte, Validators, error) {
 	host := hostOf(targetUrl)
-	if !f.usesScraper(mode) {
+	useCurl := mode == FetchViaProxy && f.curlImpersonate != "" && len(f.proxies) > 0
+	if !f.usesScraper(mode) && !useCurl {
 		if until, paused := f.proxyPaused(); paused {
 			status, _ := f.ProxyError()
 			return nil, Validators{}, fmt.Errorf("%w: %s (pobieranie wstrzymane do %s)", ErrProxy, status, until.Format("15:04"))
@@ -383,6 +402,10 @@ func retryable(err error) bool {
 }
 
 func (f *Fetcher) fetchOnce(targetUrl string, prev Validators, mode FetchMode) ([]byte, Validators, error) {
+	if mode == FetchViaProxy && f.curlImpersonate != "" && len(f.proxies) > 0 {
+		body, err := f.fetchWithCurl(targetUrl)
+		return body, Validators{}, err
+	}
 	body, err := f.fetchBody(targetUrl, prev, mode)
 	return body.data, body.validators, err
 }
