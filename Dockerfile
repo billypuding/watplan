@@ -12,7 +12,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl libnss3 nss-plugin-pem \
     && rm -rf /var/lib/apt/lists/*
 
-ARG TARGETARCH
+ARG TARGETARCH=amd64
 
 RUN case "$TARGETARCH" in \
         amd64) archive=curl-impersonate-v2.3.2.x86_64-linux-gnu.tar.gz ;; \
