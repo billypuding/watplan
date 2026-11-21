@@ -118,6 +118,29 @@ The server does the fetching, so the phone's network does not matter: WAT sees t
 hosting provider's egress IP. Fetching ~580 plans in the background from a shared
 cloud IP is a good way to get that IP blocked.
 
+### Docker with curl-impersonate
+
+The repository includes a `Dockerfile` with `curl-impersonate` and its NSS
+dependencies. Use a Render **Docker** web service when manual refreshes should go
+through a browser-fingerprint curl and an HTTP proxy:
+
+```text
+PLANWAT_ON_DEMAND=1
+PLANWAT_NO_BACKGROUND=1
+PLANWAT_CURL_IMPERSONATE=/usr/local/bin/curl_chrome136
+PLANWAT_PROXY=http://user:pass@proxy.example:7777
+PLANWAT_SCRAPER_PROVIDER=scrapingant
+PLANWAT_SCRAPER_KEY=...
+PLANWAT_SCRAPER_PROXY_TYPE=datacenter
+PLANWAT_SCRAPER_COUNTRY=PL
+PLANWAT_SCRAPER_BROWSER=false
+```
+
+Background refreshes use the scraping API; manual refreshes use
+`curl-impersonate` through `PLANWAT_PROXY` and fall back to the API when the proxy
+is blocked or the curl request fails. The container listens on `$PORT` and binds
+to `0.0.0.0`.
+
 For a hosted instance, use on-demand mode. It serves the plans restored from Turso
 (see below) and fetches only the plan a user actually opens:
 
