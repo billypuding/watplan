@@ -12,6 +12,7 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -72,6 +73,8 @@ type Fetcher struct {
 	scraperBudget int
 	proxyBudget   int
 	credits       *creditWatch
+	seriesMu      sync.Mutex
+	failures      map[string]int
 	budgetMu      sync.Mutex
 	budgetOver    map[string]bool
 
@@ -212,6 +215,7 @@ func NewFetcher() (*Fetcher, error) {
 		credits:       credits,
 		proxyBudget:   proxyBudget,
 		budgetOver:    map[string]bool{},
+		failures:      map[string]int{},
 		client:        client,
 		minInterval:   minInterval,
 		blockBackoff:  blockBackoff,
@@ -325,11 +329,45 @@ func (f *Fetcher) Blocked(targetUrl string) bool {
 }
 
 func (f *Fetcher) FetchPage(targetUrl string, prev Validators) ([]byte, Validators, error) {
-	return f.fetchPage(targetUrl, prev, FetchAuto)
+	body, got, err := f.fetchPage(targetUrl, prev, FetchAuto)
+	f.noteResult(hostOf(targetUrl), err)
+	return body, got, err
 }
 
 func (f *Fetcher) FetchPageViaProxy(targetUrl string, prev Validators) ([]byte, Validators, error) {
-	return f.fetchPage(targetUrl, prev, FetchViaProxy)
+	body, got, err := f.fetchPage(targetUrl, prev, FetchViaProxy)
+	f.noteResult(hostOf(targetUrl), err)
+	return body, got, err
+}
+
+const failureSeries = 5
+
+var credentialsInURL = regexp.MustCompile(`//[^/\s@]+@`)
+
+func (f *Fetcher) noteResult(host string, err error) {
+	if errors.Is(err, ErrGone) || errors.Is(err, ErrBudget) || errors.Is(err, ErrBlocked) {
+		return
+	}
+	f.seriesMu.Lock()
+	if err == nil || errors.Is(err, ErrNotModified) {
+		had := f.failures[host] >= failureSeries
+		delete(f.failures, host)
+		f.seriesMu.Unlock()
+		if had {
+			f.alert.Resolved("fetch:"+host, "Pobieranie z "+host+" znów działa.")
+		}
+		return
+	}
+	if f.failures == nil {
+		f.failures = map[string]int{}
+	}
+	f.failures[host]++
+	n := f.failures[host]
+	f.seriesMu.Unlock()
+	if n >= failureSeries {
+		text := credentialsInURL.ReplaceAllString(err.Error(), "//***@")
+		f.alert.Raise("fetch:"+host, fmt.Sprintf("Pobieranie z %s nie działa: %d błędów z rzędu (ostatni: %s).", host, n, text))
+	}
 }
 
 func (f *Fetcher) fetchPage(targetUrl string, prev Validators, mode FetchMode) ([]byte, Validators, error) {

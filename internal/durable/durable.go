@@ -148,7 +148,7 @@ func (q *Queue) run() {
 				q.alert.Resolved("db", "Zapis do bazy znów działa.")
 			}
 			if err != nil {
-				q.alert.Problem("db", "Zapis do bazy Turso nie działa: "+err.Error())
+				q.alert.Raise("db", "Zapis do bazy Turso nie działa: "+err.Error())
 				log.Printf("baza: zapis %s: %v", key, err)
 				q.mu.Lock()
 				if _, newer := q.wait[key]; !newer {

@@ -216,8 +216,19 @@ Integrations → Webhooks → New Webhook → Copy URL). The server posts a mess
 when something breaks and another when it recovers: the proxy rejecting
 connections (for example `402 Payment Required`), WAT's firewall blocking a
 faculty host, a faculty's group list failing or disappearing, and writes to
-Turso failing. An unchanged problem is repeated at most every 6 hours. Summer
-lists that are not published yet do not alert.
+Turso failing. Summer lists that are not published yet do not alert.
+
+All alerts share one mechanism: one message per problem key, repeated at most every
+6 hours even if the details change, and a "resolved" message when it is over. Keys:
+
+- `budget:<provider>`: daily fetch budget used up,
+- `credits:<percent>`: ScrapingAnt credits below a threshold (one message per threshold),
+- `db-start`: the server started without Turso and runs cache-only,
+- `db`: writes to Turso failing,
+- `parser`: a plan read with no classes or with a sudden drop in the number of classes
+  (one message for all affected plans, resolved when every one of them reads correctly again),
+- `fetch:<host>`: 5 failed fetches in a row from a WAT host (404s, budget and firewall
+  blocks are not counted; credentials in error texts are masked).
 
 ### Keeping data across deploys (Turso)
 

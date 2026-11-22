@@ -56,6 +56,9 @@ type Updater struct {
 	lastOK    atomic.Int64
 	lastFail  atomic.Int64
 	cacheOnly atomic.Bool
+
+	suspectMu sync.Mutex
+	suspect   map[string]bool
 	alert     *alert.Notifier
 }
 
@@ -313,6 +316,7 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (r
 		if err := u.store.Save(cfg.ID, old); err != nil {
 			return updateResult{}, fmt.Errorf("zapis: %w", err)
 		}
+		u.clearSuspect(cfg.ID)
 		return updateResult{events: len(old.Events), unchanged: true}, nil
 	}
 	if err != nil {
@@ -321,6 +325,7 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (r
 
 	if len(events) == 0 {
 		if len(old.Events) > 0 {
+			u.markSuspect(cfg.ID, fmt.Sprintf("plan %s w nowym odczycie nie ma żadnych zajęć (wcześniej %d)", cfg.ID, len(old.Events)))
 			return updateResult{}, fmt.Errorf("nowy odczyt bez zajęć (poprzednio %d), zostawiam poprzednie dane", len(old.Events))
 		}
 		return updateResult{skipped: true}, nil
@@ -332,6 +337,7 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (r
 			streak = old.DropStreak + 1
 		}
 		if streak < dropConfirmations {
+			u.markSuspect(cfg.ID, fmt.Sprintf("w planie %s liczba zajęć spadła z %d do %d (potwierdzenie %d/%d)", cfg.ID, len(old.Events), len(events), streak, dropConfirmations))
 			pending := old
 			pending.DropCount = len(events)
 			pending.DropStreak = streak
@@ -373,6 +379,7 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (r
 	if err := u.store.Save(cfg.ID, plan); err != nil {
 		return updateResult{}, fmt.Errorf("zapis: %w", err)
 	}
+	u.clearSuspect(cfg.ID)
 	if !change.Empty() {
 		if err := u.store.AddHistory(cfg.ID, change, historyKeep); err != nil {
 			log.Printf("plan %s: zapis historii zmian: %v", cfg.ID, err)
@@ -548,4 +555,27 @@ func (u *Updater) Credits() (wat.Credits, bool) {
 		return wat.Credits{}, false
 	}
 	return u.fetcher.Credits()
+}
+
+func (u *Updater) markSuspect(id, text string) {
+	u.suspectMu.Lock()
+	if u.suspect == nil {
+		u.suspect = map[string]bool{}
+	}
+	u.suspect[id] = true
+	n := len(u.suspect)
+	u.suspectMu.Unlock()
+	log.Printf("podejrzany odczyt: %s", text)
+	u.alert.Raise("parser", fmt.Sprintf("Podejrzany odczyt planu: %s. Zostawiam poprzednie dane. Planów z problemem: %d. Możliwa zmiana formatu na stronie WAT.", text, n))
+}
+
+func (u *Updater) clearSuspect(id string) {
+	u.suspectMu.Lock()
+	had := u.suspect[id]
+	delete(u.suspect, id)
+	empty := len(u.suspect) == 0
+	u.suspectMu.Unlock()
+	if had && empty {
+		u.alert.Resolved("parser", "Odczyty planów znów wyglądają poprawnie.")
+	}
 }
