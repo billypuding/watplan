@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/sha1"
+	"crypto/subtle"
 	"embed"
 	"encoding/hex"
 	"encoding/json"
@@ -63,6 +64,8 @@ type Options struct {
 
 	DBRequired        bool
 	HealthFetchMaxAge time.Duration
+
+	StatusToken string
 }
 
 const defaultHealthFetchMaxAge = 3 * time.Hour
@@ -739,11 +742,16 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	case s.options.OnDemand:
 		mode = "on-demand"
 	}
+	now := time.Now().In(warsawLoc).Format(timeLayout)
+	if !s.statusAuthorized(r) {
+		writeJSON(w, http.StatusOK, map[string]any{"mode": mode, "now": now})
+		return
+	}
 	blocked := map[string]string{}
 	for host, until := range s.updater.BlockedHosts() {
 		blocked[host] = until.In(warsawLoc).Format(timeLayout)
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
+	detail := map[string]any{
 		"mode":          mode,
 		"blocked_hosts": blocked,
 		"proxy":         s.updater.ProxyHost(),
@@ -753,8 +761,24 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		"db":            s.dbStatus(),
 		"missing_plans": s.updater.MissingPlans(),
 		"usage":         s.updater.Usage().Snapshot(),
-		"now":           time.Now().In(warsawLoc).Format(timeLayout),
-	})
+		"budget":        s.updater.Budget(),
+		"now":           now,
+	}
+	if credits, ok := s.updater.Credits(); ok {
+		detail["credits"] = credits
+	}
+	if s.options.Push != nil {
+		detail["push_subscriptions"] = s.options.Push.Count()
+	}
+	writeJSON(w, http.StatusOK, detail)
+}
+
+func (s *Server) statusAuthorized(r *http.Request) bool {
+	if s.options.StatusToken == "" {
+		return false
+	}
+	got, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+	return ok && subtle.ConstantTimeCompare([]byte(strings.TrimSpace(got)), []byte(s.options.StatusToken)) == 1
 }
 
 func (s *Server) dataReady() bool {

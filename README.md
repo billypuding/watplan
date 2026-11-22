@@ -259,8 +259,17 @@ every `PLANWAT_CREDITS_CHECK_EVERY` (default `4h`) and sends one alert per thres
 `PLANWAT_CREDITS_ALERT` (percent of the plan, default `30,10`) to the alert webhook. After a
 top-up the alerts are marked as resolved and the thresholds work again.
 
+`/api/status` returns only `mode` and `now` unless the request carries
+`Authorization: Bearer <PLANWAT_STATUS_TOKEN>`; without the variable nobody gets the details.
+The detailed view adds the proxy, blocked hosts, database state, usage, budgets, credits and
+the number of push subscriptions:
+
+```bash
+curl -s -H "Authorization: Bearer $PLANWAT_STATUS_TOKEN" https://watplan.me/api/status
+```
+
 Every request to the scraping API and to the proxy is logged (`zużycie: ...`) and counted.
-`/api/status` shows the counts under `usage`, per provider, for the last 24 hours and
+With `Authorization: Bearer $PLANWAT_STATUS_TOKEN`, `/api/status` shows the counts under `usage`, per provider, for the last 24 hours and
 30 days: requests, ScrapingAnt credits (from the `Ant-Credits-Cost` header) and proxy
 bytes. The counters are stored in Turso, so they survive restarts.
 Without these variables the server works on local files only.

@@ -153,6 +153,8 @@ func main() {
 
 		DBRequired:        os.Getenv("PLANWAT_DB_URL") != "",
 		HealthFetchMaxAge: envDuration("PLANWAT_HEALTH_FETCH_MAX_AGE"),
+
+		StatusToken: os.Getenv("PLANWAT_STATUS_TOKEN"),
 	})
 	handler, err := srvApp.Handler()
 	if err != nil {

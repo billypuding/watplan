@@ -322,7 +322,10 @@ func TestStatusShowsUsage(t *testing.T) {
 	waitFor(t, func() bool { return env.apiHits.Load() == 1 && !env.srv.busy(refreshTestPlan) })
 
 	rec := httptest.NewRecorder()
-	env.handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/status", nil))
+	env.srv.options.StatusToken = "sekret"
+	req := httptest.NewRequest(http.MethodGet, "/api/status", nil)
+	req.Header.Set("Authorization", "Bearer sekret")
+	env.handler.ServeHTTP(rec, req)
 	var status struct {
 		Usage map[string]struct {
 			Requests24h int `json:"requests_24h"`
