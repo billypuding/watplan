@@ -1259,6 +1259,14 @@ async function refreshServer() {
             setNotice('Plan był odświeżany przed chwilą', false);
             return;
         }
+        if (state === 'limited') {
+            setNotice('Za dużo odświeżeń z tej sieci. Spróbuj za kilka minut.', true);
+            return;
+        }
+        if (state === 'budget') {
+            setNotice('Dzienny limit pobierań z WAT jest wyczerpany. Pokazuję zapisany plan.', true);
+            return;
+        }
         setNotice(state === 'pending' ? 'Sprawdzam plan...' : 'Odświeżanie w tle...', false);
         const outcome = await watchRefresh(planId, plan);
         if (outcome === 'same') setNotice('Plan aktualny', false);

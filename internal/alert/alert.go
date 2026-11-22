@@ -68,6 +68,25 @@ func (n *Notifier) Problem(key, text string) {
 	n.send("⚠️ " + text)
 }
 
+func (n *Notifier) Raise(key, text string) {
+	if n == nil {
+		return
+	}
+	n.mu.Lock()
+	_, had := n.state[key]
+	last := n.sent[key]
+	repeat := had && time.Since(last) < n.every
+	n.state[key] = text
+	if !repeat {
+		n.sent[key] = time.Now()
+	}
+	n.mu.Unlock()
+	if repeat {
+		return
+	}
+	n.send("⚠️ " + text)
+}
+
 func (n *Notifier) Resolved(key, text string) {
 	if n == nil {
 		return

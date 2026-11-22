@@ -1,6 +1,7 @@
 package alert
 
 import (
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -66,4 +67,31 @@ func TestNilNotifierIsSafe(t *testing.T) {
 	var n *Notifier
 	n.Problem("x", "y")
 	n.Resolved("x", "y")
+}
+
+func TestRaiseDedupesByKey(t *testing.T) {
+	sent := make(chan string, 10)
+	n := NewFunc(func(text string) error { sent <- text; return nil })
+	n.Raise("budget:x", "limit 400/400")
+	n.Raise("budget:x", "limit 401/400")
+	n.Raise("budget:x", "limit 402/400")
+	n.Resolved("budget:x", "wróciło")
+	n.Raise("budget:x", "limit 400/400")
+	var got []string
+	for len(got) < 3 {
+		select {
+		case s := <-sent:
+			got = append(got, s)
+		case <-time.After(2 * time.Second):
+			t.Fatalf("wysłane: %q", got)
+		}
+	}
+	select {
+	case s := <-sent:
+		t.Fatalf("nadmiarowy alert: %q (wcześniej %q)", s, got)
+	case <-time.After(100 * time.Millisecond):
+	}
+	if !strings.Contains(got[0], "400/400") || !strings.HasPrefix(got[1], "✅") || !strings.Contains(got[2], "400/400") {
+		t.Fatalf("kolejność alertów: %q", got)
+	}
 }

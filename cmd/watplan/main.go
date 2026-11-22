@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -142,10 +143,13 @@ func main() {
 	}
 
 	srvApp := server.NewServer(reg, st, upd, server.Options{
-		Push:          pushSvc,
-		Offline:       offline,
-		OnDemand:      onDemand,
-		CanonicalHost: os.Getenv("PLANWAT_CANONICAL_HOST"),
+		Push:           pushSvc,
+		Offline:        offline,
+		OnDemand:       onDemand,
+		CanonicalHost:  os.Getenv("PLANWAT_CANONICAL_HOST"),
+		TrustProxy:     envBool("PLANWAT_TRUST_PROXY"),
+		RefreshPerHour: envInt("PLANWAT_LIMIT_REFRESH_PER_HOUR"),
+		ChecksPerHour:  envInt("PLANWAT_LIMIT_CHECKS_PER_HOUR"),
 	})
 	handler, err := srvApp.Handler()
 	if err != nil {
@@ -297,6 +301,18 @@ func envOr(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func envInt(key string) int {
+	v := strings.TrimSpace(os.Getenv(key))
+	if v == "" {
+		return 0
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		log.Fatalf("zły %s %q (liczba całkowita, -1 = bez limitu)", key, v)
+	}
+	return n
 }
 
 func envBool(key string) bool {

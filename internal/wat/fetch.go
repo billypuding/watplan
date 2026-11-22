@@ -69,6 +69,11 @@ type Fetcher struct {
 
 	alert *alert.Notifier
 
+	scraperBudget int
+	proxyBudget   int
+	budgetMu      sync.Mutex
+	budgetOver    map[string]bool
+
 	scraper       *scraperConfig
 	scraperClient *http.Client
 	scraperMu     sync.Mutex
@@ -182,12 +187,24 @@ func NewFetcher() (*Fetcher, error) {
 		proxyPause = d
 	}
 
+	scraperBudget, err := budgetFromEnv("PLANWAT_BUDGET_SCRAPER_DAILY", defaultScraperBudget)
+	if err != nil {
+		return nil, err
+	}
+	proxyBudget, err := budgetFromEnv("PLANWAT_BUDGET_PROXY_DAILY", defaultProxyBudget)
+	if err != nil {
+		return nil, err
+	}
+
 	usage := NewUsage()
 	if tlsProxy != nil {
 		tlsProxy.usage = usage
 	}
 	f := &Fetcher{
 		usage:         usage,
+		scraperBudget: scraperBudget,
+		proxyBudget:   proxyBudget,
+		budgetOver:    map[string]bool{},
 		client:        client,
 		minInterval:   minInterval,
 		blockBackoff:  blockBackoff,
@@ -390,7 +407,7 @@ func (f *Fetcher) proxyRejection(err error) (string, bool) {
 }
 
 func retryable(err error) bool {
-	if errors.Is(err, ErrBlocked) || errors.Is(err, ErrProxy) || errors.Is(err, ErrNotModified) {
+	if errors.Is(err, ErrBlocked) || errors.Is(err, ErrProxy) || errors.Is(err, ErrNotModified) || errors.Is(err, ErrBudget) {
 		return false
 	}
 	var se *statusError
@@ -411,6 +428,9 @@ func retryable(err error) bool {
 
 func (f *Fetcher) fetchOnce(targetUrl string, prev Validators, mode FetchMode) ([]byte, Validators, error) {
 	if mode == FetchViaProxy && f.tlsProxy != nil {
+		if err := f.spend(f.tlsProxy.provider(), f.proxyBudget); err != nil {
+			return nil, Validators{}, err
+		}
 		return f.tlsProxy.fetch(targetUrl, prev)
 	}
 	body, err := f.fetchBody(targetUrl, prev, mode)
@@ -471,6 +491,11 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators, mode FetchMode) (
 	httpClient := f.client
 	if useScraper {
 		httpClient = f.scraperClient
+	}
+	if useScraper {
+		if err := f.spend(f.scraper.provider, f.scraperBudget); err != nil {
+			return fetched{}, err
+		}
 	}
 	resp, err := httpClient.Do(req)
 	if useScraper {

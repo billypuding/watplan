@@ -231,7 +231,7 @@ func (u *Updater) UpdateManual(cfg config.PlanConfig) error {
 }
 
 func manualFallback(err error) bool {
-	if errors.Is(err, wat.ErrBlocked) || errors.Is(err, wat.ErrProxy) {
+	if errors.Is(err, wat.ErrBlocked) || errors.Is(err, wat.ErrProxy) || errors.Is(err, wat.ErrBudget) {
 		return true
 	}
 	var ne net.Error
@@ -469,4 +469,21 @@ func (u *Updater) Usage() *wat.Usage {
 		return nil
 	}
 	return u.fetcher.Usage()
+}
+
+func (u *Updater) FetchAllowed(manual bool) bool {
+	if u == nil || u.fetcher == nil {
+		return true
+	}
+	if manual {
+		return u.fetcher.BudgetLeft(wat.FetchViaProxy)
+	}
+	return u.fetcher.BudgetLeft(wat.FetchAuto)
+}
+
+func (u *Updater) Budget() map[string]wat.BudgetStatus {
+	if u == nil || u.fetcher == nil {
+		return nil
+	}
+	return u.fetcher.Budget()
 }

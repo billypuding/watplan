@@ -77,7 +77,21 @@ type Options struct {
 	OnDemand bool
 
 	CanonicalHost string
+
+	TrustProxy     bool
+	RefreshPerHour int
+	ChecksPerHour  int
 }
+
+const (
+	defaultRefreshPerHour = 10
+	defaultChecksPerHour  = 30
+)
+
+var (
+	errRateLimited = errors.New("za dużo zapytań")
+	errNoBudget    = errors.New("limit pobierań wyczerpany")
+)
 
 type Server struct {
 	registry    *config.Registry
@@ -87,6 +101,8 @@ type Server struct {
 	mu          sync.Mutex
 	lastRefresh map[string]time.Time
 	lastVisit   map[string]time.Time
+	refreshIPs  *rateLimiter
+	checkIPs    *rateLimiter
 	blobs       planBlobs
 	lastEnsure  map[string]time.Time
 	ensureErr   map[string]error
@@ -133,6 +149,8 @@ func NewServer(registry *config.Registry, store *store.Store, updater *updater.U
 		options:     options,
 		lastRefresh: make(map[string]time.Time),
 		lastVisit:   make(map[string]time.Time),
+		refreshIPs:  newRateLimiter(orDefault(options.RefreshPerHour, defaultRefreshPerHour), time.Hour),
+		checkIPs:    newRateLimiter(orDefault(options.ChecksPerHour, defaultChecksPerHour), time.Hour),
 		lastEnsure:  make(map[string]time.Time),
 		ensureErr:   make(map[string]error),
 		inflight:    make(map[string]bool),
@@ -287,7 +305,7 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 			log.Printf("wolna odpowiedź /api/plan/%s: %s", plan.ID, t)
 		}
 	}()
-	data, ok := s.planData(w, plan, t, false)
+	data, ok := s.planData(w, r, plan, t, false)
 	if !ok {
 		return
 	}
@@ -326,12 +344,12 @@ func etagMatches(header, etag string) bool {
 	return false
 }
 
-func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig, t *timing, wait bool) ([]byte, bool) {
+func (s *Server) planData(w http.ResponseWriter, r *http.Request, plan config.PlanConfig, t *timing, wait bool) ([]byte, bool) {
 	id := plan.ID
 	data, err := s.store.Raw(id)
 	t.mark("read")
 	if errors.Is(err, fs.ErrNotExist) && s.options.OnDemand && s.updater != nil && !wait {
-		if ensureErr := s.startEnsure(plan); ensureErr != nil {
+		if ensureErr := s.startEnsure(plan, s.clientIP(r)); ensureErr != nil {
 			s.writeUpdateError(w, ensureErr)
 			return nil, false
 		}
@@ -356,7 +374,7 @@ func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig, t *timi
 	}
 	if err == nil && s.options.OnDemand && s.updater != nil {
 		refresh := "none"
-		if s.checkOnVisit(plan, data) {
+		if s.checkOnVisit(plan, data, s.clientIP(r)) {
 			refresh = "background"
 		}
 		w.Header().Set("X-Plan-Refresh", refresh)
@@ -492,7 +510,7 @@ func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
 		alarm = n
 	}
 
-	data, ok := s.planData(w, plan, nil, true)
+	data, ok := s.planData(w, r, plan, nil, true)
 	if !ok {
 		return
 	}
@@ -579,7 +597,7 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	refresh := s.startManual(plan)
+	refresh := s.startManual(plan, s.clientIP(r))
 	w.Header().Set("X-Plan-Refresh", refresh)
 	if err == nil {
 		w.Header().Set("Content-Type", "application/json")
@@ -643,7 +661,7 @@ func (s *Server) startLocked(plan config.PlanConfig, label string, run func(conf
 
 var errNoPlanData = errors.New("plan bez zajęć")
 
-func (s *Server) startEnsure(plan config.PlanConfig) error {
+func (s *Server) startEnsure(plan config.PlanConfig, ip string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.busyLocked(plan.ID) {
@@ -651,6 +669,12 @@ func (s *Server) startEnsure(plan config.PlanConfig) error {
 	}
 	if err := s.ensureErr[plan.ID]; err != nil && time.Since(s.lastEnsure[plan.ID]) < ensureRetryEvery {
 		return err
+	}
+	if !s.updater.FetchAllowed(false) {
+		return errNoBudget
+	}
+	if !s.checkIPs.allow(ip) {
+		return errRateLimited
 	}
 	s.lastEnsure[plan.ID] = time.Now()
 	delete(s.ensureErr, plan.ID)
@@ -676,20 +700,34 @@ func (s *Server) startEnsure(plan config.PlanConfig) error {
 	return nil
 }
 
-func (s *Server) startManual(plan config.PlanConfig) string {
+func orDefault(v, fallback int) int {
+	if v == 0 {
+		return fallback
+	}
+	return v
+}
+
+func (s *Server) startManual(plan config.PlanConfig, ip string) string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.busyLocked(plan.ID) {
 		return "pending"
 	}
-	if s.reserveRefreshLocked(plan.ID) > 0 {
+	if time.Since(s.lastRefresh[plan.ID]) < refreshCooldown {
 		return "cooldown"
 	}
+	if !s.updater.FetchAllowed(true) {
+		return "budget"
+	}
+	if !s.refreshIPs.allow(ip) {
+		return "limited"
+	}
+	s.reserveRefreshLocked(plan.ID)
 	s.startLocked(plan, "ręczne odświeżanie", s.updater.UpdateManual)
 	return "background"
 }
 
-func (s *Server) checkOnVisit(plan config.PlanConfig, data []byte) bool {
+func (s *Server) checkOnVisit(plan config.PlanConfig, data []byte, ip string) bool {
 	times := readPlanTimes(data)
 	every := visitInterval(times.modified, times.modifiedKnown, time.Now())
 	if times.checkedKnown && time.Since(times.checked) < every {
@@ -698,6 +736,9 @@ func (s *Server) checkOnVisit(plan config.PlanConfig, data []byte) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if time.Since(s.lastVisit[plan.ID]) < every || s.busyLocked(plan.ID) {
+		return false
+	}
+	if !s.updater.FetchAllowed(false) || !s.checkIPs.allow(ip) {
 		return false
 	}
 	s.lastVisit[plan.ID] = time.Now()
@@ -751,6 +792,14 @@ func proxyErrorText(u *updater.Updater) string {
 }
 
 func (s *Server) writeUpdateError(w http.ResponseWriter, err error) {
+	if errors.Is(err, errRateLimited) {
+		writeError(w, http.StatusTooManyRequests, "za dużo zapytań z tej sieci, spróbuj za kilka minut")
+		return
+	}
+	if errors.Is(err, errNoBudget) || errors.Is(err, wat.ErrBudget) {
+		writeError(w, http.StatusServiceUnavailable, "dzienny limit pobierań z WAT został wyczerpany, spróbuj później")
+		return
+	}
 	if errors.Is(err, errNoPlanData) {
 		writeError(w, http.StatusServiceUnavailable, "plan nie został jeszcze pobrany")
 		return

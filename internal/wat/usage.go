@@ -130,3 +130,19 @@ func (u *Usage) Snapshot() map[string]UsageStats {
 	}
 	return out
 }
+
+func (u *Usage) Requests24h(provider string) int {
+	if u == nil {
+		return 0
+	}
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	day := u.now().Add(-24 * time.Hour).Unix()
+	n := 0
+	for h, b := range u.hours[provider] {
+		if h >= day {
+			n += b.Requests
+		}
+	}
+	return n
+}

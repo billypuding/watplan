@@ -231,6 +231,19 @@ On start the server restores everything from the database (newer plans win),
 uploads local plans the database does not have yet, and from then on mirrors
 every write in the background. `/api/status` shows the state under `db`.
 
+Daily budgets cap outgoing requests over a rolling 24 hours:
+`PLANWAT_BUDGET_SCRAPER_DAILY` (default 400) and `PLANWAT_BUDGET_PROXY_DAILY` (default 300),
+`0` turns a budget off. When a budget is used up the server stops fetching that way, keeps
+serving cached plans and sends one alert; `/api/refresh` answers `X-Plan-Refresh: budget`.
+
+Per-IP limits (per hour) protect the budgets: `PLANWAT_LIMIT_REFRESH_PER_HOUR` (default 10)
+for `/api/refresh` and `PLANWAT_LIMIT_CHECKS_PER_HOUR` (default 30) for checks started by
+opening a plan; `-1` turns a limit off. Over the limit, refresh answers `X-Plan-Refresh: limited`
+and opening a plan just shows the cached copy. The client IP is taken from `CF-Connecting-IP`
+only when the request really came from Cloudflare: either the peer is in Cloudflare's IP
+ranges, or the peer is a private address and `PLANWAT_TRUST_PROXY=1` (Render, where all
+traffic goes through Cloudflare). Otherwise the TCP peer address is used.
+
 Every request to the scraping API and to the proxy is logged (`zużycie: ...`) and counted.
 `/api/status` shows the counts under `usage`, per provider, for the last 24 hours and
 30 days: requests, ScrapingAnt credits (from the `Ant-Credits-Cost` header) and proxy
