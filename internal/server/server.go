@@ -2,6 +2,7 @@ package server
 
 import (
 	"compress/gzip"
+	"context"
 	"crypto/sha1"
 	"embed"
 	"encoding/hex"
@@ -86,6 +87,7 @@ func (s *Server) SetReady(ch <-chan struct{}) {
 
 func (s *Server) waitReady(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		t := newTiming()
 		if s.ready != nil {
 			select {
 			case <-s.ready:
@@ -94,7 +96,8 @@ func (s *Server) waitReady(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 		}
-		next(w, r)
+		t.mark("ready")
+		next(w, r.WithContext(context.WithValue(r.Context(), timingKey{}, t)))
 	}
 }
 
@@ -239,7 +242,13 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, ok := s.planData(w, plan)
+	t := timingFrom(r.Context())
+	defer func() {
+		if t.total() > slowResponse {
+			log.Printf("wolna odpowiedź /api/plan/%s: %s", plan.ID, t)
+		}
+	}()
+	data, ok := s.planData(w, plan, t)
 	if !ok {
 		return
 	}
@@ -248,12 +257,15 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 	etag := `"` + hex.EncodeToString(sum[:10]) + `"`
 	w.Header().Set("ETag", etag)
 	w.Header().Set("Cache-Control", "no-cache")
+	t.mark("etag")
+	w.Header().Set("Server-Timing", t.header())
 	if etagMatches(r.Header.Get("If-None-Match"), etag) {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
+	t.mark("write")
 }
 
 func etagMatches(header, etag string) bool {
@@ -270,9 +282,10 @@ func etagMatches(header, etag string) bool {
 	return false
 }
 
-func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig) ([]byte, bool) {
+func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig, t *timing) ([]byte, bool) {
 	id := plan.ID
 	data, err := s.store.Raw(id)
+	t.mark("read")
 	if errors.Is(err, fs.ErrNotExist) && s.options.OnDemand && s.updater != nil {
 		log.Printf("plan %s: brak w cache, pobieram na żądanie", id)
 		if updateErr := s.updater.Ensure(plan); updateErr != nil {
@@ -281,6 +294,7 @@ func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig) ([]byte
 			return nil, false
 		}
 		data, err = s.store.Raw(id)
+		t.mark("fetch")
 	}
 	if errors.Is(err, fs.ErrNotExist) {
 		writeError(w, http.StatusServiceUnavailable, "plan nie został jeszcze pobrany")
@@ -292,6 +306,7 @@ func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig) ([]byte
 			refresh = "background"
 		}
 		w.Header().Set("X-Plan-Refresh", refresh)
+		t.mark("visit")
 	}
 	if err != nil {
 		log.Printf("odczyt planu %s: %v", id, err)
@@ -424,7 +439,7 @@ func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
 		alarm = n
 	}
 
-	data, ok := s.planData(w, plan)
+	data, ok := s.planData(w, plan, nil)
 	if !ok {
 		return
 	}

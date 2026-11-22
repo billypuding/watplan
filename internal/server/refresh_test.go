@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -226,5 +227,37 @@ func TestVisitFreshPlanHeader(t *testing.T) {
 
 	if got := env.visit(t); got != "none" {
 		t.Fatalf("X-Plan-Refresh = %q, chcę none", got)
+	}
+}
+
+func TestVisitDuringBackgroundFetchIsFast(t *testing.T) {
+	release := make(chan struct{})
+	env := newRefreshEnv(t, func(w http.ResponseWriter, r *http.Request) {
+		<-release
+		gone(w, r)
+	}, checkedAgo(time.Hour))
+	defer close(release)
+
+	if got := env.visit(t); got != "background" {
+		t.Fatalf("X-Plan-Refresh = %q, chcę background", got)
+	}
+	waitFor(t, func() bool { return env.apiHits.Load() == 1 })
+
+	for i := 0; i < 5; i++ {
+		started := time.Now()
+		rec := httptest.NewRecorder()
+		env.handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/plan/"+refreshTestPlan, nil))
+		if took := time.Since(started); took > 200*time.Millisecond {
+			t.Fatalf("GET w trakcie pobierania w tle trwał %v", took)
+		}
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d", rec.Code)
+		}
+		timing := rec.Header().Get("Server-Timing")
+		for _, part := range []string{"ready;dur=", "read;dur=", "visit;dur=", "etag;dur=", "total;dur="} {
+			if !strings.Contains(timing, part) {
+				t.Fatalf("Server-Timing = %q, brak %q", timing, part)
+			}
+		}
 	}
 }
