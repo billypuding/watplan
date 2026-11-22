@@ -570,10 +570,14 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkedAt(data []byte) (time.Time, bool) {
-	var plan model.Plan
-	if err := json.Unmarshal(data, &plan); err != nil {
+	var stamps struct {
+		FetchedAt string `json:"fetched_at"`
+		CheckedAt string `json:"checked_at"`
+	}
+	if err := json.Unmarshal(data, &stamps); err != nil {
 		return time.Time{}, false
 	}
+	plan := model.Plan{FetchedAt: stamps.FetchedAt, CheckedAt: stamps.CheckedAt}
 	at, err := time.ParseInLocation(timeLayout, plan.LastChecked(), warsawLoc)
 	return at, err == nil
 }

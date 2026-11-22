@@ -41,3 +41,16 @@ func BenchmarkPlanGzip(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkCheckedAt(b *testing.B) {
+	data, err := os.ReadFile("../../e2e/fixtures/data/WMT26AX3S1.json")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		if _, ok := checkedAt(data); !ok {
+			b.Fatal("brak czasu")
+		}
+	}
+}
