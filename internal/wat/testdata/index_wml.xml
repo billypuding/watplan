@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="windows-1250"?>
+<?xml-stylesheet type="text/xsl" href="layout.xslt"?>
+<xml>
+<title name="Plansoft.org - zajęcia"></title>
+<period name="iKalendarz_WML"></period>
+<description text=""></description>
+<data>
+  <gro href="K1103168.htm" text="K1103168"/>
+  <gro href="K8103042.htm" text="K8103042"/>
+  <gro href="K8103084.htm" text="K8103084"/>
+  <gro href="K8103092.htm" text="K8103092"/>
+  <gro href="K-8103093.htm" text="K-8103093"/>
+  <gro href="P1.htm" text="P1"/>
+  <gro href="P2.htm" text="P2"/>
+  <gro href="P3.htm" text="P3"/>
+  <gro href="P4.htm" text="P4"/>
+  <gro href="P5.htm" text="P5"/>
+  <gro href="Si1.htm" text="Si1"/>
+  <gro href="Studia_indywidualne.htm" text="Studia indywidualne"/>
+  <gro href="WMT22AC1S0.htm" text="WMT22AC1S0"/>
+  <gro href="WMT22AE1S0.htm" text="WMT22AE1S0"/>
+  <gro href="WMT22AE2S0.htm" text="WMT22AE2S0"/>
+  <gro href="WMT22AG1S0.htm" text="WMT22AG1S0"/>
+  <gro href="WMT22AS1S0.htm" text="WMT22AS1S0"/>
+  <gro href="WMT22AW1S0.htm" text="WMT22AW1S0"/>
+  <gro href="WMT22AW2S0.htm" text="WMT22AW2S0"/>
+  <gro href="WMT22AW3S0.htm" text="WMT22AW3S0"/>
+  <gro href="WMT22AW4S0.htm" text="WMT22AW4S0"/>
+  <gro href="WMT22AW5S0.htm" text="WMT22AW5S0"/>
+  <gro href="WMT22AW6S0.htm" text="WMT22AW6S0"/>
+  <gro href="WMT22AZ1S0.htm" text="WMT22AZ1S0"/>
+  <gro href="WMT22LL1S0.htm" text="WMT22LL1S0"/>
+  <gro href="WMT22LL2S0.htm" text="WMT22LL2S0"/>
+  <gro href="WMT22LL3S0.htm" text="WMT22LL3S0"/>
+  <gro href="WMT22LW1S0.htm" text="WMT22LW1S0"/>
+  <gro href="WMT22LW2S0.htm" text="WMT22LW2S0"/>
+  <gro href="WMT22LW3S0.htm" text="WMT22LW3S0"/>
+  <gro href="WMT22LW4S0.htm" text="WMT22LW4S0"/>
+  <gro href="WMT22LW5S0.htm" text="WMT22LW5S0"/>
+  <gro href="WMT22SW1S0.htm" text="WMT22SW1S0"/>
+  <gro href="WMT23AC1S0.htm" text="WMT23AC1S0"/>
+  <gro href="WMT23AE1S0.htm" text="WMT23AE1S0"/>
+  <gro href="WMT23AG1S0.htm" text="WMT23AG1S0"/>
+  <gro href="WMT23AH1S0.htm" text="WMT23AH1S0"/>
+  <gro href="WMT23AK1S1.htm" text="WMT23AK1S1"/>
+  <gro href="WMT23AO1S0.htm" text="WMT23AO1S0"/>
+  <gro href="WMT23AP1S1.htm" text="WMT23AP1S1"/>
+  <gro href="WMT23AS1S0.htm" text="WMT23AS1S0"/>
+  <gro href="WMT23AW1S0.htm" text="WMT23AW1S0"/>
+  <gro href="WMT23AW2S0.htm" text="WMT23AW2S0"/>
+  <gro href="WMT23AW3S0.htm" text="WMT23AW3S0"/>
+  <gro href="WMT23AW4S0.htm" text="WMT23AW4S0"/>
+  <gro href="WMT23AW5S0.htm" text="WMT23AW5S0"/>
+  <gro href="WMT23AW6S0.htm" text="WMT23AW6S0"/>
+  <gro href="WMT23AW7S0.htm" text="WMT23AW7S0"/>
+  <gro href="WMT23AW8S0.htm" text="WMT23AW8S0"/>
+  <gro href="WMT23AZ1S0.htm" text="WMT23AZ1S0"/>
+  <gro href="WMT23IP1S1.htm" text="WMT23IP1S1"/>
+  <gro href="WMT23LA1S1.htm" text="WMT23LA1S1"/>
+  <gro href="WMT23LL1S0.htm" text="WMT23LL1S0"/>
+  <gro href="WMT23LL2S0.htm" text="WMT23LL2S0"/>
+  <gro href="WMT23LL3S0.htm" text="WMT23LL3S0"/>
+  <gro href="WMT23LL4S0.htm" text="WMT23LL4S0"/>
+  <gro href="WMT23LL5S0.htm" text="WMT23LL5S0"/>
+  <gro href="WMT23LL6S0.htm" text="WMT23LL6S0"/>
+  <gro href="WMT23LP1S1.htm" text="WMT23LP1S1"/>
+  <gro href="WMT23LW1S0.htm" text="WMT23LW1S0"/>
+  <gro href="WMT23LW2S0.htm" text="WMT23LW2S0"/>
+  <gro href="WMT23LW3S0.htm" text="WMT23LW3S0"/>
+  <gro href="WMT23LW4S0.htm" text="WMT23LW4S0"/>
+  <gro href="WMT23LW5S0.htm" text="WMT23LW5S0"/>
+  <gro href="WMT23LW6S0.htm" text="WMT23LW6S0"/>
+  <gro href="WMT23LW7S0.htm" text="WMT23LW7S0"/>
+  <gro href="WMT23LY1S1.htm" text="WMT23LY1S1"/>
+  <gro href="WMT23ST1S1.htm" text="WMT23ST1S1"/>
+  <gro href="WMT23SW1S0.htm" text="WMT23SW1S0"/>
+  <gro href="WMT24AB1S1.htm" text="WMT24AB1S1"/>
+  <gro href="WMT24AC1S0.htm" text="WMT24AC1S0"/>
+  <gro href="WMT24AE1S0.htm" text="WMT24AE1S0"/>
+  <gro href="WMT24AG1S0.htm" text="WMT24AG1S0"/>
+  <gro href="WMT24AH1S0.htm" text="WMT24AH1S0"/>
+  <gro href="WMT24AK1S1.htm" text="WMT24AK1S1"/>
+  <gro href="WMT24AO1S0.htm" text="WMT24AO1S0"/>
+  <gro href="WMT24AO2S0.htm" text="WMT24AO2S0"/>
+  <gro href="WMT24AP1S1.htm" text="WMT24AP1S1"/>
+  <gro href="WMT24AS1S0.htm" text="WMT24AS1S0"/>
+  <gro href="WMT24AX2S1.htm" text="WMT24AX2S1"/>
+  <gro href="WMT24AY1S1.htm" text="WMT24AY1S1"/>
+  <gro href="WMT24AZ1S0.htm" text="WMT24AZ1S0"/>
+  <gro href="WMT24IP1S1.htm" text="WMT24IP1S1"/>
+  <gro href="WMT24LA1S1.htm" text="WMT24LA1S1"/>
+  <gro href="WMT24LL1S0.htm" text="WMT24LL1S0"/>
+  <gro href="WMT24LL2S0.htm" text="WMT24LL2S0"/>
+  <gro href="WMT24LL3S0.htm" text="WMT24LL3S0"/>
+  <gro href="WMT24LL4S0.htm" text="WMT24LL4S0"/>
+  <gro href="WMT24LL5S0.htm" text="WMT24LL5S0"/>
+  <gro href="WMT24LL6S0.htm" text="WMT24LL6S0"/>
+  <gro href="WMT24LP1s1.htm" text="WMT24LP1s1"/>
+  <gro href="WMT24LP2S1.htm" text="WMT24LP2S1"/>
+  <gro href="WMT24ST1S1.htm" text="WMT24ST1S1"/>
+  <gro href="WMT24SW1S0.htm" text="WMT24SW1S0"/>
+  <gro href="WMT24SW2S0.htm" text="WMT24SW2S0"/>
+  <gro href="WMT25AC1S0.htm" text="WMT25AC1S0"/>
+  <gro href="WMT25AE1S0.htm" text="WMT25AE1S0"/>
+  <gro href="WMT25AE2S0.htm" text="WMT25AE2S0"/>
+  <gro href="WMT25AG1S0.htm" text="WMT25AG1S0"/>
+  <gro href="WMT25AH1S0.htm" text="WMT25AH1S0"/>
+  <gro href="WMT25AH2S0.htm" text="WMT25AH2S0"/>
+  <gro href="WMT25AK1S4.htm" text="WMT25AK1S4"/>
+  <gro href="WMT25AL1S4.htm" text="WMT25AL1S4"/>
+  <gro href="WMT25AO1S0.htm" text="WMT25AO1S0"/>
+  <gro href="WMT25AO2S0.htm" text="WMT25AO2S0"/>
+  <gro href="WMT25AP1S4.htm" text="WMT25AP1S4"/>
+  <gro href="WMT25AS1S0.htm" text="WMT25AS1S0"/>
+  <gro href="WMT25AS2S0.htm" text="WMT25AS2S0"/>
+  <gro href="WMT25AW1S0.htm" text="WMT25AW1S0"/>
+  <gro href="WMT25AW2S0.htm" text="WMT25AW2S0"/>
+  <gro href="WMT25AW3S0.htm" text="WMT25AW3S0"/>
+  <gro href="WMT25AW4S0.htm" text="WMT25AW4S0"/>
+  <gro href="WMT25AW5S0.htm" text="WMT25AW5S0"/>
+  <gro href="WMT25AW6S0.htm" text="WMT25AW6S0"/>
+  <gro href="WMT25AW7S0.htm" text="WMT25AW7S0"/>
+  <gro href="WMT25AW8S0.htm" text="WMT25AW8S0"/>
+  <gro href="WMT25AW9S0.htm" text="WMT25AW9S0"/>
+  <gro href="WMT25AX1S1.htm" text="WMT25AX1S1"/>
+  <gro href="WMT25AX2S1.htm" text="WMT25AX2S1"/>
+  <gro href="WMT25AY1S1.htm" text="WMT25AY1S1"/>
+  <gro href="WMT25AZ1S0.htm" text="WMT25AZ1S0"/>
+  <gro href="WMT25IX1S1.htm" text="WMT25IX1S1"/>
+  <gro href="WMT25IX2S1.htm" text="WMT25IX2S1"/>
+  <gro href="WMT25LB1S4.htm" text="WMT25LB1S4"/>
+  <gro href="WMT25LC1S4.htm" text="WMT25LC1S4"/>
+  <gro href="WMT25LW1S0.htm" text="WMT25LW1S0"/>
+  <gro href="WMT25LW2S0.htm" text="WMT25LW2S0"/>
+  <gro href="WMT25LW3S0.htm" text="WMT25LW3S0"/>
+  <gro href="WMT25LW4S0.htm" text="WMT25LW4S0"/>
+  <gro href="WMT25LW5S0.htm" text="WMT25LW5S0"/>
+  <gro href="WMT25LW6S0.htm" text="WMT25LW6S0"/>
+  <gro href="WMT25LW7S0.htm" text="WMT25LW7S0"/>
+  <gro href="WMT25LW8S0.htm" text="WMT25LW8S0"/>
+  <gro href="WMT25LX1S1.htm" text="WMT25LX1S1"/>
+  <gro href="WMT25LX2S1.htm" text="WMT25LX2S1"/>
+  <gro href="WMT25LX3S1.htm" text="WMT25LX3S1"/>
+  <gro href="WMT25LY1S1.htm" text="WMT25LY1S1"/>
+  <gro href="WMT25SW1S0.htm" text="WMT25SW1S0"/>
+  <gro href="WMT25SX1S1.htm" text="WMT25SX1S1"/>
+  <gro href="WMT26AE2S6.htm" text="WMT26AE2S6"/>
+  <gro href="WMT26AV1S0.htm" text="WMT26AV1S0"/>
+  <gro href="WMT26AV2S0.htm" text="WMT26AV2S0"/>
+  <gro href="WMT26AW1S0.htm" text="WMT26AW1S0"/>
+  <gro href="WMT26AW2S0.htm" text="WMT26AW2S0"/>
+  <gro href="WMT26AW3S0.htm" text="WMT26AW3S0"/>
+  <gro href="WMT26AW4S0.htm" text="WMT26AW4S0"/>
+  <gro href="WMT26AW5S0.htm" text="WMT26AW5S0"/>
+  <gro href="WMT26AW6S0.htm" text="WMT26AW6S0"/>
+  <gro href="WMT26AW7S0.htm" text="WMT26AW7S0"/>
+  <gro href="WMT26AW8S0.htm" text="WMT26AW8S0"/>
+  <gro href="WMT26AW9S0.htm" text="WMT26AW9S0"/>
+  <gro href="WMT26AX1E1.htm" text="WMT26AX1E1"/>
+  <gro href="WMT26AX1S1.htm" text="WMT26AX1S1"/>
+  <gro href="WMT26AX2S1.htm" text="WMT26AX2S1"/>
+  <gro href="WMT26AX3S1.htm" text="WMT26AX3S1"/>
+  <gro href="WMT26AY1S1.htm" text="WMT26AY1S1"/>
+  <gro href="WMT26IX1S1.htm" text="WMT26IX1S1"/>
+  <gro href="WMT26IX2S1.htm" text="WMT26IX2S1"/>
+  <gro href="WMT26LW1S0.htm" text="WMT26LW1S0"/>
+  <gro href="WMT26LW2S0.htm" text="WMT26LW2S0"/>
+  <gro href="WMT26LW3S0.htm" text="WMT26LW3S0"/>
+  <gro href="WMT26LW4S0.htm" text="WMT26LW4S0"/>
+  <gro href="WMT26LW5S0.htm" text="WMT26LW5S0"/>
+  <gro href="WMT26LW6S0.htm" text="WMT26LW6S0"/>
+  <gro href="WMT26LW7S0.htm" text="WMT26LW7S0"/>
+  <gro href="WMT26LW8S0.htm" text="WMT26LW8S0"/>
+  <gro href="WMT26LX1E1.htm" text="WMT26LX1E1"/>
+  <gro href="WMT26LX1S1.htm" text="WMT26LX1S1"/>
+  <gro href="WMT26LX2S1.htm" text="WMT26LX2S1"/>
+  <gro href="WMT26LX3S1.htm" text="WMT26LX3S1"/>
+  <gro href="WMT26LY1S1.htm" text="WMT26LY1S1"/>
+  <gro href="WMT26SW1S0.htm" text="WMT26SW1S0"/>
+  <gro href="WMT26SX1S1.htm" text="WMT26SX1S1"/>
+  <gro href="WMT26SX2S1.htm" text="WMT26SX2S1"/>
+  <lec href="mgr_inz._Adamczyk_Maciej.htm" text="mgr inż. Adamczyk Maciej"/>
+  <lec href="inz._Adamski_Dawid.htm" text="inż. Adamski Dawid"/>
+  <lec href="kpt._mgr_inz._Arkuszynska_Angelika_.htm" text="kpt. mgr inż. Arkuszyńska Angelika "/>
+  <lec href="dr_hab._inz._Baranowski_Leszek.htm" text="dr hab. inż. Baranowski Leszek"/>
+  <lec href="ppor._mgr_inz._Barca_Iga.htm" text="ppor. mgr inż. Barca Iga"/>
+  <lec href="_Bartkowski_Przemyslaw.htm" text="* Bartkowski Przemysław"/>
+  <lec href="pplk_Bedkowski_Bogumil_.htm" text="ppłk Będkowski Bogumił "/>
+  <lec href="mgr_inz._Borcuch_Dominik.htm" text="mgr inż. Borcuch Dominik"/>
+  <lec href="mgr_inz._Borys_Szymon.htm" text="mgr inż. Borys Szymon"/>
+  <lec href="mgr_inz._Bozejko_Jacek.htm" text="mgr inż. Bożejko Jacek"/>
+  <lec href="mgr_inz._Bratkowski_Przemyslaw.htm" text="mgr inż. Bratkowski Przemysław"/>
+  <lec href="dr_inz._Brzozowski_Bartosz.htm" text="dr inż. Brzozowski Bartosz"/>
+  <lec href="_Buczynski_Rafal.htm" text="* Buczyński Rafał"/>
+  <lec href="pplk_dr_inz._Buzantowicz_Witold.htm" text="ppłk dr inż. Bużantowicz Witold"/>
+  <lec href="dr_hab._inz._Chachurski_Ryszard.htm" text="dr hab. inż. Chachurski Ryszard"/>
+  <lec href="mgr_inz._Chudy_Kamil.htm" text="mgr inż. Chudy Kamil"/>
+  <lec href="por._mgr_inz._Cichy_Damian.htm" text="por. mgr inż. Cichy Damian"/>
+  <lec href="mgr_inz._Cieplak_Kamil.htm" text="mgr inż. Cieplak Kamil"/>
+  <lec href="plk_Czerwinski_Szymon.htm" text="płk Czerwiński Szymon"/>
+  <lec href="dr_inz._Czyzewska_Marta.htm" text="dr inż. Czyżewska Marta"/>
+  <lec href="mgr_inz._Dabrowski_Jakub.htm" text="mgr inż. Dąbrowski Jakub"/>
+  <lec href="dr_inz._Debski_Andrzej.htm" text="dr inż. Dębski Andrzej"/>
+  <lec href="mgr_inz._Djabin_Jakub.htm" text="mgr inż. Djabin Jakub"/>
+  <lec href="dr_hab._inz._Dragan_Krzysztof.htm" text="dr hab. inż. Dragan Krzysztof"/>
+  <lec href="dr_inz._Dudzinski_Jacek.htm" text="dr inż. Dudziński Jacek"/>
+  <lec href="por._mgr_inz._Dyjak_Jakub.htm" text="por. mgr inż. Dyjak Jakub"/>
+  <lec href="dr_inz._Dziendzikowski_Michal.htm" text="dr inż. Dziendzikowski Michał"/>
+  <lec href="mgr_inz._Dziewit_Piotr.htm" text="mgr inż. Dziewit Piotr"/>
+  <lec href="dr_hab._inz._Falkowski_Krzysztof.htm" text="dr hab. inż. Falkowski Krzysztof"/>
+  <lec href="mjr_dr_inz._Fikus_Bartosz.htm" text="mjr dr inż. Fikus Bartosz"/>
+  <lec href="dr_inz._Frant_Michal.htm" text="dr inż. Frant Michał"/>
+  <lec href="pplk_dr_inz._Furmanek_Wojciech.htm" text="ppłk dr inż. Furmanek Wojciech"/>
+  <lec href="prof._dr__hab._n._mat._inz._Gawinecki_Jerzy.htm" text="prof. dr  hab. n. mat. inż. Gawinecki Jerzy"/>
+  <lec href="dr_inz._Gasiorowski_Marek.htm" text="dr inż. Gąsiorowski Marek"/>
+  <lec href="mgr_inz._Gibula_Bartlomiej.htm" text="mgr inż. Gibuła Bartłomiej"/>
+  <lec href="por._mgr_inz._Glogowski_Karol.htm" text="por. mgr inż. Głogowski Karol"/>
+  <lec href="mgr_inz._Glowczyk_Bartlomiej.htm" text="mgr inż. Główczyk Bartłomiej"/>
+  <lec href="mjr_dr_inz._Gozdzik_Dawid.htm" text="mjr dr inż. Goździk Dawid"/>
+  <lec href="dr_inz._Grazka_Michal.htm" text="dr inż. Grązka Michał"/>
+  <lec href="dr_inz._Grzegorczyk_Tomasz.htm" text="dr inż. Grzegorczyk Tomasz"/>
+  <lec href="dr_inz._Grzejszczak_Paczek_Olga.htm" text="dr inż. Grzejszczak Pączek Olga"/>
+  <lec href="dr_hab._inz._Grzesik_Norbert.htm" text="dr hab. inż. Grzesik Norbert"/>
+  <lec href="dr_inz._Grzywinski_Stanislaw.htm" text="dr inż. Grzywiński Stanisław"/>
+  <lec href="plk_mgr_inz._Hanc_Damian.htm" text="płk mgr inż. Hanc Damian"/>
+  <lec href="pplk_dr_inz.__Henzel_Maciej.htm" text="ppłk dr inż.  Henzel Maciej"/>
+  <lec href="mgr__Hrynkiewicz_Agnieszka.htm" text="mgr  Hrynkiewicz Agnieszka"/>
+  <lec href="dr_inz._Idziaszek_Zdzislaw.htm" text="dr inż. Idziaszek Zdzisław"/>
+  <lec href="mgr_inz._Jakubik_Wojciech.htm" text="mgr inż. Jakubik Wojciech"/>
+  <lec href="mgr_inz._Janczewski_Mariusz.htm" text="mgr inż. Janczewski Mariusz"/>
+  <lec href="dr_hab._inz._Janiszewski_Jacek.htm" text="dr hab. inż. Janiszewski Jacek"/>
+  <lec href="dr_inz.__Jaskolowski_Waldemar.htm" text="dr inż.  Jaskółowski Waldemar"/>
+  <lec href="pplk_dr_inz._Jasztal_Michal.htm" text="ppłk dr inż. Jasztal Michał"/>
+  <lec href="dr_inz._Jaworowicz_Marek.htm" text="dr inż. Jaworowicz Marek"/>
+  <lec href="mgr_inz._Jedrak_Michal.htm" text="mgr inż. Jędrak Michał"/>
+  <lec href="dr_hab._inz._Kachel_Stanislaw.htm" text="dr hab. inż. Kachel Stanisław"/>
+  <lec href="dr_inz._Kaczmarek_Wojciech.htm" text="dr inż. Kaczmarek Wojciech"/>
+  <lec href="mgr_inz._Karpinski_Tomasz.htm" text="mgr inż. Karpiński Tomasz"/>
+  <lec href="por._mgr_inz._Karpinski_Michal.htm" text="por. mgr inż. Karpiński Michał"/>
+  <lec href="por._mgr_inz._Kaszynski_Mateusz.htm" text="por. mgr inż. Kaszyński Mateusz"/>
+  <lec href="prof._dr_hab._inz._Kawalec_Adam.htm" text="prof. dr hab. inż. Kawalec Adam"/>
+  <lec href="dr_inz._Kazmierczak_Krzysztof.htm" text="dr inż. Kaźmierczak Krzysztof"/>
+  <lec href="ppor.mgr_inz._Kazmierczyk_Aleksandra.htm" text="ppor.mgr inż. Kaźmierczyk Aleksandra"/>
+  <lec href="mgr_inz.__Kepniak_Szymon.htm" text="mgr inż.  Kępniak Szymon"/>
+  <lec href="dr_inz._Kieszek_Rafal.htm" text="dr inż. Kieszek Rafał"/>
+  <lec href="pplk_dr_inz._Kijewski_Jacek.htm" text="ppłk dr inż. Kijewski Jacek"/>
+  <lec href="pplk_dr_inz._Kiszkowiak_Lukasz.htm" text="ppłk dr inż. Kiszkowiak Łukasz"/>
+  <lec href="kpt._mgr_inz._Klicki_Kamil.htm" text="kpt. mgr inż. Klicki Kamil"/>
+  <lec href="mgr_inz._Kluska_Krzysztof.htm" text="mgr inż. Kluska Krzysztof"/>
+  <lec href="por._mgr_inz._Klosinski_Artur.htm" text="por. mgr inż. Kłosiński Artur"/>
+  <lec href="mgr_inz._Kochan_Jakub.htm" text="mgr inż. Kochan Jakub"/>
+  <lec href="dr_inz._Kocjan_Jakub.htm" text="dr inż. Kocjan Jakub"/>
+  <lec href="prof._dr_hab._inz._Koniorczyk_Piotr.htm" text="prof. dr hab. inż. Koniorczyk Piotr"/>
+  <lec href="pplk_dr_inz._Koperski_Wojciech.htm" text="ppłk dr inż. Koperski Wojciech"/>
+  <lec href="mgr_inz._Kowalski_Maciej.htm" text="mgr inż. Kowalski Maciej"/>
+  <lec href="plk_dr_hab._inz._Kozakiewicz_Adam.htm" text="płk dr hab. inż. Kozakiewicz Adam"/>
+  <lec href="dr_inz._Krenc_Ksawery.htm" text="dr inż. Krenc Ksawery"/>
+  <lec href="dr_inz.__Krzyzanowski_Slawomir.htm" text="dr inż.  Krzyżanowski Sławomir"/>
+  <lec href="ppor.mgr_inz._Kunicki_Jakub.htm" text="ppor.mgr inż. Kunicki Jakub"/>
+  <lec href="mgr_inz._Kunikowski_Mateusz.htm" text="mgr inż. Kunikowski Mateusz"/>
+  <lec href="mgr_inz._Kurenda_Maciej.htm" text="mgr inż. Kurenda Maciej"/>
+  <lec href="dr_inz._Kurnyta-Mazurek_Paulina.htm" text="dr inż. Kurnyta-Mazurek Paulina"/>
+  <lec href="mgr_inz._Kusinska_Wioletta.htm" text="mgr inż. Kusińska Wioletta"/>
+  <lec href="dr_hab._inz._Leciejewski_Zbigniew.htm" text="dr hab. inż. Leciejewski Zbigniew"/>
+  <lec href="pplk_dr_inz._Leszczynski_Piotr.htm" text="ppłk dr inż. Leszczyński Piotr"/>
+  <lec href="pplk_dr_inz._Lesnik_Grzegorz.htm" text="ppłk dr inż. Leśnik Grzegorz"/>
+  <lec href="kpt._mgr_inz._Lozynski_Adam.htm" text="kpt. mgr inż. Łożyński Adam"/>
+  <lec href="_Maciorowski_Damian.htm" text="* Maciorowski Damian"/>
+  <lec href="dr_inz._Majcher_Maciej.htm" text="dr inż. Majcher Maciej"/>
+  <lec href="kpt._mgr_inz._Majchrowicz_Jakub.htm" text="kpt. mgr inż. Majchrowicz Jakub"/>
+  <lec href="dr_hab._inz._Majewski_Tomasz.htm" text="dr hab. inż. Majewski Tomasz"/>
+  <lec href="dr_inz._Makowska_Katarzyna.htm" text="dr inż. Makowska Katarzyna"/>
+  <lec href="gen._Marciniak_Michal.htm" text="gen. Marciniak Michał"/>
+  <lec href="mgr_inz._Marut_Adam.htm" text="mgr inż. Marut Adam"/>
+  <lec href="dr_inz._Michalski_Jakub.htm" text="dr inż. Michalski Jakub"/>
+  <lec href="mgr_inz._Miernik_Jakub.htm" text="mgr inż. Miernik Jakub"/>
+  <lec href="mgr_inz._Milczarczyk_Jaroslaw.htm" text="mgr inż. Milczarczyk Jarosław"/>
+  <lec href="mgr_inz._Misiak_Zawadzka_Aneta.htm" text="mgr inż. Misiak Zawadzka Aneta"/>
+  <lec href="mgr_inz._Modrzejewski_Patryk.htm" text="mgr inż. Modrzejewski Patryk"/>
+  <lec href="mjr_dr_inz._Morawski_Mateusz.htm" text="mjr dr inż. Morawski Mateusz"/>
+  <lec href="dr_inz._Motyl_Krzysztof.htm" text="dr inż. Motyl Krzysztof"/>
+  <lec href="pplk_Neffe_J.htm" text="ppłk Neffe J"/>
+  <lec href="por._mgr_inz._Okon_Tomasz_.htm" text="por. mgr inż. Okoń Tomasz "/>
+  <lec href="dr_inz._Omen_Lukasz.htm" text="dr inż. Omen Łukasz"/>
+  <lec href="dr__inz._Pac_Malgorzata.htm" text="dr  inż. Pac Małgorzata"/>
+  <lec href="prof._dr_hab._inz._Panas_Andrzej.htm" text="prof. dr hab. inż. Panas Andrzej"/>
+  <lec href="dr_inz._Panasiuk_Jaroslaw.htm" text="dr inż. Panasiuk Jarosław"/>
+  <lec href="dr_hab._inz._Paplinski_Andrzej.htm" text="dr hab. inż. Papliński Andrzej"/>
+  <lec href="dr_inz._Para_Wojciech.htm" text="dr inż. Para Wojciech"/>
+  <lec href="dr_inz._Paszkowski_Robert.htm" text="dr inż. Paszkowski Robert"/>
+  <lec href="plk.__Patelak_Artur.htm" text="płk.  Patelak Artur"/>
+  <lec href="mgr_inz._Paczek_Grzegorz.htm" text="mgr inż. Pączek Grzegorz"/>
+  <lec href="kpt._mgr_inz._Piasta_Krzysztof.htm" text="kpt. mgr inż. Piasta Krzysztof"/>
+  <lec href="dr__Piatkowski_Andrzej.htm" text="dr  Piątkowski Andrzej"/>
+  <lec href="dr_inz._Piechna_Slawomir.htm" text="dr inż. Piechna Sławomir"/>
+  <lec href="dr_hab._inz._Pietrasienski_Jan.htm" text="dr hab. inż. Pietrasieński Jan"/>
+  <lec href="pplk_dr_inz._Platek_Pawel.htm" text="ppłk dr inż. Płatek Paweł"/>
+  <lec href="dr_inz._Podciechowski_Maciej.htm" text="dr inż. Podciechowski Maciej"/>
+  <lec href="mgr_inz._Prusaczyk_Piotr_.htm" text="mgr inż. Prusaczyk Piotr "/>
+  <lec href="dr_inz._Puchalski_Radoslaw.htm" text="dr inż. Puchalski Radosław"/>
+  <lec href="mgr_inz._Pustkowski_Remigiusz.htm" text="mgr inż. Pustkowski Remigiusz"/>
+  <lec href="mgr_inz._Pyzowski_Kacper.htm" text="mgr inż. Pyzowski Kacper"/>
+  <lec href="mgr_inz.__Rajkowski_Kamil.htm" text="mgr inż.  Rajkowski Kamil"/>
+  <lec href="dr_inz._Rochala_Zdzislaw.htm" text="dr inż. Rochala Zdzisław"/>
+  <lec href="dr_inz._Rodzik_Dariusz.htm" text="dr inż. Rodzik Dariusz"/>
+  <lec href="pplk_dr_inz._Rogolski_Robert.htm" text="ppłk dr inż. Rogólski Robert"/>
+  <lec href="mgr_inz._Rolka_Arkadiusz.htm" text="mgr inż. Rolka Arkadiusz"/>
+  <lec href="dr_hab._inz._Roskowicz_Marek.htm" text="dr hab. inż. Rośkowicz Marek"/>
+  <lec href="mgr_inz._Rudzik_Marcin_.htm" text="mgr inż. Rudzik Marcin "/>
+  <lec href="mgr_inz._Ryniec_Radoslaw.htm" text="mgr inż. Ryniec Radosław"/>
+  <lec href="mgr_inz._Sabady_Milosz.htm" text="mgr inż. Sabady Miłosz"/>
+  <lec href="inz._Safianczuk_Adam.htm" text="inż. Safiańczuk Adam"/>
+  <lec href="mgr_inz._Sarzynska_Katarzyna.htm" text="mgr inż. Sarzyńska Katarzyna"/>
+  <lec href="dr_inz.__Sarzynski_Marcin.htm" text="dr inż.  Sarzyński Marcin"/>
+  <lec href="prof._dr_hab._inz._Sibilski_Krzysztof.htm" text="prof. dr hab. inż. Sibilski Krzysztof"/>
+  <lec href="dr_inz._Sienkiewicz_Judyta.htm" text="dr inż. Sienkiewicz Judyta"/>
+  <lec href="inz._Siodlowski_Bernard.htm" text="inż. Siodłowski Bernard"/>
+  <lec href="mgr_inz._Siuta_Bogumil.htm" text="mgr inż. Siuta Bogumił"/>
+  <lec href="dr_inz._Siwek_Michal.htm" text="dr inż. Siwek Michał"/>
+  <lec href="inz._Skolmowska_Maria.htm" text="inż. Skolmowska Maria"/>
+  <lec href="_Skolmowski_Albert.htm" text="* Skolmowski Albert"/>
+  <lec href="mgr_inz._Sokol_Bartlomiej.htm" text="mgr inż. Sokół Bartłomiej"/>
+  <lec href="_Soszynski_P.htm" text="* Soszyński P"/>
+  <lec href="mgr_inz._Sozoniuk_Kamil.htm" text="mgr inż. Sozoniuk Kamil"/>
+  <lec href="dr_inz._Stanislawek_Sebastian.htm" text="dr inż. Stanisławek Sebastian"/>
+  <lec href="dr_inz._Stepien_Slawomir.htm" text="dr inż. Stępień Sławomir"/>
+  <lec href="mgr_inz._Stosio_Lukasz.htm" text="mgr inż. Stosio Łukasz"/>
+  <lec href="mgr_inz.__Sudak_Filip.htm" text="mgr inż.  Sudak Filip"/>
+  <lec href="dr_hab._inz._Surma_Zbigniew.htm" text="dr hab. inż. Surma Zbigniew"/>
+  <lec href="mgr_inz._Syta_Borys.htm" text="mgr inż. Syta Borys"/>
+  <lec href="mgr_inz._Szadura_Jakub.htm" text="mgr inż. Szadura Jakub"/>
+  <lec href="mgr_inz._Szczesniak_Michal.htm" text="mgr inż. Szcześniak Michał"/>
+  <lec href="mgr_inz._Szczotka_Dawid.htm" text="mgr inż. Szczotka Dawid"/>
+  <lec href="dr_inz._Szczurko_Jan.htm" text="dr inż. Szczurko Jan"/>
+  <lec href="mgr_inz._Szlendak_Gabriel.htm" text="mgr inż. Szlendak Gabriel"/>
+  <lec href="pplk_dr_inz._Szmit_Lukasz.htm" text="ppłk dr inż. Szmit Łukasz"/>
+  <lec href="dr_inz._Szupienko_Damian.htm" text="dr inż. Szupieńko Damian"/>
+  <lec href="dr_inz._Szymonik_Jacek.htm" text="dr inż. Szymonik Jacek"/>
+  <lec href="dr_inz._Smietanski_Waldemar.htm" text="dr inż. Śmietański Waldemar"/>
+  <lec href="prof.dr_hab.inz._Terpilowski_Janusz.htm" text="prof.dr hab.inż. Terpiłowski Janusz"/>
+  <lec href="dr_inz._Tkaczuk_Slawomir.htm" text="dr inż. Tkaczuk Sławomir"/>
+  <lec href="prof._dr_hab.inz._Trebinski_Radoslaw.htm" text="prof. dr hab.inż. Trębiński Radosław"/>
+  <lec href="mjr_dr_inz._Turek_Piotr.htm" text="mjr dr inż. Turek Piotr"/>
+  <lec href="pplk_dr_inz._Wachlaczenko_Michal.htm" text="ppłk dr inż. Wachłaczenko Michał"/>
+  <lec href="dr_inz._Walenczykowska_Marta.htm" text="dr inż. Walenczykowska Marta"/>
+  <lec href="dr_inz._Warchulski_Jacek.htm" text="dr inż. Warchulski Jacek"/>
+  <lec href="dr_inz._Warchulski_Marcin.htm" text="dr inż. Warchulski Marcin"/>
+  <lec href="dr_inz._Wazny_Mariusz.htm" text="dr inż. Ważny Mariusz"/>
+  <lec href="mgr_inz._Wikiel_Katarzyna.htm" text="mgr inż. Wikieł Katarzyna"/>
+  <lec href="pplk_dr_inz._Wojtowicz_Konrad.htm" text="ppłk dr inż. Wojtowicz Konrad"/>
+  <lec href="dr_hab._inz._Wozniak_Ryszard.htm" text="dr hab. inż. Woźniak Ryszard"/>
+  <lec href="dr_inz._Wroblewski_Miroslaw.htm" text="dr inż. Wróblewski Mirosław"/>
+  <lec href="dr_inz._Wroblewski_Piotr.htm" text="dr inż. Wróblewski Piotr"/>
+  <lec href="dr_hab._inz._Wrzesien_Stanislaw.htm" text="dr hab. inż. Wrzesień Stanisław"/>
+  <lec href="por._mgr_inz._Wysocki_Marcin.htm" text="por. mgr inż. Wysocki Marcin"/>
+  <lec href="plk_dr_inz._Zahor_Miroslaw.htm" text="płk dr inż. Zahor Mirosław"/>
+  <lec href="dr_inz._Zalewski_Piotr.htm" text="dr inż. Zalewski Piotr"/>
+  <lec href="por._mgr_inz._Zalewski_Wlodzimierz.htm" text="por. mgr inż. Zalewski Włodzimierz"/>
+  <lec href="mgr_inz._Zarubajko_Aleksandra.htm" text="mgr inż. Zarubajko Aleksandra"/>
+  <lec href="dr_hab._inz._Zieja_Mariusz.htm" text="dr hab. inż. Zieja Mariusz"/>
+  <lec href="dr_inz.__Zielinski_Wojciech.htm" text="dr inż.  Zieliński Wojciech"/>
+  <lec href="dr_inz._Zielinski_Mateusz.htm" text="dr inż. Zieliński Mateusz"/>
+  <lec href="prof._dr_hab._inz._Zmywaczyk_Janusz.htm" text="prof. dr hab. inż. Zmywaczyk Janusz"/>
+  <lec href="kpt._mgr_inz._Zoltowski_Piotr.htm" text="kpt. mgr inż. Żółtowski Piotr"/>
+  <res href="003_36.htm" text="003 36"/>
+  <res href="004_36.htm" text="004 36"/>
+  <res href="005_36.htm" text="005 36"/>
+  <res href="101__63A.htm" text="101  63A"/>
+  <res href="102_36.htm" text="102 36"/>
+  <res href="104_63A.htm" text="104 63A"/>
+  <res href="106_36.htm" text="106 36"/>
+  <res href="111_36.htm" text="111 36"/>
+  <res href="113_25.htm" text="113 25"/>
+  <res href="12_36.htm" text="12 36"/>
+  <res href="12_H7.htm" text="12 H7"/>
+  <res href="128_36.htm" text="128 36"/>
+  <res href="13_25.htm" text="13 25"/>
+  <res href="130_36.htm" text="130 36"/>
+  <res href="136_36.htm" text="136 36"/>
+  <res href="139_36.htm" text="139 36"/>
+  <res href="14_25.htm" text="14 25"/>
+  <res href="141_36.htm" text="141 36"/>
+  <res href="15_63.htm" text="15 63"/>
+  <res href="16_63.htm" text="16 63"/>
+  <res href="17_25.htm" text="17 25"/>
+  <res href="17_63.htm" text="17 63"/>
+  <res href="18_25.htm" text="18 25"/>
+  <res href="18_63.htm" text="18 63"/>
+  <res href="18_66.htm" text="18 66"/>
+  <res href="18_67.htm" text="18 67"/>
+  <res href="18_69.htm" text="18 69"/>
+  <res href="19_25.htm" text="19 25"/>
+  <res href="19_36.htm" text="19 36"/>
+  <res href="19_63.htm" text="19 63"/>
+  <res href="2_25.htm" text="2 25"/>
+  <res href="20_63.htm" text="20 63"/>
+  <res href="20_69.htm" text="20 69"/>
+  <res href="22_69.htm" text="22 69"/>
+  <res href="24_25.htm" text="24 25"/>
+  <res href="24_67.htm" text="24 67"/>
+  <res href="28_69.htm" text="28 69"/>
+  <res href="29_25.htm" text="29 25"/>
+  <res href="29_69.htm" text="29 69"/>
+  <res href="3_63A.htm" text="3 63A"/>
+  <res href="3_67.htm" text="3 67"/>
+  <res href="31_36.htm" text="31 36"/>
+  <res href="31_67.htm" text="31 67"/>
+  <res href="322_S.htm" text="322 S"/>
+  <res href="323_S.htm" text="323 S"/>
+  <res href="325_S.htm" text="325 S"/>
+  <res href="33_67.htm" text="33 67"/>
+  <res href="331_S.htm" text="331 S"/>
+  <res href="34_67.htm" text="34 67"/>
+  <res href="35_36.htm" text="35 36"/>
+  <res href="39_36.htm" text="39 36"/>
+  <res href="4_63A.htm" text="4 63A"/>
+  <res href="4_H7.htm" text="4 H7"/>
+  <res href="41_36.htm" text="41 36"/>
+  <res href="43_67.htm" text="43 67"/>
+  <res href="45_63.htm" text="45 63"/>
+  <res href="46_63.htm" text="46 63"/>
+  <res href="47_63.htm" text="47 63"/>
+  <res href="5__63A.htm" text="5  63A"/>
+  <res href="50_63.htm" text="50 63"/>
+  <res href="6_25.htm" text="6 25"/>
+  <res href="6_63_A.htm" text="6 63 A"/>
+  <res href="7_25.htm" text="7 25"/>
+  <res href="7_69.htm" text="7 69"/>
+  <res href="8_72.htm" text="8 72"/>
+  <res href="9_67.htm" text="9 67"/>
+  <res href="bud._26.htm" text="bud. 26"/>
+  <res href="CSAiU_.htm" text="CSAiU "/>
+  <res href="H_74.htm" text="H 74"/>
+  <res href="H_H7.htm" text="H H7"/>
+  <res href="JW_.htm" text="JW "/>
+  <res href="M_H7.htm" text="M H7"/>
+  <res href="P_66.htm" text="P 66"/>
+  <res href="S1_72.htm" text="S1 72"/>
+  <res href="S2_72.htm" text="S2 72"/>
+  <res href="S3_72.htm" text="S3 72"/>
+  <res href="S4_72.htm" text="S4 72"/>
+  <res href="teren_l_t.htm" text="teren l t"/>
+</data>
+<who lastupdatetext="Aktualizacja: 19.11.2026 14:07:56"></who>
+</xml>

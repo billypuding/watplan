@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="windows-1250"?>
+<?xml-stylesheet type="text/xsl" href="layout.xslt"?>
+<xml>
+<title name="Plansoft.org - zajęcia"></title>
+<period name="IOE-Zima2026"></period>
+<description text=""></description>
+<data>
+ <gro href="IOE23HX1S0.htm" text="IOE23HX1S0"/>
+  <gro href="IOE23VX1S1.htm" text="IOE23VX1S1"/>
+  <gro href="IOE23WX1S1.htm" text="IOE23WX1S1"/>
+  <gro href="IOE24HX1S0.htm" text="IOE24HX1S0"/>
+  <gro href="IOE24VX1S1.htm" text="IOE24VX1S1"/>
+  <gro href="IOE24WX1S1.htm" text="IOE24WX1S1"/>
+  <gro href="IOE25HX1S0.htm" text="IOE25HX1S0"/>
+  <gro href="IOE25VX1S1.htm" text="IOE25VX1S1"/>
+  <gro href="IOE25VX1S4.htm" text="IOE25VX1S4"/>
+  <gro href="IOE25WA1S4.htm" text="IOE25WA1S4"/>
+  <gro href="IOE25WT1S4.htm" text="IOE25WT1S4"/>
+  <gro href="IOE25WX1S1.htm" text="IOE25WX1S1"/>
+  <gro href="IOE26HX1S0.htm" text="IOE26HX1S0"/>
+  <gro href="IOE26VX1S1.htm" text="IOE26VX1S1"/>
+  <gro href="IOE26WX1S1.htm" text="IOE26WX1S1"/>
+  <gro href="WME24BO1S1.htm" text="WME24BO1S1"/>
+  <lec href="dr_inz._Achtenberg_Krzysztof.htm" text="dr inż. Achtenberg Krzysztof"/>
+  <lec href="mgr_inz._Andrejuk_Katarzyna.htm" text="mgr inż. Andrejuk Katarzyna"/>
+  <lec href="dr_inz._Barela_Jaroslaw.htm" text="dr inż. Bareła Jarosław"/>
+  <lec href="dr_hab._inz._(prof._ucz.)_Bartnik_Andrzej.htm" text="dr hab. inż. (prof. ucz.) Bartnik Andrzej"/>
+  <lec href="mgr_inz._Bartosewicz_Bartosz_.htm" text="mgr inż. Bartosewicz Bartosz "/>
+  <lec href="mgr_inz._Baldyga-Rybka_Patrycja.htm" text="mgr inż. Bałdyga-Rybka Patrycja"/>
+  <lec href="prof._dr_hab._inz._Bielecki_Zbigniew.htm" text="prof. dr hab. inż. Bielecki Zbigniew"/>
+  <lec href="dr_Bombalska_Aneta.htm" text="dr Bombalska Aneta"/>
+  <lec href="mgr_inz._Budner_Boguslaw.htm" text="mgr inż. Budner Bogusław"/>
+  <lec href="dr_Blecka_Maria.htm" text="dr Błęcka Maria"/>
+  <lec href="prof._dr_hab._Blecki_Jan.htm" text="prof. dr hab. Błęcki Jan"/>
+  <lec href="dr_Czwartos_Joanna.htm" text="dr Czwartos Joanna"/>
+  <lec href="dr_Dobrzynska_Monika.htm" text="dr Dobrzyńska Monika"/>
+  <lec href="dr_inz._Drozd_Tadeusz.htm" text="dr inż. Drozd Tadeusz"/>
+  <lec href="dr_inz._Dlugaszek_Maria.htm" text="dr inż. Długaszek Maria"/>
+  <lec href="mgr_inz._Erd_Karol.htm" text="mgr inż. Erd Karol"/>
+  <lec href="mgr_inz._Fiderkiewicz_Szymon.htm" text="mgr inż. Fiderkiewicz Szymon"/>
+  <lec href="mgr_inz._Gawlikowski_Andrzej.htm" text="mgr inż. Gawlikowski Andrzej"/>
+  <lec href="dr_inz._Gogler_Slawomir.htm" text="dr inż. Gogler Sławomir"/>
+  <lec href="dr_inz._Gontar__Przemyslaw.htm" text="dr inż. Gontar  Przemysław"/>
+  <lec href="dr_inz._Gorajek_Lukasz.htm" text="dr inż. Gorajek Łukasz"/>
+  <lec href="mgr_Gryguc_Krzysztof.htm" text="mgr Gryguc Krzysztof"/>
+  <lec href="dr_inz._Grzes_Pawel.htm" text="dr inż. Grześ Paweł"/>
+  <lec href="dr_inz._Gutowski_Lukasz.htm" text="dr inż. Gutowski Łukasz"/>
+  <lec href="mgr_inz._Henry_Samuel.htm" text="mgr inż. Henry Samuel"/>
+  <lec href="prof._dr_hab._inz._Jabczynski_Jan.htm" text="prof. dr hab. inż. Jabczyński Jan"/>
+  <lec href="dr_inz._Jakubaszek_Marcin.htm" text="dr inż. Jakubaszek Marcin"/>
+  <lec href="dr_hab._inz._(prof._ucz.)_Jankiewicz_Bartlomiej.htm" text="dr hab. inż. (prof. ucz.) Jankiewicz Bartłomiej"/>
+  <lec href="dr_inz._Jujeczko_Pawel_.htm" text="dr inż. Jujeczko Paweł "/>
+  <lec href="dr_inz._Kaliszewski_Miron.htm" text="dr inż. Kaliszewski Miron"/>
+  <lec href="dr_inz._Kaminski_Kamil .htm" text="dr inż. Kamiński Kamil "/>
+  <lec href="mgr_inz._Kasprzycka_Wiktoria.htm" text="mgr inż. Kasprzycka Wiktoria"/>
+  <lec href="dr_inz._Kastek_Mariusz.htm" text="dr inż. Kastek Mariusz"/>
+  <lec href="mgr_inz._Kaldonski_Grzegorz.htm" text="mgr inż. Kałdoński Grzegorz"/>
+  <lec href="dr_inz._Komorowski_Pawel.htm" text="dr inż. Komorowski Paweł"/>
+  <lec href="dr_hab._inz._(prof._ucz.)_Kopczynski_Krzysztof.htm" text="dr hab. inż. (prof. ucz.) Kopczyński Krzysztof"/>
+  <lec href="dr_Kurzyna_Jacek_.htm" text="dr Kurzyna Jacek "/>
+  <lec href="dr_hab._inz._(prof._ucz.)_Kwiatkowski_Jacek.htm" text="dr hab. inż. (prof. ucz.) Kwiatkowski Jacek"/>
+  <lec href="dr_Lewandowski_Rafal.htm" text="dr Lewandowski Rafał"/>
+  <lec href="mgr_inz._Ligienza_Andrzej_.htm" text="mgr inż. Ligienza Andrzej "/>
+  <lec href="mgr_inz._Liszewska_Malwina.htm" text="mgr inż. Liszewska Malwina"/>
+  <lec href="dr_inz._Maciejewski_Marcin.htm" text="dr inż. Maciejewski Marcin"/>
+  <lec href="mgr_inz._Majchrowicz_Klaudia.htm" text="mgr inż. Majchrowicz Klaudia"/>
+  <lec href="mgr_inz._Majszyk_Mateusz_.htm" text="mgr inż. Majszyk Mateusz "/>
+  <lec href="mgr_inz._Mazur_Krzysztof.htm" text="mgr inż. Mazur Krzysztof"/>
+  <lec href="dr_Michalska-Domanska_Marta.htm" text="dr Michalska-Domańska Marta"/>
+  <lec href="prof._dr_hab._inz._Mierczyk_Zygmunt.htm" text="prof. dr hab. inż. Mierczyk Zygmunt"/>
+  <lec href="mgr_Mierczyk_Jadwiga.htm" text="mgr Mierczyk Jadwiga"/>
+  <lec href="dr_inz._Mikolajczyk_Janusz.htm" text="dr inż. Mikołajczyk Janusz"/>
+  <lec href="mgr_inz._Musialek_Filip.htm" text="mgr inż. Musiałek Filip"/>
+  <lec href="dr_hab._inz._(prof._ucz.)_Mlynczak_Jaroslaw.htm" text="dr hab. inż. (prof. ucz.) Młyńczak Jarosław"/>
+  <lec href="dr_hab._inz._(prof._ucz.)_Nasilowska_Barbara.htm" text="dr hab. inż. (prof. ucz.) Nasiłowska Barbara"/>
+  <lec href="mgr_inz._Nowak_Michal.htm" text="mgr inż. Nowak Michał"/>
+  <lec href="dr__Nowak-Stepniowska_Agata.htm" text="dr  Nowak-Stępniowska Agata"/>
+  <lec href="dr_inz._Nowakowski_Miroslaw.htm" text="dr inż. Nowakowski Mirosław"/>
+  <lec href="dr_inz._Nyga_Piotr.htm" text="dr inż. Nyga Piotr"/>
+  <lec href="mgr_Osuchowska_Paulina.htm" text="mgr Osuchowska Paulina"/>
+  <lec href="dr_inz._Osuchowski_Lukasz.htm" text="dr inż. Osuchowski Łukasz"/>
+  <lec href="dr_inz._Pawlikowska_Estera.htm" text="dr inż. Pawlikowska Estera"/>
+  <lec href="prof._dr_hab._inz._Palka_Norbert.htm" text="prof. dr hab. inż. Pałka Norbert"/>
+  <lec href="dr_inz._Pietruszka_Janusz.htm" text="dr inż. Pietruszka Janusz"/>
+  <lec href="dr_hab._inz._(prof._ucz.)_Piszczek_Marek.htm" text="dr hab. inż. (prof. ucz.) Piszczek Marek"/>
+  <lec href="dr_inz._Prokopiuk_Artur.htm" text="dr inż. Prokopiuk Artur"/>
+  <lec href="dr_inz.__Skrzeczanowski__Wojciech.htm" text="dr inż.  Skrzeczanowski  Wojciech"/>
+  <lec href="dr_inz._Skorczakowski_Marek.htm" text="dr inż. Skórczakowski Marek"/>
+  <lec href="dr_inz._Sosnowski_Tomasz.htm" text="dr inż. Sosnowski Tomasz"/>
+  <lec href="dr_Stepinska_Malgorzata.htm" text="dr Stępińska Małgorzata"/>
+  <lec href="dr_inz._Szabra_Dariusz.htm" text="dr inż. Szabra Dariusz"/>
+  <lec href="dr_inz._Szczurek_Miroslaw.htm" text="dr inż. Szczurek Mirosław"/>
+  <lec href="prof._dr_hab._n.med._Trafny_Elzbieta.htm" text="prof. dr hab. n.med. Trafny Elżbieta"/>
+  <lec href="dr_Trebinska-Stryjewska_Alicja.htm" text="dr Trębińska-Stryjewska Alicja"/>
+  <lec href="prof._dr_hab._inz._Wachulak_Przemyslaw.htm" text="prof. dr hab. inż. Wachulak Przemysław"/>
+  <lec href="mgr_inz.__Wardzinska_Martyna.htm" text="mgr inż.  Wardzińska Martyna"/>
+  <lec href="dr_hab._inz._(prof._ucz.)_Wojtanowski_Jacek.htm" text="dr hab. inż. (prof. ucz.) Wojtanowski Jacek"/>
+  <lec href="dr_hab._inz._(prof._ucz.)_Wojtas_Jacek.htm" text="dr hab. inż. (prof. ucz.) Wojtas Jacek"/>
+  <lec href="dr_inz.__Wegrzynski_Lukasz.htm" text="dr inż.  Węgrzyński Łukasz"/>
+  <lec href="dr_inz._Wlodarski_Maksymilian.htm" text="dr inż. Włodarski Maksymilian"/>
+  <lec href="mgr_inz._Wroblewski_Dawid.htm" text="mgr inż. Wróblewski Dawid"/>
+  <lec href="dr_inz._Zagrajek_Przemyslaw.htm" text="dr inż. Zagrajek Przemysław"/>
+  <lec href="prof._dr_hab._inz._Zajac_Andrzej.htm" text="prof. dr hab. inż. Zając Andrzej"/>
+  <lec href="dr_inz._Zygmunt_Marek.htm" text="dr inż. Zygmunt Marek"/>
+  <lec href="prof._dr_hab._inz._Swiderski_Jacek.htm" text="prof. dr hab. inż. Świderski Jacek"/>
+  <lec href="prof._dr_hab._inz._Zendzian_Waldemar.htm" text="prof. dr hab. inż. Żendzian Waldemar"/>
+  <lec href="mgr_inz._Zolnowski_Wojciech.htm" text="mgr inż. Żołnowski Wojciech"/>
+  <lec href="dr_hab._inz._(prof._ucz.)_Zyczkowski_Marek.htm" text="dr hab. inż. (prof. ucz.) Życzkowski Marek"/>
+  <res href="006_144.htm" text="006 144"/>
+  <res href="011_136.htm" text="011 136"/>
+  <res href="02_144.htm" text="02 144"/>
+  <res href="02_71.htm" text="02 71"/>
+  <res href="09_41.htm" text="09 41"/>
+  <res href="10_70.htm" text="10 70"/>
+  <res href="101_136.htm" text="101 136"/>
+  <res href="11_70.htm" text="11 70"/>
+  <res href="111_136.htm" text="111 136"/>
+  <res href="117_144.htm" text="117 144"/>
+  <res href="12_46.htm" text="12 46"/>
+  <res href="12_70.htm" text="12 70"/>
+  <res href="120_144.htm" text="120 144"/>
+  <res href="13_136.htm" text="13 136"/>
+  <res href="13_41.htm" text="13 41"/>
+  <res href="13_71.htm" text="13 71"/>
+  <res href="14_41.htm" text="14 41"/>
+  <res href="17_136.htm" text="17 136"/>
+  <res href="2_136.htm" text="2 136"/>
+  <res href="20_41.htm" text="20 41"/>
+  <res href="20_46.htm" text="20 46"/>
+  <res href="201E_136.htm" text="201E 136"/>
+  <res href="204_136.htm" text="204 136"/>
+  <res href="21_46.htm" text="21 46"/>
+  <res href="213a_S.htm" text="213a S"/>
+  <res href="215_144.htm" text="215 144"/>
+  <res href="215b_S.htm" text="215b S"/>
+  <res href="24_136.htm" text="24 136"/>
+  <res href="27_46.htm" text="27 46"/>
+  <res href="27_70.htm" text="27 70"/>
+  <res href="28_46.htm" text="28 46"/>
+  <res href="29_71.htm" text="29/ 71"/>
+  <res href="301_136.htm" text="301 136"/>
+  <res href="309_136.htm" text="309 136"/>
+  <res href="31_46.htm" text="31 46"/>
+  <res href="311_136.htm" text="311 136"/>
+  <res href="315_135.htm" text="315 135"/>
+  <res href="4_41.htm" text="4 41"/>
+  <res href="4_49.htm" text="4 49"/>
+  <res href="5_46.htm" text="5 46"/>
+  <res href="6_46.htm" text="6 46"/>
+  <res href="6_49.htm" text="6 49"/>
+  <res href="6_71.htm" text="6 71"/>
+  <res href="7_46.htm" text="7 46"/>
+  <res href="8_70.htm" text="8 70"/>
+  <res href="9_70.htm" text="9 70"/>
+  <res href="Obs._astrogeodyn.CBK_.htm" text="Obs. astrogeodyn.CBK "/>
+
+
+<gro href="o.pdf" text="*************************"/>
+<gro href="Siatka Godzin Dydaktycznych.pdf" text="Siatka Godzin Dydaktycznych"/>
+<gro href="PLAN_WAT_2022.pdf" text="Plan obiektów WAT"/>
+<gro href="Harmonogram RA 2026-2027 w WAT.pdf" text="Harmonogram RA 2026-2027 w WAT"/>
+
+<gro href="o.pdf" text="*************************"/>
+<gro href="o.pdf" text="***Plany zajęć laboratoryjnych z podziałem na podgrupy***"/>
+
+<gro href="IOE23WX1S1- plan lab.pdf" text="Plan lab IOE23WX1S1"/>
+<gro href="IOE24WX1S1- plan lab.pdf" text="Plan lab IOE24WX1S1"/>
+<gro href="IOE24HX1S0- plan lab.pdf" text="Plan lab IOE24HX1S0"/>
+<gro href="IOE25WA1S4- plan lab.pdf" text="Plan lab IOE25WA1S4"/>
+<gro href="IOE25VX1S1- plan lab.pdf" text="Plan lab IOE25VX1S1"/>
+<gro href="WME24BO1S1- plan lab.pdf" text="Plan lab WME24BO1S1"/>
+
+
+<gro href="WMT- plan lab Opto.pdf" text="WMT- plan lab Opto"/>
+
+</data>
+<who lastupdatetext="Aktualizacja: 20.11.2026 14:57:48"></who>
+</xml>
