@@ -47,6 +47,41 @@ test('strona główna: licznik semestru z danych planów', { skip }, async () =>
     assert.match(await page.text('[data-sem-left]'), /został|zostały|zostało/);
 });
 
+const semSamples = `new Promise((resolve) => {
+    const out = document.querySelector('[data-sem-pct]');
+    const seen = [];
+    const t0 = performance.now();
+    const tick = () => {
+        seen.push(Number(out.textContent));
+        if (performance.now() - t0 < 1800) requestAnimationFrame(tick);
+        else resolve(seen);
+    };
+    requestAnimationFrame(tick);
+})`;
+
+test('strona główna: odpowiedź API nie przerywa animacji semestru', { skip }, async () => {
+    await page.goto(server.base + '/?landing');
+    const seen = await page.eval(semSamples);
+    const final = seen[seen.length - 1];
+    assert.ok(final > 0, `końcowy procent ${final}`);
+    assert.ok(new Set(seen).size > 5, `za mało klatek animacji: ${[...new Set(seen)].join(',')}`);
+    for (let i = 1; i < seen.length; i++) assert.ok(seen[i] >= seen[i - 1], `procent cofnął się: ${seen[i - 1]} -> ${seen[i]}`);
+    assert.equal(await page.eval(`Number(document.querySelector('[data-sem-pct]').textContent)`), final);
+    assert.deepEqual(page.errors, []);
+});
+
+test('strona główna: bez animacji semestru przy prefers-reduced-motion', { skip }, async () => {
+    await page.emulateMedia([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+    try {
+        await page.goto(server.base + '/?landing');
+        const seen = await page.eval(semSamples);
+        assert.equal(new Set(seen).size, 1, `wartości: ${[...new Set(seen)].join(',')}`);
+        assert.ok(seen[0] > 0);
+    } finally {
+        await page.emulateMedia([]);
+    }
+});
+
 test('telefon: domyślnie widok dnia z bieżącymi zajęciami', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);

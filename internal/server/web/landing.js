@@ -120,7 +120,33 @@
         const fill = sem.querySelector('[data-sem-fill]');
         const dates = sem.querySelectorAll('.sem-dates span');
         let frame = 0;
-        const show = (info, animate) => {
+        let shown = 0;
+        let target = null;
+        const paint = (value) => {
+            out.textContent = String(Math.round(value));
+            fill.style.width = `${value}%`;
+        };
+        const animateTo = (pct, delay) => {
+            target = pct;
+            cancelAnimationFrame(frame);
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                shown = pct;
+                paint(pct);
+                return;
+            }
+            const from = shown;
+            const duration = from === 0 ? 1100 : 600;
+            const t0 = performance.now() + delay;
+            const step = (t) => {
+                const k = Math.min(Math.max((t - t0) / duration, 0), 1);
+                const e = 1 - Math.pow(1 - k, 3);
+                shown = from + (pct - from) * e;
+                paint(shown);
+                if (k < 1) frame = requestAnimationFrame(step);
+            };
+            frame = requestAnimationFrame(step);
+        };
+        const show = (info) => {
             const today = new Date();
             const start = parse(info.start);
             const span = (parse(info.end) - start) / DAY + 1;
@@ -135,26 +161,12 @@
             sem.querySelector('[data-sem-left]').textContent = today < start ? `start ${short(info.start)}`
                 : pct >= 100 ? 'zajęcia zakończone'
                     : left > 0 ? `${plural(left, 'został', 'zostały', 'zostało')} ${left} ${plural(left, 'tydzień', 'tygodnie', 'tygodni')}` : 'ostatni tydzień';
-            cancelAnimationFrame(frame);
-            if (!animate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                out.textContent = String(pct);
-                fill.style.width = `${pct}%`;
-                return;
-            }
-            const t0 = performance.now() + 250;
-            const step = (t) => {
-                const k = Math.min(Math.max((t - t0) / 1100, 0), 1);
-                const e = 1 - Math.pow(1 - k, 3);
-                out.textContent = String(Math.round(pct * e));
-                fill.style.width = `${pct * e}%`;
-                if (k < 1) frame = requestAnimationFrame(step);
-            };
-            frame = requestAnimationFrame(step);
+            if (pct !== target) animateTo(pct, target === null ? 250 : 0);
         };
-        show({ start: sem.dataset.start, end: sem.dataset.end, weeks: sem.dataset.weeks.split(',') }, true);
+        show({ start: sem.dataset.start, end: sem.dataset.end, weeks: sem.dataset.weeks.split(',') });
         fetch('/api/semester')
             .then((res) => (res.ok ? res.json() : null))
-            .then((info) => { if (info && info.weeks && info.weeks.length) show(info, false); })
+            .then((info) => { if (info && info.weeks && info.weeks.length) show(info); })
             .catch(() => undefined);
     }
 })();

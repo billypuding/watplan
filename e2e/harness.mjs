@@ -135,6 +135,9 @@ export async function startBrowser() {
         async text(selector) {
             return page.eval(`document.querySelector(${JSON.stringify(selector)})?.textContent ?? null`);
         },
+        async emulateMedia(features) {
+            await send('Emulation.setEmulatedMedia', { features });
+        },
         async reset() {
             await page.eval('localStorage.clear(); sessionStorage.clear(); true').catch(() => undefined);
         },
