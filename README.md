@@ -98,6 +98,9 @@ Opening a plan always returns the cached copy right away. If the plan was last
 checked (`checked_at`, updated on `200` and `304`) more than 10 minutes ago, the
 server checks it in the background through the scraping API, at most once per
 plan every 10 minutes and never while another fetch of that plan is running.
+The response then carries `X-Plan-Refresh: background` (otherwise `none`), and the
+app polls quietly after 2, 5, 10 and 20 seconds, swapping the plan in place and
+showing "Plan zaktualizowany" only if the classes changed.
 
 A manual refresh also returns the cached plan immediately, with `X-Plan-Refresh`:
 
