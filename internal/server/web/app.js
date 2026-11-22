@@ -593,10 +593,10 @@ function applyPlanData(data) {
     status = 'ready';
 }
 
-function acceptPlan(planId, text, data, cached) {
+function acceptPlan(planId, text, data, cached, changes) {
     storePlan(planId, text);
     scheduleStaleRecheck(planId, data.fetched_at);
-    loadChangeChip(planId);
+    loadChangeChip(planId, changes);
     if (cached && cached.raw === text) return false;
     applyPlanData(data);
     return true;
@@ -613,6 +613,8 @@ async function loadPlan(quiet = false) {
         status = 'loading';
     }
     render();
+    const changes = fetchChanges(planId);
+    changes.catch(() => undefined);
     try {
         const response = await fetch('/api/plan/' + encodeURIComponent(planId));
         const text = await response.text();
@@ -621,7 +623,7 @@ async function loadPlan(quiet = false) {
         if (!response.ok || !data) throw new Error((data && data.error) || `Błąd serwera (${response.status})`);
         if (requestId !== loadCounter) return null;
         if (response.headers.get('X-Plan-Refresh') === 'background') watchVisit(planId, data);
-        if (!acceptPlan(planId, text, data, cached)) return data;
+        if (!acceptPlan(planId, text, data, cached, changes)) return data;
         render();
         return data;
     } catch (err) {
@@ -666,7 +668,8 @@ function updateStaleBanner(fetchedAt) {
 }
 
 function render() {
-    app.classList.toggle('wide', currentView() === 'week' && status === 'ready');
+    document.documentElement.toggleAttribute('data-wide', currentView() === 'week' && Boolean(currentPlanId) && status !== 'error');
+    document.documentElement.toggleAttribute('data-loading', status === 'loading');
     todayBtn.classList.toggle('hidden', status !== 'ready' || !selectedDate || !todayOffScreen());
     refreshButton.classList.toggle('hidden', !currentPlanId);
     if (status === 'loading') { view.replaceChildren(h('div', { class: 'message' }, 'Ładowanie...')); return; }
@@ -694,6 +697,7 @@ function render() {
     if (currentView() === 'week') renderWeek();
     else if (currentView() === 'month') renderMonth();
     else renderAgenda();
+    if (!staleBanner.classList.contains('hidden')) view.prepend(staleBanner);
     placeChangeChip();
     tickLive();
 }
@@ -1345,9 +1349,9 @@ function placeChangeChip() {
     if (anchor) anchor.after(changeChip);
 }
 
-async function loadChangeChip(planId) {
+async function loadChangeChip(planId, pending) {
     try {
-        const data = await fetchChanges(planId);
+        const data = await (pending || fetchChanges(planId));
         if (planId !== currentPlanId) return;
         const last = (data.changes || [])[0];
         const at = last && parseStamp(last.at);

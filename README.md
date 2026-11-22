@@ -71,7 +71,7 @@ change the public IP; repeated requests only make the block last longer.
 
 ### Scraping API and browser-fingerprint proxy
 
-If WAT blocks the hosting IP and proxies, PlanWat can fetch through a scraping API.
+If WAT blocks the hosting IP and proxies, WATplan can fetch through a scraping API.
 The API does the outbound request and returns the plan HTML:
 
 ```bash

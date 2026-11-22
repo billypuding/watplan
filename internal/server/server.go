@@ -625,7 +625,7 @@ func proxyErrorText(u *updater.Updater) string {
 
 func (s *Server) writeUpdateError(w http.ResponseWriter, err error) {
 	if errors.Is(err, wat.ErrProxy) {
-		msg := "serwer PlanWat nie może połączyć się przez skonfigurowane proxy"
+		msg := "serwer WATplan nie może połączyć się przez skonfigurowane proxy"
 		if status, _ := s.updater.ProxyError(); status != "" {
 			msg += " (" + status + ")"
 		}
@@ -634,7 +634,7 @@ func (s *Server) writeUpdateError(w http.ResponseWriter, err error) {
 	}
 	if errors.Is(err, wat.ErrBlocked) {
 		writeError(w, http.StatusServiceUnavailable,
-			"WAT (Incapsula) blokuje pobieranie z serwera PlanWat. Pokazuję ostatni zapisany plan")
+			"WAT (Incapsula) blokuje pobieranie z serwera WATplan. Pokazuję ostatni zapisany plan")
 		return
 	}
 	writeError(w, http.StatusBadGateway, "nie udało się pobrać planu ze strony WAT")
