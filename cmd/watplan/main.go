@@ -128,6 +128,7 @@ func main() {
 		fetcher.SetAlert(alerts)
 		upd = updater.NewUpdater(st, fetcher)
 		upd.SetAlert(alerts)
+		upd.SetIndexSources(sources, envDuration("PLANWAT_INDEX_CHECK_EVERY"))
 	}
 
 	for _, spec := range imports {
@@ -237,6 +238,16 @@ func main() {
 					log.Printf("zapis licznika zużycia: %v", err)
 				}
 			})
+		}
+		if upd != nil {
+			data, _ := st.LoadMeta("indexes")
+			if err := upd.LoadIndexState(data, func(data []byte) {
+				if err := st.SaveMeta("indexes", data); err != nil {
+					log.Printf("zapis dat wydziałów: %v", err)
+				}
+			}); err != nil {
+				log.Printf("daty wydziałów: %v", err)
+			}
 		}
 	}()
 

@@ -599,34 +599,21 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusAccepted, map[string]string{"status": status})
 }
 
-type planTimes struct {
-	checked, modified           time.Time
-	checkedKnown, modifiedKnown bool
-}
-
-func readPlanTimes(data []byte) planTimes {
+func readPlanTimes(data []byte) updater.PlanTimes {
 	var stamps struct {
 		FetchedAt  string `json:"fetched_at"`
 		CheckedAt  string `json:"checked_at"`
 		ModifiedAt string `json:"modified_at"`
 	}
-	var t planTimes
 	if err := json.Unmarshal(data, &stamps); err != nil {
-		return t
+		return updater.PlanTimes{}
 	}
-	plan := model.Plan{FetchedAt: stamps.FetchedAt, CheckedAt: stamps.CheckedAt}
-	if at, err := time.ParseInLocation(timeLayout, plan.LastChecked(), warsawLoc); err == nil {
-		t.checked, t.checkedKnown = at, true
-	}
-	if at, err := time.ParseInLocation(timeLayout, stamps.ModifiedAt, warsawLoc); err == nil {
-		t.modified, t.modifiedKnown = at, true
-	}
-	return t
+	return updater.TimesOf(model.Plan{FetchedAt: stamps.FetchedAt, CheckedAt: stamps.CheckedAt, ModifiedAt: stamps.ModifiedAt})
 }
 
 func checkedAt(data []byte) (time.Time, bool) {
 	t := readPlanTimes(data)
-	return t.checked, t.checkedKnown
+	return t.Checked, t.HasChecked
 }
 
 func (s *Server) busyLocked(id string) bool {
@@ -719,21 +706,24 @@ func (s *Server) startManual(plan config.PlanConfig, ip string) string {
 }
 
 func (s *Server) checkOnVisit(plan config.PlanConfig, data []byte, ip string) bool {
-	times := readPlanTimes(data)
-	every := model.CheckInterval(times.modified, times.modifiedKnown, time.Now())
-	if times.checkedKnown && time.Since(times.checked) < every {
+	d := s.updater.Decide(plan, readPlanTimes(data), time.Now())
+	if !d.Due && !d.NeedIndex {
+		if d.ViaIndex {
+			go s.updater.Skip(plan.ID, d)
+		}
 		return false
 	}
+	minGap := model.CheckIntervals[len(model.CheckIntervals)-1].Every
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if time.Since(s.lastVisit[plan.ID]) < every || s.busyLocked(plan.ID) {
+	if time.Since(s.lastVisit[plan.ID]) < minGap || s.busyLocked(plan.ID) {
 		return false
 	}
 	if !s.updater.FetchAllowed(false) || !s.checkIPs.allow(ip) {
 		return false
 	}
 	s.lastVisit[plan.ID] = time.Now()
-	s.startLocked(plan, "sprawdzanie przy wejściu", s.updater.Update)
+	s.startLocked(plan, "sprawdzanie przy wejściu", s.updater.CheckPlan)
 	return true
 }
 
@@ -769,6 +759,10 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	if credits, ok := s.updater.Credits(); ok {
 		detail["credits"] = credits
+	}
+	if indexes, saved := s.updater.IndexStatus(); indexes != nil {
+		detail["indexes"] = indexes
+		detail["index_saved_checks"] = saved
 	}
 	if s.options.Push != nil {
 		detail["push_subscriptions"] = s.options.Push.Count()

@@ -341,3 +341,42 @@ func TestStatusShowsUsage(t *testing.T) {
 		t.Fatalf("usage = %+v, chcę 1 zapytanie i 1 kredyt", status.Usage)
 	}
 }
+
+func TestVisitUsesFacultyIndex(t *testing.T) {
+	var indexHits, planHits atomic.Int64
+	env := newRefreshEnv(t, func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Query().Get("url"), "/index.xml") {
+			indexHits.Add(1)
+			d := time.Now().Add(-48 * time.Hour).In(warsawLoc).Format("02.01.2006 15:04:05")
+			w.Write([]byte(`<?xml version="1.0"?><xml><data></data><who lastupdatetext="Aktualizacja: ` + d + `"></who></xml>`))
+			return
+		}
+		planHits.Add(1)
+		gone(w, r)
+	}, checkedAgo(5*time.Hour), checkedAgo(30*24*time.Hour))
+	env.srv.updater.SetIndexSources([]config.Source{{Faculty: "TST", IndexURL: "http://example.test/index.xml"}}, 30*time.Minute)
+
+	if got := env.visit(t); got != "background" {
+		t.Fatalf("pierwsze wejście: %q, chcę background (sprawdzenie indeksu)", got)
+	}
+	waitFor(t, func() bool { return !env.srv.busy(refreshTestPlan) })
+	if indexHits.Load() != 1 || planHits.Load() != 0 {
+		t.Fatalf("indeks %d, plan %d; chcę 1 i 0", indexHits.Load(), planHits.Load())
+	}
+	stored, _ := env.store.Load(refreshTestPlan)
+	if stored.CheckedAt == checkedAgo(5*time.Hour) {
+		t.Fatal("checked_at nie zaktualizowany po sprawdzeniu przez indeks")
+	}
+
+	env.srv.mu.Lock()
+	env.srv.lastVisit[refreshTestPlan] = time.Time{}
+	env.srv.mu.Unlock()
+	for i := 0; i < 3; i++ {
+		if got := env.visit(t); got != "none" {
+			t.Fatalf("kolejne wejście: %q, chcę none", got)
+		}
+	}
+	if indexHits.Load() != 1 || planHits.Load() != 0 {
+		t.Fatalf("po kolejnych wejściach: indeks %d, plan %d; chcę 1 i 0", indexHits.Load(), planHits.Load())
+	}
+}

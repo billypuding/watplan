@@ -132,6 +132,26 @@ content last changed (`modified_at`):
 
 Each plan is checked at most once per interval and never while another fetch of
 that plan is running.
+
+Most faculties export all plans at once from Plansoft and write the faculty index last,
+with its time: `<who lastupdatetext="Aktualizacja: 19.11.2026 14:07:56">` in `index.xml`
+(WML, WEL, IOE, WTC) or `<div class="lastUpdate">Aktualizacja: ...</div>` in `index.html`
+(WLO, WIM). When a plan of such a faculty is due for a check, the server first looks at the
+faculty index, fetched at most once per `PLANWAT_INDEX_CHECK_EVERY` (default `30m`) and
+only when some plan of that faculty needs a check anyway:
+
+- the faculty date is not newer than the plan's last fetch (with a 15 minute margin): the
+  plan is not fetched, only `checked_at` is updated,
+- the date is newer: the plan is fetched; while the index is fresh this happens for every
+  plan of the faculty as soon as it is opened or watched, without waiting for the interval,
+- every plan is still fetched at least once a day,
+- WCY and WIG have no date in their index, and an index that cannot be read or has no
+  date falls back to the intervals above (a failed index is not retried for one interval).
+
+If a plan changes although its faculty date says nothing changed since the previous fetch,
+the server logs it and sends an `index-assumption` alert. The faculty dates and the number
+of plan checks saved are stored in Turso and shown in the detailed `/api/status`
+(`indexes`, `index_saved_checks`). The manual refresh is not affected.
 The response then carries `X-Plan-Refresh: background` (otherwise `none`), and the
 app polls quietly after 2, 5, 10 and 20 seconds, swapping the plan in place and
 showing "Plan zaktualizowany" only if the classes changed.

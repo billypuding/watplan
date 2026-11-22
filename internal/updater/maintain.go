@@ -11,7 +11,6 @@ import (
 
 	"github.com/billypuding/watplan/internal/alert"
 	"github.com/billypuding/watplan/internal/config"
-	"github.com/billypuding/watplan/internal/model"
 	"github.com/billypuding/watplan/internal/wat"
 )
 
@@ -273,17 +272,15 @@ func (u *Updater) refreshWatched(ctx context.Context, reg *config.Registry, opts
 		if !u.FetchAllowed(false) {
 			break
 		}
-		if stored, err := u.store.Load(id); err == nil && !checkDue(stored, time.Now()) {
-			continue
+		if stored, err := u.store.Load(id); err == nil {
+			d := u.Decide(p, TimesOf(stored), time.Now())
+			if !d.Due && !d.NeedIndex {
+				u.Skip(id, d)
+				continue
+			}
 		}
-		res, err := u.update(p)
-		switch {
-		case err != nil:
+		if err := u.CheckPlan(p); err != nil {
 			log.Printf("obserwowany %s: %v", id, err)
-		case res.unchanged:
-			log.Printf("obserwowany %s: bez zmian (304)", id)
-		default:
-			log.Printf("obserwowany %s: sprawdzono, %d zajęć", id, res.events)
 		}
 		checked++
 		if !sleepCtx(ctx, opts.FetchGap) {
@@ -305,13 +302,4 @@ func sleepCtx(ctx context.Context, d time.Duration) bool {
 	case <-t.C:
 		return true
 	}
-}
-
-func checkDue(p model.Plan, now time.Time) bool {
-	checked, err := time.ParseInLocation(timeLayout, p.LastChecked(), warsawLoc)
-	if err != nil {
-		return true
-	}
-	modified, err := time.ParseInLocation(timeLayout, p.ModifiedAt, warsawLoc)
-	return now.Sub(checked) >= model.CheckInterval(modified, err == nil, now)
 }

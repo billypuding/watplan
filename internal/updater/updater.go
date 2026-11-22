@@ -59,7 +59,9 @@ type Updater struct {
 
 	suspectMu sync.Mutex
 	suspect   map[string]bool
-	alert     *alert.Notifier
+
+	index *indexWatch
+	alert *alert.Notifier
 }
 
 const (
@@ -363,6 +365,9 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (r
 		modifiedAt = now
 		log.Printf("plan %s: zmiany (dodane %d, usunięte %d, zmienione %d)",
 			cfg.ID, len(diff.Added), len(diff.Removed), len(diff.Modified))
+	}
+	if len(old.Events) > 0 && !diff.Empty() {
+		u.checkIndexAssumption(cfg, old.FetchedAt)
 	}
 	var change model.Change
 	if len(old.Events) > 0 && !diff.Empty() {

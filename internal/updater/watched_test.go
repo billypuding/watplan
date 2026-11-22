@@ -36,11 +36,11 @@ func TestCheckDue(t *testing.T) {
 	}
 	for _, c := range cases {
 		p := model.Plan{ModifiedAt: stamp(c.modified), CheckedAt: stamp(c.checked), FetchedAt: stamp(c.checked)}
-		if got := checkDue(p, now); got != c.due {
+		if got := (&Updater{}).Decide(config.PlanConfig{}, TimesOf(p), now).Due; got != c.due {
 			t.Errorf("%s: due = %v, chcę %v", c.name, got, c.due)
 		}
 	}
-	if !checkDue(model.Plan{}, now) {
+	if !(&Updater{}).Decide(config.PlanConfig{}, TimesOf(model.Plan{}), now).Due {
 		t.Error("plan bez dat powinien być do sprawdzenia")
 	}
 }
