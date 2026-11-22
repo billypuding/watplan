@@ -1165,9 +1165,10 @@ async function postRefresh(planId) {
     let data = null;
     try { data = JSON.parse(text); } catch (_) { data = null; }
     if (!response.ok) throw new Error((data && data.error) || `Błąd serwera (${response.status})`);
-    if (!data || !Array.isArray(data.events)) return null;
+    const cooldown = response.headers.get('X-Plan-Refresh') === 'cooldown';
+    if (!data || !Array.isArray(data.events)) return { plan: null, cooldown };
     if (currentPlanId === planId && acceptPlan(planId, text, data, cachedPlan(planId))) render();
-    return data;
+    return { plan: data, cooldown };
 }
 
 async function watchRefresh(planId, baseline) {
@@ -1194,9 +1195,13 @@ async function refreshServer() {
     refreshButton.classList.add('spinning');
     refreshButton.setAttribute('aria-busy', 'true');
     try {
-        const baseline = await postRefresh(planId);
+        const { plan, cooldown } = await postRefresh(planId);
+        if (cooldown) {
+            setNotice('Plan był odświeżany przed chwilą', false);
+            return;
+        }
         setNotice('Odświeżanie w tle...', false);
-        await watchRefresh(planId, baseline);
+        await watchRefresh(planId, plan);
     } catch (err) {
         setNotice(err.message, true);
     } finally {

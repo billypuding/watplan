@@ -41,6 +41,37 @@ func TestOfflineRefreshDoesNotFetch(t *testing.T) {
 	}
 }
 
+func TestRefreshCooldownHeader(t *testing.T) {
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.Save("TST26XX1S0", model.Plan{FetchedAt: "2026-11-22 10:00:00"}); err != nil {
+		t.Fatal(err)
+	}
+	reg := config.NewRegistry([]config.PlanConfig{{
+		ID:  "TST26XX1S0",
+		URL: "http://example.invalid/plan.htm",
+	}})
+	srv := NewServer(reg, st, nil, Options{})
+	srv.lastRefresh["TST26XX1S0"] = time.Now()
+	handler, err := srv.Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/refresh?plan=TST26XX1S0", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d", rec.Code)
+	}
+	if got := rec.Header().Get("X-Plan-Refresh"); got != "cooldown" {
+		t.Fatalf("X-Plan-Refresh = %q, chcę cooldown", got)
+	}
+}
+
 func TestOnDemandFetchesMissingPlanOnce(t *testing.T) {
 	page, err := os.ReadFile("../wat/testdata/plan_wat.html")
 	if err != nil {

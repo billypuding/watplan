@@ -499,7 +499,9 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	refresh := "cooldown"
 	if wait := s.reserveRefresh(plan.ID); wait <= 0 {
+		refresh = "background"
 		go func() {
 			if err := s.updater.UpdateManual(plan); err != nil {
 				log.Printf("ręczne odświeżanie planu %s: %v", plan.ID, err)
@@ -510,12 +512,17 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	data, err := s.store.Raw(plan.ID)
 	if err == nil {
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("X-Plan-Refresh", "background")
+		w.Header().Set("X-Plan-Refresh", refresh)
 		w.Write(data)
 		return
 	}
 
-	writeJSON(w, http.StatusAccepted, map[string]string{"status": "refreshing"})
+	w.Header().Set("X-Plan-Refresh", refresh)
+	status := "refreshing"
+	if refresh == "cooldown" {
+		status = "cooldown"
+	}
+	writeJSON(w, http.StatusAccepted, map[string]string{"status": status})
 }
 
 func (s *Server) refreshIfStale(plan config.PlanConfig) <-chan struct{} {
