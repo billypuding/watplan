@@ -741,6 +741,8 @@ func (w gzipResponseWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
+var gzipPool = sync.Pool{New: func() any { return gzip.NewWriter(io.Discard) }}
+
 func withGzip(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
@@ -748,8 +750,13 @@ func withGzip(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		w.Header().Set("Content-Encoding", "gzip")
-		gz := gzip.NewWriter(w)
-		defer gz.Close()
+		gz := gzipPool.Get().(*gzip.Writer)
+		gz.Reset(w)
+		defer func() {
+			gz.Close()
+			gz.Reset(io.Discard)
+			gzipPool.Put(gz)
+		}()
 
 		gzw := gzipResponseWriter{Writer: gz, ResponseWriter: w}
 		next(gzw, r)
