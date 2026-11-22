@@ -61,23 +61,10 @@ go run cmd/watplan/main.go -offline -import WEL24EX1S0=~/Downloads/WEL24EX1S0.ht
 
 `-import` can be repeated. The full ID must already exist in `plans.json`.
 
-You can also route traffic through a working proxy:
-
-```bash
-PLANWAT_PROXY=http://user:pass@host:port go run cmd/watplan/main.go
-```
-
-`PLANWAT_PROXY_BACKUP` takes a second proxy in the same format. The server switches
-to it when the main proxy rejects the connection (`402 Payment Required`, `407`,
-no connection), times out, or when WAT blocks the main proxy's IP (`403`/Incapsula).
-It goes back to the main proxy after `PLANWAT_PROXY_BLOCK_BACKOFF` (default `30m`)
-and pauses fetching only when neither proxy can get through. If both proxies are
-blocked by WAT, the domain is paused for `PLANWAT_BLOCK_BACKOFF` (default `1h`).
-
 Do not restart the app in a loop while the block is active. Wait for it to expire or
 change the public IP; repeated requests only make the block last longer.
 
-### Scraping API instead of a proxy
+### Scraping API and browser-fingerprint proxy
 
 If WAT blocks the hosting IP and proxies, PlanWat can fetch through a scraping API.
 The API does the outbound request and returns the plan HTML:
@@ -91,24 +78,28 @@ PLANWAT_SCRAPER_BROWSER=false
 ```
 
 Supported providers: `scrapingant`, `scrapingbee`, `scraperapi`. Background
-refreshes use the scraping API. A manual refresh (`POST /api/refresh`) first tries
-`PLANWAT_PROXY`/`PLANWAT_PROXY_BACKUP` for speed, then falls back to the scraping API
-if the proxy is blocked or times out. If no provider is configured, both paths use
-the proxy/direct connection.
+refreshes use the scraping API.
+
+Manual refreshes can use a browser-fingerprint Go client through an HTTP proxy:
+
+```bash
+PLANWAT_PROXY_HOST=pr.oxylabs.io:7777
+PLANWAT_PROXY_USER=customer-...
+PLANWAT_PROXY_PASS=...
+```
+
+The client uses a Chrome profile from `tls-client`, one shared cookie jar, and a
+sticky proxy session. On `403`, `407`, or timeout it generates a new session ID and
+retries once. If the proxy still fails, the refresh falls back to the scraping API.
+The proxy login is built as
+`customer-<user>-cc-PL-sessid-<id>-sesstime-10`.
+
+A manual refresh returns the cached plan immediately and fetches in the background.
+The same group is fetched at most once per minute; further clicks return the cache.
 
 ScrapingAnt's free plan includes 10,000 credits a month; a plain datacenter request
 costs 1 credit, while residential costs 25. Use `PLANWAT_ON_DEMAND=1` and
 `PLANWAT_NO_BACKGROUND=1` to avoid spending credits on bulk refreshes.
-
-Manual refreshes can also use a browser-fingerprint curl through `PLANWAT_PROXY`:
-
-```bash
-PLANWAT_CURL_IMPERSONATE=/usr/local/bin/curl_chrome116
-```
-
-The binary is a `curl-impersonate` build. It is used only for manual refreshes;
-background refreshes still use the scraping API. If the curl request is blocked
-or fails, the refresh falls back to the scraping API.
 
 For tests, `PLANWAT_SCRAPER_API_URL` overrides the provider endpoint.
 
@@ -118,28 +109,8 @@ The server does the fetching, so the phone's network does not matter: WAT sees t
 hosting provider's egress IP. Fetching ~580 plans in the background from a shared
 cloud IP is a good way to get that IP blocked.
 
-### Docker with curl-impersonate
-
-The repository includes a `Dockerfile` with `curl-impersonate` and its NSS
-dependencies. Use a Render **Docker** web service when manual refreshes should go
-through a browser-fingerprint curl and an HTTP proxy:
-
-```text
-PLANWAT_ON_DEMAND=1
-PLANWAT_NO_BACKGROUND=1
-PLANWAT_CURL_IMPERSONATE=/usr/local/bin/curl_chrome136
-PLANWAT_PROXY=http://user:pass@proxy.example:7777
-PLANWAT_SCRAPER_PROVIDER=scrapingant
-PLANWAT_SCRAPER_KEY=...
-PLANWAT_SCRAPER_PROXY_TYPE=datacenter
-PLANWAT_SCRAPER_COUNTRY=PL
-PLANWAT_SCRAPER_BROWSER=false
-```
-
-Background refreshes use the scraping API; manual refreshes use
-`curl-impersonate` through `PLANWAT_PROXY` and fall back to the API when the proxy
-is blocked or the curl request fails. The container listens on `$PORT` and binds
-to `0.0.0.0`.
+Use native Go on Render. Set the proxy variables above and keep the scraping API
+for background refreshes. No credentials belong in the repository.
 
 For a hosted instance, use on-demand mode. It serves the plans restored from Turso
 (see below) and fetches only the plan a user actually opens:
@@ -160,7 +131,8 @@ on-demand mode alone will not unblock it. In that case:
 
 - create the service in a different Render region to get a new egress IP (and keep
   on-demand mode enabled), or
-- set `PLANWAT_PROXY` to a proxy with a clean IP, or
+- set `PLANWAT_PROXY_HOST`, `PLANWAT_PROXY_USER`, and `PLANWAT_PROXY_PASS` to a
+  proxy with a clean IP, or
 - move fetching to a machine on a network that WAT allows; with `PLANWAT_DB_URL`
   set there too, the plans it fetches land in Turso and the hosted server picks
   them up on its next start.
