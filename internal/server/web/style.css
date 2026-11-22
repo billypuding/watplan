@@ -489,6 +489,13 @@ dialog::backdrop { background: var(--scrim); }
 .notice.show { opacity: 1; }
 .notice.error { background: var(--error); color: #fff; }
 
+.update-bar {
+    position: fixed; z-index: 20; left: 50%; top: max(12px, env(safe-area-inset-top)); transform: translateX(-50%);
+    max-width: calc(100vw - 32px); padding: 10px 16px; border: 0; border-radius: 14px;
+    background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 650; font-size: 14px;
+    box-shadow: var(--shadow); cursor: pointer;
+}
+
 .site-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 24px; margin-top: 32px; padding: 16px 0 max(20px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); font-size: 13px; line-height: 1.45; color: var(--muted); text-align: left; }
 .site-foot a { color: var(--text); opacity: .78; text-decoration: none; }
 .site-foot a:hover { opacity: 1; }

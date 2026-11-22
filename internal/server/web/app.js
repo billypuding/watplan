@@ -1967,6 +1967,13 @@ if (new URLSearchParams(window.location.search).has('changes')) {
 
 loadPlans();
 
+const updateBar = $('updateBar');
+updateBar.addEventListener('click', () => location.reload());
+
 if ('serviceWorker' in navigator) {
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (hadController) updateBar.classList.remove('hidden');
+    });
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => undefined));
 }
