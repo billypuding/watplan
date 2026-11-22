@@ -577,6 +577,14 @@ dialog::backdrop { background: var(--scrim); }
     background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 600;
 }
 .tool-note { margin-top: 18px; font-size: 13px; }
+.extra-form .wide { grid-column: 1 / -1; }
+.ev-card.extra, .wk-cell.extra { outline: 2px dashed color-mix(in srgb, var(--text) 30%, transparent); outline-offset: -2px; }
+.clash { color: var(--error); font-weight: 650; }
+.extra-list { display: grid; gap: 8px; }
+.extra-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--surface); }
+.extra-item small { display: block; color: var(--muted); font-size: 13px; }
+.extra-item small.clash { color: var(--error); }
+.extra-item .link-btn { margin-top: 0; flex: none; }
 .rooms-summary { margin: 0 0 12px; color: var(--muted); }
 .rooms-summary b { color: var(--text); }
 .room-building { padding: 14px 0; border-top: 1px solid var(--line); }
@@ -645,7 +653,7 @@ dialog::backdrop { background: var(--scrim); }
 .makeup header b { font-size: 16px; font-weight: 650; }
 .makeup select { height: 38px; max-width: 60%; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; }
 .makeup .hint { margin: 10px 0 6px; font-size: 13px; }
-.makeup .hint.error { color: var(--error); }
+.makeup .hint.error, .extra-form .hint.error { color: var(--error); }
 .makeup-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .makeup-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
 .makeup-item .when { display: flex; flex-direction: column; min-width: 0; }

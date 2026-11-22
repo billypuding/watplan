@@ -239,6 +239,46 @@ test('historia zmian pokazuje przeniesione i zmienione zajęcia', { skip }, asyn
     assert.deepEqual(kinds.sort(), ['changed', 'moved']);
 });
 
+test('moje zajęcia: dodanie, kolizja z planem, zapis i usunięcie', { skip }, async () => {
+    await page.reset();
+    await page.goto(app('&view=week'));
+    await page.waitFor(`document.querySelectorAll('.wk-cell').length > 0`);
+    const target = JSON.parse(await page.eval(`JSON.stringify((({ date, start, end, subject }) => ({ date, start, end, subject, weekday: dayIndex(parseISO(date)) }))(allEvents.find(e => mondayOf(e.date) === mondayOf(selectedDate))))`));
+    await page.click('#toolsBtn');
+    await page.click('[data-tool="extras"]');
+    await page.waitFor(`document.getElementById('extrasModal').open`);
+    await page.eval(`document.getElementById('extraName').value = ''; true`);
+    await page.click('#extraForm button[type=submit]');
+    assert.equal(await page.text('#extraError'), 'Podaj nazwę zajęć.');
+    await page.eval(`(() => {
+        document.getElementById('extraName').value = 'Lektorat';
+        document.getElementById('extraWeekday').value = '${target.weekday}';
+        document.getElementById('extraStart').value = '${target.start}';
+        document.getElementById('extraEnd').value = '${target.end}';
+        document.getElementById('extraRoom').value = '65/100';
+        return true;
+    })()`);
+    await page.click('#extraForm button[type=submit]');
+    await page.waitFor(`document.querySelectorAll('.extra-item').length === 1`);
+    assert.match(await page.text('.extra-item'), /Lektorat/);
+    assert.match(await page.text('.extra-item'), /Kolizje z planem: \d+/);
+    const cell = await page.eval(`(() => { const c = document.querySelector('.wk-cell.extra'); return c && c.title; })()`);
+    assert.ok(cell, 'brak własnych zajęć w siatce tygodnia');
+    assert.ok(cell.includes(`Kolizja: ${target.subject}`), cell);
+    const stored = JSON.parse(await page.eval(`localStorage.getItem('extraClasses')`));
+    assert.equal(Object.values(stored)[0][0].subject, 'Lektorat');
+
+    await page.goto(app('&view=week'));
+    await page.waitFor(`document.querySelectorAll('.wk-cell.extra').length > 0`);
+    await page.click('#toolsBtn');
+    await page.click('[data-tool="extras"]');
+    await page.click('.extra-item .link-btn');
+    await page.waitFor(`document.querySelectorAll('.extra-item').length === 0`);
+    assert.equal(await page.eval(`document.querySelectorAll('.wk-cell.extra').length`), 0);
+    assert.equal(await page.eval(`localStorage.getItem('extraClasses')`), '{}');
+    assert.deepEqual(page.errors, []);
+});
+
 test('wolne sale pokazują sale dla wybranego bloku', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
