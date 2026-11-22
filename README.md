@@ -33,6 +33,15 @@ Static files are embedded in the binary. At startup the server replaces every
 of that file's content, and names the service worker cache after a hash of all
 files. Write new links as `/file.js?v=0`; there is no version to bump by hand.
 
+Cache headers are set so that a CDN in front of the server (e.g. Cloudflare) only
+keeps what is safe to share:
+
+- versioned files (`?v=`): `public, max-age=31536000, immutable`,
+- HTML (`/`, `/app`, `/o-watplan`): `public, max-age=0, must-revalidate` with an `ETag`,
+- `sw.js`: `no-cache`,
+- everything under `/api/`: `private, no-store`, or `private, no-cache` with an `ETag`
+  for `/api/plan` and `/api/plans`; compressed responses carry `Vary: Accept-Encoding`.
+
 ## Getting started
 
 ```bash

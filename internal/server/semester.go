@@ -178,6 +178,6 @@ func (s *Server) handleSemester(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "brak danych o semestrze")
 		return
 	}
-	w.Header().Set("Cache-Control", "public, max-age=600")
+	w.Header().Set("Cache-Control", "private, max-age=600")
 	writeJSON(w, http.StatusOK, sem)
 }

@@ -177,24 +177,21 @@ func (s *Server) Handler() (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	mux.HandleFunc("/app", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Write(appPage)
-	})
+	mux.HandleFunc("/app", htmlPage(appPage))
 	faqPage, err := fs.ReadFile(static, "o-watplan.html")
 	if err != nil {
 		return nil, err
 	}
-	mux.HandleFunc("/o-watplan", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Write(faqPage)
-	})
+	mux.HandleFunc("/o-watplan", htmlPage(faqPage))
 	mux.HandleFunc("/app/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, withQuery("/app", r), http.StatusMovedPermanently)
 	})
 
+	indexPage, err := fs.ReadFile(static, "index.html")
+	if err != nil {
+		return nil, err
+	}
+	landing := htmlPage(indexPage)
 	files := withCache(http.FileServer(http.FS(static)))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
@@ -203,11 +200,13 @@ func (s *Server) Handler() (http.Handler, error) {
 				http.Redirect(w, r, withQuery("/app", r), http.StatusFound)
 				return
 			}
+			landing(w, r)
+			return
 		}
 		files.ServeHTTP(w, r)
 	})
 
-	return withCanonicalHost(mux, s.options.CanonicalHost), nil
+	return withCanonicalHost(withAPIHeaders(mux), s.options.CanonicalHost), nil
 }
 
 func withCanonicalHost(next http.Handler, canonical string) http.Handler {
@@ -260,7 +259,7 @@ func (s *Server) handlePlans(w http.ResponseWriter, r *http.Request) {
 	sum := sha1.Sum(data)
 	etag := `"` + hex.EncodeToString(sum[:10]) + `"`
 	w.Header().Set("ETag", etag)
-	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Cache-Control", cacheAPIWithET)
 	if etagMatches(r.Header.Get("If-None-Match"), etag) {
 		w.WriteHeader(http.StatusNotModified)
 		return
@@ -295,7 +294,7 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 
 	blob := s.blobs.get(plan.ID, data)
 	w.Header().Set("ETag", blob.etag)
-	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Cache-Control", cacheAPIWithET)
 	w.Header().Set("Vary", "Accept-Encoding")
 	t.mark("etag")
 	w.Header().Set("Server-Timing", t.header())
@@ -338,7 +337,6 @@ func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig, t *timi
 		}
 		t.mark("visit")
 		w.Header().Set("X-Plan-Refresh", "background")
-		w.Header().Set("Cache-Control", "no-store")
 		writeJSON(w, http.StatusAccepted, map[string]string{"status": "fetching"})
 		return nil, false
 	}
@@ -463,7 +461,6 @@ func (s *Server) handleChanges(w http.ResponseWriter, r *http.Request) {
 		resp["fetched_at"] = stored.FetchedAt
 		resp["modified_at"] = stored.ModifiedAt
 	}
-	w.Header().Set("Cache-Control", "no-cache")
 	writeJSON(w, http.StatusOK, resp)
 }
 
@@ -798,12 +795,32 @@ func writeError(w http.ResponseWriter, status int, message string) {
 }
 
 type gzipResponseWriter struct {
-	io.Writer
 	http.ResponseWriter
+	gz       *gzip.Writer
+	started  bool
+	compress bool
 }
 
-func (w gzipResponseWriter) Write(b []byte) (int, error) {
-	return w.Writer.Write(b)
+func (w *gzipResponseWriter) WriteHeader(code int) {
+	if !w.started {
+		w.started = true
+		if code != http.StatusNotModified && code != http.StatusNoContent {
+			w.compress = true
+			w.Header().Set("Content-Encoding", "gzip")
+			w.Header().Del("Content-Length")
+		}
+	}
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *gzipResponseWriter) Write(b []byte) (int, error) {
+	if !w.started {
+		w.WriteHeader(http.StatusOK)
+	}
+	if !w.compress {
+		return w.ResponseWriter.Write(b)
+	}
+	return w.gz.Write(b)
 }
 
 var gzipPool = sync.Pool{New: func() any { return gzip.NewWriter(io.Discard) }}
@@ -814,24 +831,57 @@ func withGzip(next http.HandlerFunc) http.HandlerFunc {
 			next(w, r)
 			return
 		}
-		w.Header().Set("Content-Encoding", "gzip")
+		w.Header().Add("Vary", "Accept-Encoding")
 		gz := gzipPool.Get().(*gzip.Writer)
 		gz.Reset(w)
+		gzw := &gzipResponseWriter{ResponseWriter: w, gz: gz}
 		defer func() {
-			gz.Close()
+			if gzw.compress {
+				gz.Close()
+			}
 			gz.Reset(io.Discard)
 			gzipPool.Put(gz)
 		}()
-
-		gzw := gzipResponseWriter{Writer: gz, ResponseWriter: w}
 		next(gzw, r)
 	}
 }
 
+const (
+	cacheHTML      = "public, max-age=0, must-revalidate"
+	cacheAPI       = "private, no-store"
+	cacheAPIWithET = "private, no-cache"
+)
+
+func htmlPage(page []byte) http.HandlerFunc {
+	sum := sha1.Sum(page)
+	etag := `"` + hex.EncodeToString(sum[:10]) + `"`
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", cacheHTML)
+		w.Header().Set("ETag", etag)
+		if etagMatches(r.Header.Get("If-None-Match"), etag) {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(page)
+	}
+}
+
+func withAPIHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			w.Header().Set("Cache-Control", cacheAPI)
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func withCache(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" || r.URL.Path == "/sw.js" || strings.HasSuffix(r.URL.Path, ".html") {
+		if r.URL.Path == "/sw.js" {
 			w.Header().Set("Cache-Control", "no-cache")
+		} else if strings.HasSuffix(r.URL.Path, ".html") {
+			w.Header().Set("Cache-Control", cacheHTML)
 		} else if r.URL.Query().Has("v") {
 			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 		} else {

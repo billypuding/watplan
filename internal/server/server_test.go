@@ -271,8 +271,12 @@ func TestRouting(t *testing.T) {
 		if c.contains != "" && !strings.Contains(rec.Body.String(), c.contains) {
 			t.Errorf("%s: odpowiedź nie zawiera %q", c.path, c.contains)
 		}
-		if c.status == http.StatusOK && rec.Header().Get("Cache-Control") != "no-cache" {
-			t.Errorf("%s: Cache-Control %q, chcę no-cache", c.path, rec.Header().Get("Cache-Control"))
+		want := cacheHTML
+		if c.path == "/sw.js" {
+			want = "no-cache"
+		}
+		if c.status == http.StatusOK && rec.Header().Get("Cache-Control") != want {
+			t.Errorf("%s: Cache-Control %q, chcę %q", c.path, rec.Header().Get("Cache-Control"), want)
 		}
 	}
 }
@@ -324,7 +328,7 @@ func TestPlanETagGives304(t *testing.T) {
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/plan/TST26XX1S0", nil))
 	etag := rec.Header().Get("ETag")
-	if rec.Code != http.StatusOK || etag == "" || rec.Header().Get("Cache-Control") != "no-cache" {
+	if rec.Code != http.StatusOK || etag == "" || rec.Header().Get("Cache-Control") != cacheAPIWithET {
 		t.Fatalf("status %d etag %q cache %q", rec.Code, etag, rec.Header().Get("Cache-Control"))
 	}
 	for _, header := range []string{etag, "W/" + etag, `"inny", ` + etag} {
