@@ -386,3 +386,28 @@ func TestPlanRequestsWaitForRestoreButPagesDoNot(t *testing.T) {
 		t.Fatal("plan nie odpowiedział po odtworzeniu")
 	}
 }
+
+func TestPlansListETag(t *testing.T) {
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg := config.NewRegistry([]config.PlanConfig{{ID: "TST26XX1S0", Name: "TST26XX1S0", URL: "http://example.invalid/"}})
+	handler, err := NewServer(reg, st, nil, Options{Offline: true}).Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/plans", nil))
+	etag := rec.Header().Get("ETag")
+	if rec.Code != http.StatusOK || etag == "" || !strings.Contains(rec.Body.String(), "TST26XX1S0") {
+		t.Fatalf("status = %d, ETag = %q, body = %s", rec.Code, etag, rec.Body.String())
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/plans", nil)
+	req.Header.Set("If-None-Match", etag)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotModified || rec.Body.Len() != 0 {
+		t.Fatalf("status = %d, body = %q, chcę 304 bez treści", rec.Code, rec.Body.String())
+	}
+}

@@ -230,7 +230,21 @@ func (s *Server) handlePlans(w http.ResponseWriter, r *http.Request) {
 	for _, p := range plans {
 		items = append(items, item{ID: p.ID, Name: p.Name, Faculty: p.Faculty})
 	}
-	writeJSON(w, http.StatusOK, items)
+	data, err := json.Marshal(items)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "błąd listy planów")
+		return
+	}
+	sum := sha1.Sum(data)
+	etag := `"` + hex.EncodeToString(sum[:10]) + `"`
+	w.Header().Set("ETag", etag)
+	w.Header().Set("Cache-Control", "no-cache")
+	if etagMatches(r.Header.Get("If-None-Match"), etag) {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
 }
 
 func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
