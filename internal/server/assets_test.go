@@ -18,7 +18,8 @@ import (
 
 func testAssets() fstest.MapFS {
 	return fstest.MapFS{
-		"app.html":        {Data: []byte(`<link href="/style.css?v=0"><script src="/app.js?v=0"></script><a href="/missing.js?v=0">`)},
+		"app.html":        {Data: []byte(`<script src="/boot.js?v=0" data-inline></script><link href="/style.css?v=0"><script src="/app.js?v=0"></script><a href="/missing.js?v=0">`)},
+		"boot.js":         {Data: []byte("\nwindow.boot = '/favicon-192.png?v=0';\n")},
 		"app.js":          {Data: []byte(`console.log(1)`)},
 		"style.css":       {Data: []byte(`@font-face{src:url(/fonts/f.woff2?v=0)}`)},
 		"fonts/f.woff2":   {Data: []byte("font-1")},
@@ -66,6 +67,7 @@ func TestAssetVersionsFollowContent(t *testing.T) {
 		"/app.js?v=" + shortHash([]byte(`console.log(1)`)),
 		"/style.css?v=" + shortHash([]byte(css)),
 		"/missing.js?v=0",
+		"<script>window.boot = '/favicon-192.png?v=" + shortHash([]byte("png")) + "';</script>",
 	} {
 		if !strings.Contains(html, want) {
 			t.Fatalf("app.html = %q, brak %q", html, want)
@@ -75,6 +77,20 @@ func TestAssetVersionsFollowContent(t *testing.T) {
 		t.Fatalf("sw.js = %q", sw)
 	}
 	before := swCache(t, a)
+
+	if strings.Contains(html, "boot.js") {
+		t.Fatalf("app.html dalej odwołuje się do boot.js: %q", html)
+	}
+
+	src["boot.js"] = &fstest.MapFile{Data: []byte("window.boot = 2;")}
+	inlined, err := newAssetFS(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(readAsset(t, inlined, "app.html"), "<script>window.boot = 2;</script>") || swCache(t, inlined) == before {
+		t.Fatal("zmiana wstawianego skryptu nie zmieniła app.html i wersji cache")
+	}
+	src["boot.js"] = &fstest.MapFile{Data: []byte("\nwindow.boot = '/favicon-192.png?v=0';\n")}
 
 	src["fonts/f.woff2"] = &fstest.MapFile{Data: []byte("font-2")}
 	b, err := newAssetFS(src)
@@ -123,6 +139,9 @@ func TestServedAssetsAreVersioned(t *testing.T) {
 	}
 	if strings.Contains(page, "?v=0") {
 		t.Fatal("/app zawiera nieprzepisane ?v=0")
+	}
+	if strings.Contains(page, "theme.js") || !strings.Contains(page, "setAttribute('data-theme'") {
+		t.Fatal("/app nie ma wstawionego theme.js")
 	}
 	js := get("/app.js?v=" + ref[1])
 	if js.StatusCode != http.StatusOK || !strings.Contains(js.Header.Get("Cache-Control"), "immutable") {

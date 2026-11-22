@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"io/fs"
 	"path"
@@ -16,6 +17,7 @@ const serviceWorkerFile = "sw.js"
 var (
 	assetRef    = regexp.MustCompile(`/([A-Za-z0-9_./-]+)\?v=[A-Za-z0-9]*`)
 	swCacheName = regexp.MustCompile(`const CACHE = '[^']*';`)
+	inlineRef   = regexp.MustCompile(`<script src="/([A-Za-z0-9_./-]+\.js)(?:\?v=[A-Za-z0-9]*)?" data-inline></script>`)
 	textAssets  = map[string]bool{".html": true, ".css": true, ".js": true, ".json": true}
 )
 
@@ -92,6 +94,24 @@ func (a *assetFS) rewrite(name string, visiting map[string]bool) ([]byte, error)
 		return nil, err
 	}
 	var resolveErr error
+	if path.Ext(name) == ".html" {
+		data = inlineRef.ReplaceAllFunc(data, func(ref []byte) []byte {
+			target := string(inlineRef.FindSubmatch(ref)[1])
+			script, err := fs.ReadFile(a.base, target)
+			if err != nil {
+				resolveErr = err
+				return ref
+			}
+			if bytes.Contains(bytes.ToLower(script), []byte("</script")) {
+				resolveErr = fmt.Errorf("%s: nie można wstawić skryptu zawierającego </script", target)
+				return ref
+			}
+			return append(append([]byte("<script>"), bytes.TrimSpace(script)...), []byte("</script>")...)
+		})
+		if resolveErr != nil {
+			return nil, resolveErr
+		}
+	}
 	out := assetRef.ReplaceAllFunc(data, func(ref []byte) []byte {
 		target := string(assetRef.FindSubmatch(ref)[1])
 		if _, err := fs.Stat(a.base, target); err != nil {
@@ -107,7 +127,11 @@ func (a *assetFS) rewrite(name string, visiting map[string]bool) ([]byte, error)
 	if resolveErr != nil {
 		return nil, resolveErr
 	}
-	if !bytes.Equal(out, data) {
+	original, err := fs.ReadFile(a.base, name)
+	if err != nil {
+		return nil, err
+	}
+	if !bytes.Equal(out, original) {
 		a.files[name] = out
 	}
 	return out, nil
