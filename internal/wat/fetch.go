@@ -67,10 +67,10 @@ type Fetcher struct {
 
 	alert *alert.Notifier
 
-	scraper         *scraperConfig
-	scraperClient   *http.Client
-	scraperMu       sync.Mutex
-	curlImpersonate string
+	scraper       *scraperConfig
+	scraperClient *http.Client
+	scraperMu     sync.Mutex
+	tlsProxy      *tlsProxyClient
 
 	proxyMu    sync.Mutex
 	proxies    []*url.URL
@@ -120,19 +120,16 @@ func NewFetcher() (*Fetcher, error) {
 		return nil, err
 	}
 
-	curlImpersonate := strings.TrimSpace(os.Getenv("PLANWAT_CURL_IMPERSONATE"))
-	if curlImpersonate != "" {
-		if len(proxies) == 0 {
-			return nil, fmt.Errorf("PLANWAT_CURL_IMPERSONATE wymaga ustawionego PLANWAT_PROXY")
+	tlsProxy, err := newTLSProxyClient()
+	if err != nil {
+		return nil, err
+	}
+	if tlsProxy != nil {
+		if len(proxies) > 0 {
+			log.Printf("tls-client aktywny - ignoruję PLANWAT_PROXY/PLANWAT_PROXY_BACKUP")
+			proxies = nil
 		}
-		info, err := os.Stat(curlImpersonate)
-		if err != nil {
-			return nil, fmt.Errorf("PLANWAT_CURL_IMPERSONATE: %w", err)
-		}
-		if info.Mode()&0o111 == 0 {
-			return nil, fmt.Errorf("PLANWAT_CURL_IMPERSONATE %s nie jest wykonywalny", curlImpersonate)
-		}
-		log.Printf("ręczne pobieranie przez curl-impersonate %s", curlImpersonate)
+		log.Printf("ręczne pobieranie przez tls-client %s", tlsProxy.host)
 	}
 
 	client := &http.Client{
@@ -184,16 +181,16 @@ func NewFetcher() (*Fetcher, error) {
 	}
 
 	f := &Fetcher{
-		client:          client,
-		minInterval:     minInterval,
-		blockBackoff:    blockBackoff,
-		blockedUntil:    make(map[string]time.Time),
-		scraper:         scraper,
-		scraperClient:   scraperClient,
-		curlImpersonate: curlImpersonate,
-		proxies:         proxies,
-		proxyBad:        make([]time.Time, len(proxies)),
-		proxyPause:      proxyPause,
+		client:        client,
+		minInterval:   minInterval,
+		blockBackoff:  blockBackoff,
+		blockedUntil:  make(map[string]time.Time),
+		scraper:       scraper,
+		scraperClient: scraperClient,
+		tlsProxy:      tlsProxy,
+		proxies:       proxies,
+		proxyBad:      make([]time.Time, len(proxies)),
+		proxyPause:    proxyPause,
 	}
 	if len(proxies) > 0 {
 		transport.Proxy = func(req *http.Request) (*url.URL, error) {
@@ -306,8 +303,8 @@ func (f *Fetcher) FetchPageViaProxy(targetUrl string, prev Validators) ([]byte, 
 
 func (f *Fetcher) fetchPage(targetUrl string, prev Validators, mode FetchMode) ([]byte, Validators, error) {
 	host := hostOf(targetUrl)
-	useCurl := mode == FetchViaProxy && f.curlImpersonate != "" && len(f.proxies) > 0
-	if !f.usesScraper(mode) && !useCurl {
+	useTLS := mode == FetchViaProxy && f.tlsProxy != nil
+	if !f.usesScraper(mode) && !useTLS {
 		if until, paused := f.proxyPaused(); paused {
 			status, _ := f.ProxyError()
 			return nil, Validators{}, fmt.Errorf("%w: %s (pobieranie wstrzymane do %s)", ErrProxy, status, until.Format("15:04"))
@@ -402,8 +399,8 @@ func retryable(err error) bool {
 }
 
 func (f *Fetcher) fetchOnce(targetUrl string, prev Validators, mode FetchMode) ([]byte, Validators, error) {
-	if mode == FetchViaProxy && f.curlImpersonate != "" && len(f.proxies) > 0 {
-		body, err := f.fetchWithCurl(targetUrl)
+	if mode == FetchViaProxy && f.tlsProxy != nil {
+		body, err := f.tlsProxy.fetch(targetUrl)
 		return body, Validators{}, err
 	}
 	body, err := f.fetchBody(targetUrl, prev, mode)

@@ -155,6 +155,9 @@ func (f *Fetcher) proxyWorked(used *url.URL) {
 }
 
 func (f *Fetcher) ProxyHost() string {
+	if f.tlsProxy != nil {
+		return f.tlsProxy.host + " (tls-client)"
+	}
 	f.proxyMu.Lock()
 	defer f.proxyMu.Unlock()
 	if len(f.proxies) == 0 {
