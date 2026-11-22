@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE = 'watplan-v2';
+const CACHE = 'watplan-dev';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -66,8 +66,8 @@ self.addEventListener('push', (event) => {
         body: data.body || '',
         tag: data.tag || 'plan',
         renotify: true,
-        icon: '/favicon-192.png?v=3',
-        badge: '/favicon-192.png?v=3',
+        icon: '/favicon-192.png?v=0',
+        badge: '/favicon-192.png?v=0',
         data: { url: data.url || '/app' },
     }));
 });

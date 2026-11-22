@@ -28,6 +28,11 @@ WAT publishes class schedules as static plansoft HTML pages, which are hard to r
 3. A Go server renders the weekly view
 4. A background check detects changes in the source schedule and updates the data
 
+Static files are embedded in the binary. At startup the server replaces every
+`?v=...` in links to local files (HTML, CSS, JS, `manifest.json`, `sw.js`) with a hash
+of that file's content, and names the service worker cache after a hash of all
+files. Write new links as `/file.js?v=0`; there is no version to bump by hand.
+
 ## Getting started
 
 ```bash

@@ -113,7 +113,11 @@ func NewServer(registry *config.Registry, store *store.Store, updater *updater.U
 }
 
 func (s *Server) Handler() (http.Handler, error) {
-	static, err := fs.Sub(webFS, "web")
+	sub, err := fs.Sub(webFS, "web")
+	if err != nil {
+		return nil, err
+	}
+	static, err := newAssetFS(sub)
 	if err != nil {
 		return nil, err
 	}
