@@ -1154,7 +1154,8 @@ async function refreshServer() {
     try {
         await fetchJSON('/api/refresh?plan=' + encodeURIComponent(currentPlanId), { method: 'POST' });
         await loadPlan();
-        setNotice('Plan odświeżony z WAT', false);
+        setNotice('Odświeżanie w tle...', false);
+        setTimeout(() => { if (currentPlanId) loadPlan(); }, 1500);
     } catch (err) {
         setNotice(err.message, true);
     } finally {

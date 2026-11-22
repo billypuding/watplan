@@ -31,7 +31,7 @@ import (
 var webFS embed.FS
 
 const (
-	refreshCooldown = 2 * time.Minute
+	refreshCooldown = time.Minute
 
 	staleAfter = time.Hour
 	staleRetry = 30 * time.Minute
@@ -499,19 +499,23 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if wait := s.reserveRefresh(plan.ID); wait > 0 {
-		w.Header().Set("Retry-After", strconv.Itoa(int(wait.Seconds())+1))
-		writeError(w, http.StatusTooManyRequests, "ten plan był odświeżany przed chwilą, spróbuj za moment")
+	if wait := s.reserveRefresh(plan.ID); wait <= 0 {
+		go func() {
+			if err := s.updater.UpdateManual(plan); err != nil {
+				log.Printf("ręczne odświeżanie planu %s: %v", plan.ID, err)
+			}
+		}()
+	}
+
+	data, err := s.store.Raw(plan.ID)
+	if err == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-Plan-Refresh", "background")
+		w.Write(data)
 		return
 	}
 
-	if err := s.updater.UpdateManual(plan); err != nil {
-		log.Printf("ręczne odświeżanie planu %s: %v", plan.ID, err)
-		s.writeUpdateError(w, err)
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	writeJSON(w, http.StatusAccepted, map[string]string{"status": "refreshing"})
 }
 
 func (s *Server) refreshIfStale(plan config.PlanConfig) <-chan struct{} {
