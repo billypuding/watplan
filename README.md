@@ -99,10 +99,17 @@ retries once. If the proxy still fails, the refresh falls back to the scraping A
 The proxy login is built as
 `customer-<user>-cc-PL-sessid-<id>-sesstime-1440` (24 hours, Oxylabs' maximum).
 
-Opening a plan always returns the cached copy right away. If the plan was last
-checked (`checked_at`, updated on `200` and `304`) more than 10 minutes ago, the
-server checks it in the background through the scraping API, at most once per
-plan every 10 minutes and never while another fetch of that plan is running.
+Opening a plan always returns the cached copy right away. The server then checks
+it in the background through the scraping API if the last check (`checked_at`,
+updated on `200` and `304`) is older than an interval that depends on when the
+content last changed (`modified_at`):
+
+- changed in the last 24 hours: every 10 minutes,
+- unchanged for 1 to 7 days: every hour,
+- unchanged for more than 7 days: every 4 hours.
+
+Each plan is checked at most once per interval and never while another fetch of
+that plan is running.
 The response then carries `X-Plan-Refresh: background` (otherwise `none`), and the
 app polls quietly after 2, 5, 10 and 20 seconds, swapping the plan in place and
 showing "Plan zaktualizowany" only if the classes changed.
@@ -114,7 +121,7 @@ A manual refresh also returns the cached plan immediately, with `X-Plan-Refresh`
 - `cooldown`: refreshed less than a minute ago,
 - `background`: fetched through the proxy, falling back to the scraping API.
 
-The 10 and 15 minute windows are `visitCheckEvery` and `manualFreshFor` in
+The intervals are `visitIntervals` and the 15 minute window is `manualFreshFor` in
 `internal/server/server.go`.
 
 ScrapingAnt's free plan includes 10,000 credits a month; a plain datacenter request

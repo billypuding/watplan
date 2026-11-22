@@ -32,12 +32,33 @@ import (
 var webFS embed.FS
 
 const (
-	refreshCooldown = time.Minute
-	visitCheckEvery = 10 * time.Minute
-	manualFreshFor  = 15 * time.Minute
+	refreshCooldown  = time.Minute
+	manualFreshFor   = 15 * time.Minute
+	ensureRetryEvery = 10 * time.Minute
 
 	timeLayout = "2006-01-02 15:04:05"
 )
+
+var visitIntervals = []struct {
+	unchangedFor time.Duration
+	every        time.Duration
+}{
+	{7 * 24 * time.Hour, 4 * time.Hour},
+	{24 * time.Hour, time.Hour},
+	{0, 10 * time.Minute},
+}
+
+func visitInterval(modified time.Time, known bool, now time.Time) time.Duration {
+	if known {
+		age := now.Sub(modified)
+		for _, v := range visitIntervals {
+			if age >= v.unchangedFor {
+				return v.every
+			}
+		}
+	}
+	return visitIntervals[len(visitIntervals)-1].every
+}
 
 var warsawLoc = func() *time.Location {
 	loc, err := time.LoadLocation("Europe/Warsaw")
@@ -575,17 +596,34 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusAccepted, map[string]string{"status": status})
 }
 
-func checkedAt(data []byte) (time.Time, bool) {
+type planTimes struct {
+	checked, modified           time.Time
+	checkedKnown, modifiedKnown bool
+}
+
+func readPlanTimes(data []byte) planTimes {
 	var stamps struct {
-		FetchedAt string `json:"fetched_at"`
-		CheckedAt string `json:"checked_at"`
+		FetchedAt  string `json:"fetched_at"`
+		CheckedAt  string `json:"checked_at"`
+		ModifiedAt string `json:"modified_at"`
 	}
+	var t planTimes
 	if err := json.Unmarshal(data, &stamps); err != nil {
-		return time.Time{}, false
+		return t
 	}
 	plan := model.Plan{FetchedAt: stamps.FetchedAt, CheckedAt: stamps.CheckedAt}
-	at, err := time.ParseInLocation(timeLayout, plan.LastChecked(), warsawLoc)
-	return at, err == nil
+	if at, err := time.ParseInLocation(timeLayout, plan.LastChecked(), warsawLoc); err == nil {
+		t.checked, t.checkedKnown = at, true
+	}
+	if at, err := time.ParseInLocation(timeLayout, stamps.ModifiedAt, warsawLoc); err == nil {
+		t.modified, t.modifiedKnown = at, true
+	}
+	return t
+}
+
+func checkedAt(data []byte) (time.Time, bool) {
+	t := readPlanTimes(data)
+	return t.checked, t.checkedKnown
 }
 
 func (s *Server) busyLocked(id string) bool {
@@ -614,7 +652,7 @@ func (s *Server) startEnsure(plan config.PlanConfig) error {
 	if s.busyLocked(plan.ID) {
 		return nil
 	}
-	if err := s.ensureErr[plan.ID]; err != nil && time.Since(s.lastEnsure[plan.ID]) < visitCheckEvery {
+	if err := s.ensureErr[plan.ID]; err != nil && time.Since(s.lastEnsure[plan.ID]) < ensureRetryEvery {
 		return err
 	}
 	s.lastEnsure[plan.ID] = time.Now()
@@ -655,12 +693,14 @@ func (s *Server) startManual(plan config.PlanConfig) string {
 }
 
 func (s *Server) checkOnVisit(plan config.PlanConfig, data []byte) bool {
-	if checked, ok := checkedAt(data); ok && time.Since(checked) < visitCheckEvery {
+	times := readPlanTimes(data)
+	every := visitInterval(times.modified, times.modifiedKnown, time.Now())
+	if times.checkedKnown && time.Since(times.checked) < every {
 		return false
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if time.Since(s.lastVisit[plan.ID]) < visitCheckEvery || s.busyLocked(plan.ID) {
+	if time.Since(s.lastVisit[plan.ID]) < every || s.busyLocked(plan.ID) {
 		return false
 	}
 	s.lastVisit[plan.ID] = time.Now()

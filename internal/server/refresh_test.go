@@ -25,7 +25,7 @@ type refreshEnv struct {
 	apiHits   atomic.Int64
 }
 
-func newRefreshEnv(t *testing.T, api http.HandlerFunc, checkedAt string) *refreshEnv {
+func newRefreshEnv(t *testing.T, api http.HandlerFunc, checkedAt string, modifiedAt ...string) *refreshEnv {
 	t.Helper()
 	env := &refreshEnv{}
 
@@ -55,9 +55,10 @@ func newRefreshEnv(t *testing.T, api http.HandlerFunc, checkedAt string) *refres
 		t.Fatal(err)
 	}
 	plan := model.Plan{
-		FetchedAt: checkedAt,
-		CheckedAt: checkedAt,
-		Events:    []model.Event{{Date: "2026-11-23", Start: "08:00", End: "09:35", Subject: "Stary"}},
+		FetchedAt:  checkedAt,
+		CheckedAt:  checkedAt,
+		ModifiedAt: strings.Join(modifiedAt, ""),
+		Events:     []model.Event{{Date: "2026-11-23", Start: "08:00", End: "09:35", Subject: "Stary"}},
 	}
 	if err := st.Save(refreshTestPlan, plan); err != nil {
 		t.Fatal(err)
@@ -188,12 +189,12 @@ func TestVisitChecksAPIOncePerWindow(t *testing.T) {
 	}
 
 	env.srv.mu.Lock()
-	env.srv.lastVisit[refreshTestPlan] = time.Now().Add(-visitCheckEvery - time.Second)
+	env.srv.lastVisit[refreshTestPlan] = time.Now().Add(-visitIntervals[len(visitIntervals)-1].every - time.Second)
 	env.srv.mu.Unlock()
 	env.visit(t)
 	waitFor(t, func() bool { return !env.srv.busy(refreshTestPlan) })
 	if env.apiHits.Load() != 2 {
-		t.Fatalf("zapytań do API po %v = %d, chcę 2", visitCheckEvery, env.apiHits.Load())
+		t.Fatalf("zapytań do API po %v = %d, chcę 2", visitIntervals[len(visitIntervals)-1].every, env.apiHits.Load())
 	}
 	if env.proxyHits.Load() != 0 {
 		t.Fatalf("zapytań do proxy = %d, chcę 0", env.proxyHits.Load())
@@ -259,5 +260,54 @@ func TestVisitDuringBackgroundFetchIsFast(t *testing.T) {
 				t.Fatalf("Server-Timing = %q, brak %q", timing, part)
 			}
 		}
+	}
+}
+
+func TestVisitIntervalThresholds(t *testing.T) {
+	now := time.Date(2026, 11, 22, 12, 0, 0, 0, warsawLoc)
+	cases := []struct {
+		unchanged time.Duration
+		known     bool
+		want      time.Duration
+	}{
+		{0, true, 10 * time.Minute},
+		{23*time.Hour + 59*time.Minute, true, 10 * time.Minute},
+		{24 * time.Hour, true, time.Hour},
+		{3 * 24 * time.Hour, true, time.Hour},
+		{7*24*time.Hour - time.Minute, true, time.Hour},
+		{7 * 24 * time.Hour, true, 4 * time.Hour},
+		{60 * 24 * time.Hour, true, 4 * time.Hour},
+		{0, false, 10 * time.Minute},
+	}
+	for _, c := range cases {
+		if got := visitInterval(now.Add(-c.unchanged), c.known, now); got != c.want {
+			t.Errorf("bez zmian od %v (znane: %v): co %v, chcę %v", c.unchanged, c.known, got, c.want)
+		}
+	}
+}
+
+func TestVisitUsesAdaptiveInterval(t *testing.T) {
+	cases := []struct {
+		name              string
+		modified, checked time.Duration
+		fetch             bool
+	}{
+		{"zmieniony 2 h temu, sprawdzony 15 min temu", 2 * time.Hour, 15 * time.Minute, true},
+		{"zmieniony 2 h temu, sprawdzony 5 min temu", 2 * time.Hour, 5 * time.Minute, false},
+		{"bez zmian 3 dni, sprawdzony 30 min temu", 3 * 24 * time.Hour, 30 * time.Minute, false},
+		{"bez zmian 3 dni, sprawdzony 2 h temu", 3 * 24 * time.Hour, 2 * time.Hour, true},
+		{"bez zmian 10 dni, sprawdzony 2 h temu", 10 * 24 * time.Hour, 2 * time.Hour, false},
+		{"bez zmian 10 dni, sprawdzony 5 h temu", 10 * 24 * time.Hour, 5 * time.Hour, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			env := newRefreshEnv(t, gone, checkedAgo(c.checked), checkedAgo(c.modified))
+			got := env.visit(t)
+			waitFor(t, func() bool { return !env.srv.busy(refreshTestPlan) })
+			fetched := env.apiHits.Load() > 0
+			if fetched != c.fetch || (got == "background") != c.fetch {
+				t.Fatalf("pobranie = %v, X-Plan-Refresh = %q, chcę pobranie = %v", fetched, got, c.fetch)
+			}
+		})
 	}
 }

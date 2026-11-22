@@ -49,7 +49,7 @@ func BenchmarkCheckedAt(b *testing.B) {
 	}
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		if _, ok := checkedAt(data); !ok {
+		if !readPlanTimes(data).checkedKnown {
 			b.Fatal("brak czasu")
 		}
 	}
