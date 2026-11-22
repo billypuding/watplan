@@ -66,6 +66,7 @@ type Server struct {
 	mu          sync.Mutex
 	lastRefresh map[string]time.Time
 	lastVisit   map[string]time.Time
+	blobs       planBlobs
 	lastEnsure  map[string]time.Time
 	ensureErr   map[string]error
 	inflight    map[string]bool
@@ -139,7 +140,7 @@ func (s *Server) Handler() (http.Handler, error) {
 	}
 
 	mux.HandleFunc("/api/plans", withGzip(s.handlePlans))
-	mux.HandleFunc("/api/plan/", s.waitReady(withGzip(s.handlePlan)))
+	mux.HandleFunc("/api/plan/", s.waitReady(s.handlePlan))
 	mux.HandleFunc("/api/refresh", s.waitReady(s.handleRefresh))
 	mux.HandleFunc("/api/status", s.handleStatus)
 	mux.HandleFunc("/api/changes/", s.waitReady(withGzip(s.handleChanges)))
@@ -271,18 +272,23 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sum := sha1.Sum(data)
-	etag := `"` + hex.EncodeToString(sum[:10]) + `"`
-	w.Header().Set("ETag", etag)
+	blob := s.blobs.get(plan.ID, data)
+	w.Header().Set("ETag", blob.etag)
 	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Vary", "Accept-Encoding")
 	t.mark("etag")
 	w.Header().Set("Server-Timing", t.header())
-	if etagMatches(r.Header.Get("If-None-Match"), etag) {
+	if etagMatches(r.Header.Get("If-None-Match"), blob.etag) {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
+	body, encoding := blob.encoded(r.Header.Get("Accept-Encoding"))
+	if encoding != "" {
+		w.Header().Set("Content-Encoding", encoding)
+	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+	w.Write(body)
 	t.mark("write")
 }
 
