@@ -153,6 +153,10 @@ export async function startBrowser() {
         async text(selector) {
             return page.eval(`document.querySelector(${JSON.stringify(selector)})?.textContent ?? null`);
         },
+        async offline(on) {
+            await send('Network.enable');
+            await send('Network.emulateNetworkConditions', { offline: on, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+        },
         async emulateMedia(features) {
             await send('Emulation.setEmulatedMedia', { features });
         },

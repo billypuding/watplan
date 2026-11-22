@@ -109,6 +109,31 @@ test('bez błędów CSP i Permissions-Policy na stronach i w akcjach', { skip },
     assert.deepEqual(page.errors, []);
 });
 
+test('offline: polskie komunikaty i zapisany plan', { skip }, async () => {
+    await page.goto(app());
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    await page.offline(true);
+    try {
+        await page.eval(`selectPlan('WMT26AX1S1', 'WMT26AX1S1'), true`);
+        await page.waitFor(`document.querySelector('#view .message.error') !== null`);
+        const message = await page.text('#view .message.error');
+        assert.match(message, /Brak połączenia z internetem/);
+        assert.doesNotMatch(message, /Failed to fetch|NetworkError|Load failed/);
+        assert.equal(await page.eval(`document.querySelector('#notice').classList.contains('show')`), false);
+
+        await page.eval(`selectPlan('WMT26AX3S1', 'WMT26AX3S1'), true`);
+        await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+        await page.waitFor(`document.querySelector('#notice').textContent.includes('zapisaną wersję')`);
+
+        await page.click('#refreshButton');
+        await page.waitFor(`document.querySelector('#notice').textContent.includes('Brak połączenia')`);
+        assert.doesNotMatch(await page.text('#notice'), /Failed to fetch/);
+    } finally {
+        await page.offline(false);
+    }
+    assert.deepEqual(page.errors, []);
+});
+
 test('telefon: domyślnie widok dnia z bieżącymi zajęciami', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);

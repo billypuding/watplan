@@ -298,6 +298,16 @@ function setNotice(text, isError) {
     if (text) noticeTimer = setTimeout(() => notice.classList.remove('show'), NOTICE_MS);
 }
 
+const OFFLINE_TEXT = 'Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.';
+const OFFLINE_PLAN_TEXT = 'Brak połączenia z internetem, a tego planu nie ma jeszcze zapisanego na tym urządzeniu. Otwórz go ponownie, gdy wróci sieć.';
+
+const isNetworkError = (err) => !navigator.onLine || err instanceof TypeError;
+
+function errorText(err, fallback = 'Coś poszło nie tak. Spróbuj ponownie.') {
+    if (isNetworkError(err)) return OFFLINE_TEXT;
+    return (err && err.message) || fallback;
+}
+
 async function fetchJSON(url, options) {
     const response = await fetch(url, options);
     let body = null;
@@ -507,7 +517,7 @@ async function loadPlans() {
     } catch (err) {
         if (currentPlanId) return;
         status = 'error';
-        statusMessage = err.message;
+        statusMessage = errorText(err);
         render();
     }
 }
@@ -550,6 +560,7 @@ function selectPlan(id, name) {
     if (id === currentPlanId) return;
     currentPlanId = id;
     groupLabel.textContent = name;
+    setNotice('');
     safeSet('selectedPlan', currentPlanId);
     const url = new URL(window.location);
     url.searchParams.set('plan', currentPlanId);
@@ -649,7 +660,7 @@ async function loadPlan(quiet = false) {
         fetchedLabel.textContent = '-';
         modifiedLabel.textContent = '-';
         status = 'error';
-        statusMessage = err.message;
+        statusMessage = isNetworkError(err) ? OFFLINE_PLAN_TEXT : errorText(err);
     }
     render();
     return null;
@@ -1101,7 +1112,7 @@ function makeupSection(list, next) {
                 h('p', { class: 'hint' }, upcoming.length ? `Zajęcia nr ${n} w innych grupach ${data.cohort}:` : `Wszystkie terminy zajęć nr ${n} w innych grupach ${data.cohort} już minęły.`),
                 list, morePast);
         } catch (err) {
-            results.replaceChildren(h('p', { class: 'hint error' }, err.message));
+            results.replaceChildren(h('p', { class: 'hint error' }, errorText(err)));
         }
     };
     select.addEventListener('change', load);
@@ -1273,7 +1284,7 @@ async function refreshServer() {
         else if (outcome === 'changed') setNotice('Plan zaktualizowany', false);
         else if (outcome === 'timeout') setNotice('Odświeżanie trwa dłużej niż zwykle, spróbuj ponownie później', true);
     } catch (err) {
-        setNotice(err.message, true);
+        setNotice(errorText(err), true);
     } finally {
         refreshButton.disabled = false;
         refreshButton.classList.remove('spinning');
@@ -1521,7 +1532,7 @@ async function renderChanges(planId) {
         }
         changesBody.replaceChildren(summary, ...list.map(renderChangeEntry));
     } catch (err) {
-        changesBody.replaceChildren(h('div', { class: 'message error' }, err.message));
+        changesBody.replaceChildren(h('div', { class: 'message error' }, errorText(err)));
     }
 }
 
@@ -1613,7 +1624,7 @@ pushToggle.addEventListener('change', async () => {
         setNotice(enable ? `Powiadomienia o zmianach w ${currentPlanId} włączone` : 'Powiadomienia wyłączone', false);
     } catch (err) {
         pushToggle.checked = !enable;
-        setNotice(err.message || 'Nie udało się zmienić powiadomień', true);
+        setNotice(errorText(err, 'Nie udało się zmienić powiadomień'), true);
     } finally {
         syncPushUI();
     }
@@ -1805,7 +1816,7 @@ async function loadRooms() {
             free.length > 1 ? ` w ${free.length} budynkach` : ` w bud. ${free[0].building}`);
         roomsBody.replaceChildren(summary, ...free.map(roomsBuildingCard));
     } catch (err) {
-        if (id === roomsRequest) roomsBody.replaceChildren(h('div', { class: 'message error' }, err.message));
+        if (id === roomsRequest) roomsBody.replaceChildren(h('div', { class: 'message error' }, errorText(err)));
     }
 }
 
@@ -1922,7 +1933,7 @@ async function renderCompare() {
     try {
         data = await Promise.all(ids.map(compareEvents));
     } catch (err) {
-        compareBody.replaceChildren(nav, h('div', { class: 'message error' }, err.message));
+        compareBody.replaceChildren(nav, h('div', { class: 'message error' }, errorText(err)));
         return;
     }
     if (week !== compareWeek || ids.join() !== compareIds.join()) return;
