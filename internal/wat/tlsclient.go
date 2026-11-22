@@ -22,7 +22,7 @@ type tlsProxyClient struct {
 	host    string
 	user    string
 	pass    string
-	mu      sync.Mutex
+	mu      sync.RWMutex
 	session string
 }
 
@@ -44,10 +44,11 @@ func newTLSProxyClient() (*tlsProxyClient, error) {
 		return nil, fmt.Errorf("PLANWAT_PROXY_HOST wymaga PLANWAT_PROXY_USER i PLANWAT_PROXY_PASS")
 	}
 
-	c := &tlsProxyClient{host: host, user: user, pass: pass}
-	if err := c.rotate(); err != nil {
+	session, err := randomSession()
+	if err != nil {
 		return nil, err
 	}
+	c := &tlsProxyClient{host: host, user: user, pass: pass, session: session}
 
 	jar := tls_client.NewCookieJar()
 	client, err := tls_client.NewHttpClient(nil,
@@ -64,14 +65,16 @@ func newTLSProxyClient() (*tlsProxyClient, error) {
 	return c, nil
 }
 
+const proxySessionMinutes = "1440"
+
 func (c *tlsProxyClient) proxyURL() string {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.proxyURLLocked()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.proxyURLFor(c.session)
 }
 
-func (c *tlsProxyClient) proxyURLLocked() string {
-	login := proxyLogin(c.user) + "-sessid-" + c.session + "-sesstime-10"
+func (c *tlsProxyClient) proxyURLFor(session string) string {
+	login := proxyLogin(c.user) + "-sessid-" + session + "-sesstime-" + proxySessionMinutes
 	u := url.URL{Scheme: "http", Host: c.host, User: url.UserPassword(login, c.pass)}
 	return u.String()
 }
@@ -99,41 +102,48 @@ func randomSession() (string, error) {
 	return hex.EncodeToString(buf), nil
 }
 
-func (c *tlsProxyClient) rotate() error {
+func (c *tlsProxyClient) rotateFrom(seen string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.session != seen {
+		return nil
+	}
 	session, err := randomSession()
 	if err != nil {
 		return err
 	}
-	c.mu.Lock()
-	c.session = session
-	proxy := c.proxyURLLocked()
-	c.mu.Unlock()
-
 	if c.client != nil {
-		if err := c.client.SetProxy(proxy); err != nil {
+		if err := c.client.SetProxy(c.proxyURLFor(session)); err != nil {
 			return err
 		}
 		c.client.SetCookieJar(tls_client.NewCookieJar())
 	}
+	c.session = session
 	return nil
 }
 
-func (c *tlsProxyClient) fetch(target string) ([]byte, error) {
+func (c *tlsProxyClient) fetch(target string, prev Validators) ([]byte, Validators, error) {
 	var lastErr error
 	for attempt := 0; attempt < 2; attempt++ {
-		body, err := c.do(target)
+		c.mu.RLock()
+		session := c.session
+		body, got, err := c.do(target, prev)
+		c.mu.RUnlock()
 		if err == nil {
-			return body, nil
+			return body, got, nil
+		}
+		if errors.Is(err, ErrNotModified) {
+			return nil, prev, err
 		}
 		lastErr = err
 		if attempt == 1 || !retryNewSession(err) {
 			break
 		}
-		if err := c.rotate(); err != nil {
-			return nil, err
+		if err := c.rotateFrom(session); err != nil {
+			return nil, Validators{}, err
 		}
 	}
-	return nil, lastErr
+	return nil, Validators{}, lastErr
 }
 
 func retryNewSession(err error) bool {
@@ -147,10 +157,10 @@ func retryNewSession(err error) bool {
 	return strings.Contains(strings.ToLower(err.Error()), "407")
 }
 
-func (c *tlsProxyClient) do(target string) ([]byte, error) {
+func (c *tlsProxyClient) do(target string, prev Validators) ([]byte, Validators, error) {
 	req, err := http.NewRequest(http.MethodGet, target, nil)
 	if err != nil {
-		return nil, err
+		return nil, Validators{}, err
 	}
 	req.Header = http.Header{
 		"accept":                    {"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"},
@@ -176,33 +186,44 @@ func (c *tlsProxyClient) do(target string) ([]byte, error) {
 			"sec-fetch-mode",
 			"sec-fetch-user",
 			"sec-fetch-dest",
+			"if-none-match",
+			"if-modified-since",
 		},
+	}
+	if prev.ETag != "" {
+		req.Header.Set("if-none-match", prev.ETag)
+	}
+	if prev.LastModified != "" {
+		req.Header.Set("if-modified-since", prev.LastModified)
 	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, Validators{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
 	if err != nil {
-		return nil, err
+		return nil, Validators{}, err
 	}
 
 	switch {
+	case resp.StatusCode == http.StatusNotModified && !prev.empty():
+		return nil, prev, ErrNotModified
 	case resp.StatusCode == http.StatusProxyAuthRequired:
-		return nil, fmt.Errorf("%w: HTTP 407", ErrProxy)
+		return nil, Validators{}, fmt.Errorf("%w: HTTP 407", ErrProxy)
 	case resp.StatusCode == http.StatusForbidden:
-		return nil, fmt.Errorf("%w (HTTP 403)", ErrBlocked)
+		return nil, Validators{}, fmt.Errorf("%w (HTTP 403)", ErrBlocked)
 	case resp.StatusCode < 200 || resp.StatusCode > 299:
-		return nil, &statusError{status: resp.StatusCode}
+		return nil, Validators{}, &statusError{status: resp.StatusCode}
 	}
 	if len(body) == 0 {
-		return nil, fmt.Errorf("%w: pusta odpowiedź", ErrProxy)
+		return nil, Validators{}, fmt.Errorf("%w: pusta odpowiedź", ErrProxy)
 	}
 	if isWAFBlockBody(body) {
-		return nil, fmt.Errorf("%w (tls-client)", ErrBlocked)
+		return nil, Validators{}, fmt.Errorf("%w (tls-client)", ErrBlocked)
 	}
-	return body, nil
+	got := Validators{ETag: resp.Header.Get("ETag"), LastModified: resp.Header.Get("Last-Modified")}
+	return body, got, nil
 }

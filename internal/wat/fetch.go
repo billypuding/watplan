@@ -400,8 +400,7 @@ func retryable(err error) bool {
 
 func (f *Fetcher) fetchOnce(targetUrl string, prev Validators, mode FetchMode) ([]byte, Validators, error) {
 	if mode == FetchViaProxy && f.tlsProxy != nil {
-		body, err := f.tlsProxy.fetch(targetUrl)
-		return body, Validators{}, err
+		return f.tlsProxy.fetch(targetUrl, prev)
 	}
 	body, err := f.fetchBody(targetUrl, prev, mode)
 	return body.data, body.validators, err
