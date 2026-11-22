@@ -218,7 +218,7 @@ func withCanonicalHost(next http.Handler, canonical string) http.Handler {
 		if h, _, err := net.SplitHostPort(host); err == nil {
 			host = h
 		}
-		if host == canonical || !strings.HasSuffix(host, ".onrender.com") ||
+		if host == canonical || host == "" || host == "localhost" || net.ParseIP(host) != nil ||
 			strings.HasPrefix(r.URL.Path, "/api/") || r.URL.Path == "/sw.js" {
 			next.ServeHTTP(w, r)
 			return

@@ -33,6 +33,11 @@ Static files are embedded in the binary. At startup the server replaces every
 of that file's content, and names the service worker cache after a hash of all
 files. Write new links as `/file.js?v=0`; there is no version to bump by hand.
 
+With `PLANWAT_CANONICAL_HOST=watplan.me`, every other host name (for example
+`www.watplan.me` or `*.onrender.com`) gets a `301` to `https://watplan.me` with the
+same path and query. `/api/` and `/sw.js` are left alone for older installs, and so
+are `localhost` and bare IP addresses (health checks).
+
 Cache headers are set so that a CDN in front of the server (e.g. Cloudflare) only
 keeps what is safe to share:
 

@@ -301,8 +301,19 @@ func TestCanonicalHostRedirect(t *testing.T) {
 		{"watplan.onrender.com:443", "/o-watplan", http.StatusMovedPermanently, "https://watplan.me/o-watplan"},
 		{"watplan.onrender.com", "/api/plans", http.StatusOK, ""},
 		{"watplan.onrender.com", "/sw.js", http.StatusOK, ""},
+		{"www.watplan.me", "/", http.StatusMovedPermanently, "https://watplan.me/"},
+		{"www.watplan.me", "/app?plan=WEL26EY4S0", http.StatusMovedPermanently, "https://watplan.me/app?plan=WEL26EY4S0"},
+		{"WWW.WatPlan.me:443", "/o-watplan?x=1", http.StatusMovedPermanently, "https://watplan.me/o-watplan?x=1"},
+		{"www.watplan.me", "/api/plans", http.StatusOK, ""},
+		{"www.watplan.me", "/sw.js", http.StatusOK, ""},
+		{"watplan-abc1.onrender.com", "/app", http.StatusMovedPermanently, "https://watplan.me/app"},
+		{"inna-domena.pl", "/", http.StatusMovedPermanently, "https://watplan.me/"},
 		{"watplan.me", "/", http.StatusOK, ""},
+		{"watplan.me", "/app?plan=WEL26EY4S0", http.StatusOK, ""},
+		{"watplan.me:443", "/", http.StatusOK, ""},
 		{"127.0.0.1:8080", "/", http.StatusOK, ""},
+		{"localhost:8080", "/", http.StatusOK, ""},
+		{"10.0.3.7:10000", "/app", http.StatusOK, ""},
 	}
 	for _, c := range cases {
 		req := httptest.NewRequest(http.MethodGet, c.path, nil)
