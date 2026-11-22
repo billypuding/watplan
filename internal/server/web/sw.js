@@ -33,6 +33,7 @@ self.addEventListener('activate', (event) => {
 
 function shellKey(url) {
     if (url.pathname === '/app') return '/app';
+    if (/^\/plan\/[^/]+\/?$/.test(url.pathname)) return url.pathname;
     if (url.pathname === '/' && !url.searchParams.has('plan') && !url.searchParams.has('view')) return '/';
     return null;
 }
@@ -97,7 +98,8 @@ self.addEventListener('notificationclick', (event) => {
     event.waitUntil((async () => {
         const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
         for (const client of windows) {
-            if (new URL(client.url).pathname === '/app' && 'navigate' in client) {
+            const path = new URL(client.url).pathname;
+            if ((path === '/app' || path.startsWith('/plan/')) && 'navigate' in client) {
                 await client.focus();
                 return client.navigate(target);
             }

@@ -35,7 +35,7 @@ test('strona główna: wyszukanie grupy otwiera jej plan', { skip }, async () =>
     await page.eval(`(() => { const i = document.querySelector('#group'); i.value = 'WMT26AX3'; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
     await page.waitFor(`[...document.querySelectorAll('#group-results button, #group-results a')].some(b => b.textContent.includes('WMT26AX3S1'))`);
     await page.eval(`[...document.querySelectorAll('#group-results button, #group-results a')].find(b => b.textContent.includes('WMT26AX3S1')).click()`);
-    await page.waitFor(`location.pathname === '/app' && location.search.includes('WMT26AX3S1')`);
+    await page.waitFor(`location.pathname === '/plan/WMT26AX3S1'`);
     await page.waitFor(`document.querySelector('.day-title h1')?.textContent === 'Czwartek'`);
     assert.deepEqual(page.errors, []);
 });
@@ -131,6 +131,20 @@ test('offline: polskie komunikaty i zapisany plan', { skip }, async () => {
     } finally {
         await page.offline(false);
     }
+    assert.deepEqual(page.errors, []);
+});
+
+test('strona grupy /plan/ID: tytuł, indeksowanie i przełączanie', { skip }, async () => {
+    await page.goto(server.base + '/plan/WMT26AX3S1');
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    assert.match(await page.eval('document.title'), /WMT26AX3S1/);
+    assert.equal(await page.eval(`document.querySelector('meta[name=robots]').content`), 'index, follow');
+    assert.match(await page.eval(`document.querySelector('link[rel=canonical]').href`), /\/plan\/WMT26AX3S1$/);
+    const paths = JSON.parse(await page.eval(`JSON.stringify(performance.getEntriesByType('resource').map(r => new URL(r.name).pathname))`));
+    assert.equal(paths.filter(p => p === '/api/plan/WMT26AX3S1').length, 1);
+    assert.equal(await page.eval(`window.earlyPlan && window.earlyPlan.id`), 'WMT26AX3S1');
+    await page.eval(`selectPlan('WMT26AX1S1', 'WMT26AX1S1'), true`);
+    await page.waitFor(`location.pathname === '/plan/WMT26AX1S1' && !location.search.includes('plan=')`);
     assert.deepEqual(page.errors, []);
 });
 

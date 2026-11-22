@@ -46,6 +46,14 @@ the site itself, umami (`cloud.umami.is`, `gateway.umami.is`) and no framing
 (`frame-ancestors 'none'`). Inline scripts are allowed by their `sha256` hashes, which
 `assets.go` computes at startup from the served HTML, so there is no `'unsafe-inline'`.
 
+Every group also has an indexable page, `/plan/<ID>` (e.g. `/plan/WMT26AX3S1`): the same app
+with its own title, description, canonical URL, breadcrumbs (JSON-LD) and a short text about
+the group for crawlers. `/app` stays `noindex`. The landing page and favourites link to
+`/plan/<ID>`, and `/sitemap.xml` lists every group that has a plan, with the date of its last
+change. Requests from crawlers and monitors (user agents with `bot`, `crawl`, `spider`, ...)
+never start a fetch from WAT, so indexing costs no scraping credits; `robots.txt` lets them
+read `/api/plan/` and `/api/plans`, which the page needs to render.
+
 Cache headers are set so that a CDN in front of the server (e.g. Cloudflare) only
 keeps what is safe to share:
 

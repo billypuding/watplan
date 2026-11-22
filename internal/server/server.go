@@ -184,6 +184,8 @@ func (s *Server) Handler() (http.Handler, error) {
 		return nil, err
 	}
 	mux.HandleFunc("/app", htmlPage(appPage))
+	mux.HandleFunc("/plan/", s.handlePlanPage(appPage))
+	mux.HandleFunc("/sitemap.xml", s.handleSitemap)
 	faqPage, err := fs.ReadFile(static, "o-watplan.html")
 	if err != nil {
 		return nil, err
@@ -337,7 +339,11 @@ func (s *Server) planData(w http.ResponseWriter, r *http.Request, plan config.Pl
 	data, err := s.store.Raw(id)
 	t.mark("read")
 	if errors.Is(err, fs.ErrNotExist) && s.options.OnDemand && s.updater != nil && !wait {
-		if ensureErr := s.startEnsure(plan, s.clientIP(r)); ensureErr != nil {
+		ensureErr := error(errNoPlanData)
+		if !isBot(r) {
+			ensureErr = s.startEnsure(plan, s.clientIP(r))
+		}
+		if ensureErr != nil {
 			s.writeUpdateError(w, ensureErr)
 			return nil, false
 		}
@@ -362,7 +368,7 @@ func (s *Server) planData(w http.ResponseWriter, r *http.Request, plan config.Pl
 	}
 	if err == nil && s.options.OnDemand && s.updater != nil {
 		refresh := "none"
-		if s.checkOnVisit(plan, data, s.clientIP(r)) {
+		if s.checkOnVisit(plan, data, s.clientIP(r), isBot(r)) {
 			refresh = "background"
 		}
 		w.Header().Set("X-Plan-Refresh", refresh)
@@ -705,7 +711,10 @@ func (s *Server) startManual(plan config.PlanConfig, ip string) string {
 	return "background"
 }
 
-func (s *Server) checkOnVisit(plan config.PlanConfig, data []byte, ip string) bool {
+func (s *Server) checkOnVisit(plan config.PlanConfig, data []byte, ip string, bot bool) bool {
+	if bot {
+		return false
+	}
 	d := s.updater.Decide(plan, readPlanTimes(data), time.Now())
 	if !d.Due && !d.NeedIndex {
 		if d.ViaIndex {

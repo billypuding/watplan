@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
+Allow: /api/plan/
+Allow: /api/plans
 Disallow: /api/
 
 Sitemap: https://watplan.me/sitemap.xml

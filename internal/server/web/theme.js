@@ -10,7 +10,8 @@
         var fromUrl = { day: 'agenda', dzien: 'agenda', agenda: 'agenda', week: 'week', month: 'month' }[params.get('view')];
         if (fromUrl) view = fromUrl;
         if (view === 'auto' || ['agenda', 'week', 'month'].indexOf(view) < 0) view = window.matchMedia('(min-width: 900px)').matches ? 'week' : 'agenda';
-        var planId = params.get('plan') || localStorage.getItem('selectedPlan');
+        var fromPath = /^\/plan\/([^\/]+)\/?$/.exec(location.pathname);
+        var planId = (fromPath && decodeURIComponent(fromPath[1])) || params.get('plan') || localStorage.getItem('selectedPlan');
         if (planId) {
             var path = encodeURIComponent(planId);
             window.earlyPlan = { id: planId, plan: fetch('/api/plan/' + path), changes: fetch('/api/changes/' + path) };

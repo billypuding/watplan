@@ -483,9 +483,17 @@ function nextDateWithEvents(fromISO, dir = 1) {
     return dates.reverse().find(d => d < fromISO) || '';
 }
 
+const PLAN_PATH = /^\/plan\/([^/]+)\/?$/;
+
+function planFromPath() {
+    const m = PLAN_PATH.exec(window.location.pathname);
+    if (!m) return '';
+    try { return decodeURIComponent(m[1]); } catch (_) { return ''; }
+}
+
 async function loadPlans() {
     const params = new URLSearchParams(window.location.search);
-    const target = params.get('plan') || safeGet('selectedPlan');
+    const target = planFromPath() || params.get('plan') || safeGet('selectedPlan');
     if (target) {
         currentPlanId = target;
         groupLabel.textContent = target;
@@ -563,7 +571,12 @@ function selectPlan(id, name) {
     setNotice('');
     safeSet('selectedPlan', currentPlanId);
     const url = new URL(window.location);
-    url.searchParams.set('plan', currentPlanId);
+    if (planFromPath()) {
+        url.pathname = '/plan/' + encodeURIComponent(currentPlanId);
+        url.searchParams.delete('plan');
+    } else {
+        url.searchParams.set('plan', currentPlanId);
+    }
     window.history.replaceState(window.history.state, '', url);
     selectedDate = '';
     renderFavorites();

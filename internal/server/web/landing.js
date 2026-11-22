@@ -2,7 +2,7 @@
 
 (() => {
     const appURL = document.body.dataset.app || '/';
-    const planHref = (id) => `${appURL}?plan=${encodeURIComponent(id)}`;
+    const planHref = (id) => `/plan/${encodeURIComponent(id)}`;
     const openPlan = (plan) => {
         window.location.href = plan ? planHref(plan.id) : appURL;
     };
