@@ -28,6 +28,8 @@ func testAssets() fstest.MapFS {
 	}
 }
 
+var unversioned = regexp.MustCompile(`\?v=0["')]`)
+
 func shortHash(data []byte) string {
 	sum := sha256.Sum256(data)
 	return hex.EncodeToString(sum[:])[:10]
@@ -137,7 +139,7 @@ func TestServedAssetsAreVersioned(t *testing.T) {
 	if ref == nil {
 		t.Fatal("/app bez wersji app.js")
 	}
-	if strings.Contains(page, "?v=0") {
+	if unversioned.MatchString(page) {
 		t.Fatal("/app zawiera nieprzepisane ?v=0")
 	}
 	if strings.Contains(page, "theme.js") || !strings.Contains(page, "setAttribute('data-theme'") {
@@ -154,8 +156,8 @@ func TestServedAssetsAreVersioned(t *testing.T) {
 	for _, path := range []string{"/", "/o-watplan", "/style.css?v=x", "/manifest.json?v=x"} {
 		resp := get(path)
 		text := body(resp)
-		if resp.StatusCode != http.StatusOK || strings.Contains(text, "?v=0") {
-			t.Fatalf("%s: status %d, zawiera ?v=0: %v", path, resp.StatusCode, strings.Contains(text, "?v=0"))
+		if resp.StatusCode != http.StatusOK || unversioned.MatchString(text) {
+			t.Fatalf("%s: status %d, zawiera ?v=0: %v", path, resp.StatusCode, unversioned.MatchString(text))
 		}
 		if resp.ContentLength >= 0 && resp.ContentLength != int64(len(text)) && resp.Header.Get("Content-Length") != "" {
 			t.Fatalf("%s: Content-Length %d, treść %d", path, resp.ContentLength, len(text))
