@@ -46,7 +46,7 @@ var budgets = []budget{
 	{"app.js", metricGzip, 28500},
 	{"style.css", metricGzip, 9500},
 	{"app.html", metricGzip, 5400},
-	{"sw.js", metricGzip, 1300},
+	{"sw.js", metricGzip, 1500},
 	{budgetFonts, metricRaw, 32500},
 	{budgetCritical, metricCompact, 82500},
 	{budgetOther, metricGzip, 16500},

@@ -2,7 +2,26 @@
 
 const CACHE = 'watplan-dev';
 
-self.addEventListener('install', () => self.skipWaiting());
+const PRECACHE = [
+    '/app',
+    '/',
+    '/style.css?v=0',
+    '/app.js?v=0',
+    '/groups.js?v=0',
+    '/manifest.json?v=0',
+    '/fonts/geist-latin.woff2?v=0',
+    '/fonts/geist-latin-pl.woff2?v=0',
+    '/landing.css?v=0',
+    '/landing.js?v=0',
+];
+
+self.addEventListener('install', (event) => {
+    event.waitUntil((async () => {
+        const cache = await caches.open(CACHE);
+        await Promise.all(PRECACHE.map(url => cache.add(url).catch(() => undefined)));
+        await self.skipWaiting();
+    })());
+});
 
 self.addEventListener('activate', (event) => {
     event.waitUntil((async () => {
