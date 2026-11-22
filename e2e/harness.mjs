@@ -92,6 +92,8 @@ export async function startBrowser() {
     let seq = 0;
     const pending = new Map();
     const errors = [];
+    const policyErrors = [];
+    const policyText = /Content Security Policy|Permissions.Policy|Refused to (load|execute|apply|connect|frame)/i;
     ws.onmessage = (m) => {
         const msg = JSON.parse(m.data);
         if (msg.id && pending.has(msg.id)) {
@@ -99,6 +101,11 @@ export async function startBrowser() {
             pending.delete(msg.id);
         } else if (msg.method === 'Runtime.exceptionThrown') {
             errors.push(msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text);
+        } else if (msg.method === 'Log.entryAdded' && policyText.test(msg.params.entry.text)) {
+            policyErrors.push(msg.params.entry.text);
+        } else if (msg.method === 'Runtime.consoleAPICalled' && msg.params.type === 'error') {
+            const text = msg.params.args.map(a => a.value ?? a.description ?? '').join(' ');
+            if (policyText.test(text) || text.startsWith('csp-violation')) policyErrors.push(text);
         }
     };
     const send = (method, params = {}) => new Promise(resolve => {
@@ -108,10 +115,13 @@ export async function startBrowser() {
     });
     await send('Page.enable');
     await send('Runtime.enable');
+    await send('Log.enable');
+    await send('Page.addScriptToEvaluateOnNewDocument', { source: `document.addEventListener('securitypolicyviolation', (e) => console.error('csp-violation', e.violatedDirective, e.blockedURI))` });
     await send('Page.addScriptToEvaluateOnNewDocument', { source: clockScript(FIXED_NOW) });
 
     const page = {
         errors,
+        policyErrors,
         async viewport(width, height, mobile = width < 600) {
             await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile });
         },

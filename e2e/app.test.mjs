@@ -82,6 +82,31 @@ test('strona główna: bez animacji semestru przy prefers-reduced-motion', { ski
     }
 });
 
+test('bez błędów CSP i Permissions-Policy na stronach i w akcjach', { skip }, async () => {
+    page.policyErrors.length = 0;
+    await page.goto(server.base + '/?landing');
+    await page.waitFor(`document.querySelector('[data-sem-weeks]')?.textContent.length > 0`);
+    await page.goto(server.base + '/o-watplan');
+    await page.waitFor(`document.querySelector('.faq-h1') !== null`);
+    await page.goto(app());
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    await page.waitFor(`navigator.serviceWorker.controller !== null`, 10000).catch(() => undefined);
+    await page.goto(app());
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    await page.click('#refreshButton');
+    await page.waitFor(`document.querySelector('#notice').classList.contains('show')`);
+    await page.eval(`selectPlan('WMT26AX1S1', 'WMT26AX1S1'), true`);
+    await page.waitFor(`location.search.includes('WMT26AX1S1') && document.querySelectorAll('.ev-card').length > 0`);
+    const shown = await page.eval(`(() => { if (!navigator.serviceWorker.controller) return false; navigator.serviceWorker.dispatchEvent(new Event('controllerchange')); return !document.querySelector('#updateBar').classList.contains('hidden'); })()`);
+    if (shown) {
+        await page.click('#updateBar');
+        await page.waitFor(`document.readyState === 'complete' && document.querySelectorAll('.ev-card').length > 0`);
+    }
+    assert.ok(shown, 'pasek nowej wersji się nie pokazał');
+    assert.deepEqual(page.policyErrors, []);
+    assert.deepEqual(page.errors, []);
+});
+
 test('telefon: domyślnie widok dnia z bieżącymi zajęciami', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);

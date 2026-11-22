@@ -38,6 +38,14 @@ With `PLANWAT_CANONICAL_HOST=watplan.me`, every other host name (for example
 same path and query. `/api/` and `/sw.js` are left alone for older installs, and so
 are `localhost` and bare IP addresses (health checks).
 
+Every response carries `X-Content-Type-Options: nosniff`,
+`Referrer-Policy: strict-origin-when-cross-origin`, a `Permissions-Policy` that turns off
+unused features (camera, microphone, geolocation, payment and so on),
+`Strict-Transport-Security: max-age=86400` and a `Content-Security-Policy` that allows only
+the site itself, umami (`cloud.umami.is`, `gateway.umami.is`) and no framing
+(`frame-ancestors 'none'`). Inline scripts are allowed by their `sha256` hashes, which
+`assets.go` computes at startup from the served HTML, so there is no `'unsafe-inline'`.
+
 Cache headers are set so that a CDN in front of the server (e.g. Cloudflare) only
 keeps what is safe to share:
 

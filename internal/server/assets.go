@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -17,6 +18,7 @@ const serviceWorkerFile = "sw.js"
 var (
 	assetRef    = regexp.MustCompile(`/([A-Za-z0-9_./-]+)\?v=[A-Za-z0-9]*`)
 	swCacheName = regexp.MustCompile(`const CACHE = '[^']*';`)
+	inlineJS    = regexp.MustCompile(`(?s)<script(?:\s+type="(?:text/javascript|module)")?>(.*?)</script>`)
 	inlineRef   = regexp.MustCompile(`<script src="/([A-Za-z0-9_./-]+\.js)(?:\?v=[A-Za-z0-9]*)?" data-inline></script>`)
 	textAssets  = map[string]bool{".html": true, ".css": true, ".js": true, ".json": true}
 )
@@ -25,11 +27,12 @@ type assetFS struct {
 	base    fs.FS
 	files   map[string][]byte
 	hashes  map[string]string
+	scripts map[string]bool
 	version string
 }
 
 func newAssetFS(base fs.FS) (*assetFS, error) {
-	a := &assetFS{base: base, files: make(map[string][]byte), hashes: make(map[string]string)}
+	a := &assetFS{base: base, files: make(map[string][]byte), hashes: make(map[string]string), scripts: make(map[string]bool)}
 	var names []string
 	err := fs.WalkDir(base, ".", func(name string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
@@ -127,6 +130,12 @@ func (a *assetFS) rewrite(name string, visiting map[string]bool) ([]byte, error)
 	if resolveErr != nil {
 		return nil, resolveErr
 	}
+	if path.Ext(name) == ".html" {
+		for _, m := range inlineJS.FindAllSubmatch(out, -1) {
+			sum := sha256.Sum256(m[1])
+			a.scripts["'sha256-"+base64.StdEncoding.EncodeToString(sum[:])+"'"] = true
+		}
+	}
 	original, err := fs.ReadFile(a.base, name)
 	if err != nil {
 		return nil, err
@@ -168,3 +177,12 @@ type memInfo struct {
 }
 
 func (i memInfo) Size() int64 { return i.size }
+
+func (a *assetFS) scriptHashes() []string {
+	out := make([]string, 0, len(a.scripts))
+	for h := range a.scripts {
+		out = append(out, h)
+	}
+	sort.Strings(out)
+	return out
+}

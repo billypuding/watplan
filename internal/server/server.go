@@ -206,7 +206,7 @@ func (s *Server) Handler() (http.Handler, error) {
 		files.ServeHTTP(w, r)
 	})
 
-	return withCanonicalHost(withAPIHeaders(mux), s.options.CanonicalHost), nil
+	return withSecurityHeaders(withCanonicalHost(withAPIHeaders(mux), s.options.CanonicalHost), contentSecurityPolicy(static.scriptHashes())), nil
 }
 
 func withCanonicalHost(next http.Handler, canonical string) http.Handler {
@@ -865,6 +865,39 @@ func htmlPage(page []byte) http.HandlerFunc {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Write(page)
 	}
+}
+
+const permissionsPolicy = "accelerometer=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), hid=(), magnetometer=(), microphone=(), midi=(), payment=(), publickey-credentials-get=(), serial=(), usb=(), xr-spatial-tracking=()"
+
+func contentSecurityPolicy(scriptHashes []string) string {
+	scripts := append([]string{"'self'"}, scriptHashes...)
+	scripts = append(scripts, "https://cloud.umami.is")
+	return strings.Join([]string{
+		"default-src 'self'",
+		"script-src " + strings.Join(scripts, " "),
+		"style-src 'self'",
+		"img-src 'self' data:",
+		"font-src 'self'",
+		"connect-src 'self' https://cloud.umami.is https://gateway.umami.is",
+		"manifest-src 'self'",
+		"worker-src 'self'",
+		"object-src 'none'",
+		"base-uri 'none'",
+		"form-action 'self'",
+		"frame-ancestors 'none'",
+	}, "; ")
+}
+
+func withSecurityHeaders(next http.Handler, csp string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		h.Set("Permissions-Policy", permissionsPolicy)
+		h.Set("Content-Security-Policy", csp)
+		h.Set("Strict-Transport-Security", "max-age=86400")
+		next.ServeHTTP(w, r)
+	})
 }
 
 func withAPIHeaders(next http.Handler) http.Handler {
