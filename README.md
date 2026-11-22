@@ -243,6 +243,24 @@ cache and is not committed. To get the plans locally, run once with
 `PLANWAT_DB_URL` and `PLANWAT_DB_TOKEN` set: the server restores them into `data/`.
 
 
+### Cloudflare in front of Render
+
+The `watplan.me` zone is on Cloudflare, in front of Render:
+
+- DNS: both the apex `watplan.me` and `www` are `CNAME` records pointing to
+  `watplan.onrender.com`, **Proxied**. With an `A` record or "DNS only" the traffic goes
+  straight to Render and the zone (cache rules, settings) is skipped.
+- SSL/TLS: **Full (strict)**. Flexible causes a redirect loop, because Render forces HTTPS.
+- Cache Rule "cache static": requests whose path ends in `js`, `css`, `woff2`, `png`,
+  `svg` or `ico` are *Eligible for cache*, with Edge TTL taken from the origin's
+  `Cache-Control`. Only `?v=` files are `immutable`; HTML and `/api/` stay uncached
+  because of their own headers (see above).
+- Rocket Loader and Email Obfuscation are off: both rewrite the HTML, which breaks the
+  inline script hashes in the CSP.
+
+Check: `curl -sI "https://watplan.me$(curl -s https://watplan.me/app | grep -o '/app.js?v=[0-9a-f]*')" | grep -i cf-cache-status`
+should show `HIT` on the second request.
+
 ## Tests
 
 ```bash
