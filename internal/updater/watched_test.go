@@ -113,3 +113,38 @@ func TestFetchHealthy(t *testing.T) {
 		t.Fatal("same błędy od startu 4 h temu: chcę niezdrowo")
 	}
 }
+
+func TestCacheOnlyDoesNotFetchFromScratch(t *testing.T) {
+	var hits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits.Add(1)
+		w.Write([]byte(planHTML(3)))
+	}))
+	defer srv.Close()
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	fetcher, err := wat.NewFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+	u := NewUpdater(st, fetcher)
+	u.SetCacheOnly(true)
+	plan := config.PlanConfig{ID: "NOWY", URL: srv.URL, StartYear: 2026}
+	if err := u.Ensure(plan); !errors.Is(err, ErrCacheOnly) {
+		t.Fatalf("Ensure: %v, chcę ErrCacheOnly", err)
+	}
+	opts := MaintainOptions{FetchGap: time.Millisecond}.withDefaults()
+	if !u.fillMissing(context.Background(), config.NewRegistry([]config.PlanConfig{plan}), map[string]time.Time{}, opts) {
+		t.Fatal("fillMissing przerwane")
+	}
+	if hits.Load() != 0 {
+		t.Fatalf("pobrań = %d w trybie tylko cache, chcę 0", hits.Load())
+	}
+	u.SetCacheOnly(false)
+	if err := u.Ensure(plan); err != nil || hits.Load() != 1 {
+		t.Fatalf("po wyjściu z trybu: err = %v, pobrań = %d", err, hits.Load())
+	}
+}

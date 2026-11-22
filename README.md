@@ -280,6 +280,14 @@ cache and is not committed. To get the plans locally, run once with
 `PLANWAT_DB_URL` and `PLANWAT_DB_TOKEN` set: the server restores them into `data/`.
 
 
+
+If Turso does not answer at startup, the server retries after 5, 10, 20 and 40 seconds.
+Until the plans are restored it runs **cache-only**: it serves what is on disk, refreshes
+those plans as usual, but does not fetch missing plans from scratch (no burst of scraping
+credits on an empty disk); a missing plan answers `503` with a short explanation. After the
+last attempt it sends one alert and keeps retrying every 5 minutes in the background; when
+the database is back it restores the plans, leaves cache-only mode and sends a "resolved"
+alert. `/healthz` reports `db: false` the whole time.
 ### Cloudflare in front of Render
 
 The `watplan.me` zone is on Cloudflare, in front of Render:

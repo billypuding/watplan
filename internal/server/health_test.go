@@ -5,8 +5,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/billypuding/watplan/internal/config"
+	"github.com/billypuding/watplan/internal/store"
+	"github.com/billypuding/watplan/internal/updater"
+	"github.com/billypuding/watplan/internal/wat"
 )
 
 type healthBody struct {
@@ -73,4 +79,42 @@ func TestHealthFailures(t *testing.T) {
 			t.Fatalf("status %d, %+v", code, body)
 		}
 	})
+}
+
+func TestCacheOnlyMissingPlan(t *testing.T) {
+	var hits atomic.Int64
+	watSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits.Add(1)
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer watSrv.Close()
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	t.Setenv("PLANWAT_PROXY", "")
+	t.Setenv("PLANWAT_PROXY_HOST", "")
+	fetcher, err := wat.NewFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+	upd := updater.NewUpdater(st, fetcher)
+	upd.SetCacheOnly(true)
+	reg := config.NewRegistry([]config.PlanConfig{{ID: "NOWA26XX1S0", URL: watSrv.URL, StartYear: 2026}})
+	handler, err := NewServer(reg, st, upd, Options{OnDemand: true}).Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 3; i++ {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/plan/NOWA26XX1S0", nil))
+		if rec.Code != http.StatusServiceUnavailable || !strings.Contains(rec.Body.String(), "awaryjnym") {
+			t.Fatalf("status %d, %s", rec.Code, rec.Body.String())
+		}
+	}
+	time.Sleep(50 * time.Millisecond)
+	if hits.Load() != 0 {
+		t.Fatalf("zapytań do WAT = %d w trybie tylko cache, chcę 0", hits.Load())
+	}
 }

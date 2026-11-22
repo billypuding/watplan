@@ -216,6 +216,9 @@ func (u *Updater) checkSources(sources []config.Source, reg *config.Registry) {
 }
 
 func (u *Updater) fillMissing(ctx context.Context, reg *config.Registry, failed map[string]time.Time, opts MaintainOptions) bool {
+	if u.CacheOnly() {
+		return true
+	}
 	var todo []config.PlanConfig
 	for _, p := range reg.List() {
 		if _, err := u.store.Raw(p.ID); !errors.Is(err, fs.ErrNotExist) {

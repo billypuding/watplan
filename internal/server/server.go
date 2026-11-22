@@ -658,6 +658,9 @@ func (s *Server) startEnsure(plan config.PlanConfig, ip string) error {
 	if err := s.ensureErr[plan.ID]; err != nil && time.Since(s.lastEnsure[plan.ID]) < ensureRetryEvery {
 		return err
 	}
+	if s.updater.CacheOnly() {
+		return updater.ErrCacheOnly
+	}
 	if !s.updater.FetchAllowed(false) {
 		return errNoBudget
 	}
@@ -846,6 +849,10 @@ func proxyErrorText(u *updater.Updater) string {
 }
 
 func (s *Server) writeUpdateError(w http.ResponseWriter, err error) {
+	if errors.Is(err, updater.ErrCacheOnly) {
+		writeError(w, http.StatusServiceUnavailable, "serwer działa w trybie awaryjnym i chwilowo nie pobiera nowych planów; zapisane plany działają normalnie")
+		return
+	}
 	if errors.Is(err, errRateLimited) {
 		writeError(w, http.StatusTooManyRequests, "za dużo zapytań z tej sieci, spróbuj za kilka minut")
 		return

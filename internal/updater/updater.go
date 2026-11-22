@@ -50,12 +50,13 @@ type Updater struct {
 	sources map[string]FacultyStatus
 	missing atomic.Int64
 
-	onChange func(config.PlanConfig, model.Change)
-	clock    func() time.Time
-	started  time.Time
-	lastOK   atomic.Int64
-	lastFail atomic.Int64
-	alert    *alert.Notifier
+	onChange  func(config.PlanConfig, model.Change)
+	clock     func() time.Time
+	started   time.Time
+	lastOK    atomic.Int64
+	lastFail  atomic.Int64
+	cacheOnly atomic.Bool
+	alert     *alert.Notifier
 }
 
 const (
@@ -242,7 +243,22 @@ func manualFallback(err error) bool {
 	return errors.As(err, &ne) && ne.Timeout()
 }
 
+var ErrCacheOnly = errors.New("serwer działa bez bazy i nie pobiera nowych planów, dopóki baza nie wróci")
+
+func (u *Updater) SetCacheOnly(on bool) {
+	if u != nil {
+		u.cacheOnly.Store(on)
+	}
+}
+
+func (u *Updater) CacheOnly() bool {
+	return u != nil && u.cacheOnly.Load()
+}
+
 func (u *Updater) Ensure(cfg config.PlanConfig) error {
+	if u.CacheOnly() {
+		return ErrCacheOnly
+	}
 	defer u.track(cfg.ID)()
 	lock := u.planLock(cfg.ID)
 	lock.Lock()

@@ -160,55 +160,66 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	dbURL := os.Getenv("PLANWAT_DB_URL")
+	if dbURL != "" {
+		upd.SetCacheOnly(true)
+	}
+	connectDB := func() error {
+		turso, err := durable.OpenTurso(dbURL, os.Getenv("PLANWAT_DB_TOKEN"))
+		if err != nil {
+			return err
+		}
+		started := time.Now()
+		restored, uploaded, err := st.Restore(turso)
+		if err != nil {
+			return fmt.Errorf("odtwarzanie planów: %w", err)
+		}
+		db := durable.NewQueue(turso)
+		db.SetAlert(alerts)
+		st.SetMirror(db)
+		srvApp.SetDB(db)
+		log.Printf("baza: odtworzono %d planów, do wysłania %d, %v", restored, uploaded, time.Since(started).Round(time.Millisecond))
+		if pushSvc != nil {
+			if added, err := pushSvc.Restore(db); err != nil {
+				log.Printf("odtwarzanie subskrypcji z bazy: %v", err)
+			} else if added > 0 {
+				log.Printf("baza: odtworzono %d subskrypcji", added)
+			}
+		}
+		return nil
+	}
 	restore := func() {
-		dbURL := os.Getenv("PLANWAT_DB_URL")
 		if dbURL == "" {
 			return
 		}
-		var turso *durable.Turso
-		var err error
-		for attempt := 1; attempt <= 3; attempt++ {
-			turso, err = durable.OpenTurso(dbURL, os.Getenv("PLANWAT_DB_TOKEN"))
-			if err == nil {
-				break
-			}
-			log.Printf("baza: próba %d/3 nieudana: %v", attempt, err)
-			if attempt < 3 {
-				time.Sleep(10 * time.Second)
-			}
-		}
-		if err != nil {
-			log.Printf("baza niedostępna (%v), działam na samych plikach", err)
-			alerts.Problem("db", "Serwer wystartował bez bazy Turso: "+err.Error())
-		} else {
-			db := durable.NewQueue(turso)
-			db.SetAlert(alerts)
-			started := time.Now()
-			var restored, uploaded int
-			for attempt := 1; attempt <= 3; attempt++ {
-				restored, uploaded, err = st.Restore(db)
-				if err == nil {
-					break
-				}
-				log.Printf("odtwarzanie z bazy, próba %d/3: %v", attempt, err)
-				if attempt < 3 {
-					time.Sleep(10 * time.Second)
-				}
-			}
+		attempt := 0
+		err := durable.Retry(context.Background(), dbStartDelays, func() error {
+			attempt++
+			err := connectDB()
 			if err != nil {
-				alerts.Problem("db", "Nie udało się odtworzyć planów z bazy: "+err.Error())
+				log.Printf("baza: próba %d/%d nieudana: %v", attempt, len(dbStartDelays)+1, err)
 			}
-			st.SetMirror(db)
-			srvApp.SetDB(db)
-			log.Printf("baza: odtworzono %d planów, do wysłania %d, %v", restored, uploaded, time.Since(started).Round(time.Millisecond))
-			if pushSvc != nil {
-				if added, err := pushSvc.Restore(db); err != nil {
-					log.Printf("odtwarzanie subskrypcji z bazy: %v", err)
-				} else if added > 0 {
-					log.Printf("baza: odtworzono %d subskrypcji", added)
-				}
-			}
+			return err
+		})
+		if err == nil {
+			upd.SetCacheOnly(false)
+			return
 		}
+		log.Printf("baza niedostępna (%v): działam tylko na zapisanych planach, ponawiam co %v", err, dbRetryEvery)
+		alerts.Raise("db-start", fmt.Sprintf("Serwer wystartował bez bazy Turso (%v). Działa tylko na zapisanych planach i nie pobiera nowych. Ponawiam połączenie co %v.", err, dbRetryEvery))
+		go func() {
+			for {
+				time.Sleep(dbRetryEvery)
+				if err := connectDB(); err != nil {
+					log.Printf("baza: ponowna próba nieudana: %v", err)
+					continue
+				}
+				upd.SetCacheOnly(false)
+				log.Printf("baza wróciła, koniec trybu tylko z zapisanymi planami")
+				alerts.Resolved("db-start", "Baza Turso wróciła, serwer znów pobiera nowe plany.")
+				return
+			}
+		}()
 	}
 	ready := make(chan struct{})
 	srvApp.SetReady(ready)
@@ -311,6 +322,10 @@ func envOr(key, fallback string) string {
 	}
 	return fallback
 }
+
+var dbStartDelays = []time.Duration{5 * time.Second, 10 * time.Second, 20 * time.Second, 40 * time.Second}
+
+const dbRetryEvery = 5 * time.Minute
 
 func envDuration(key string) time.Duration {
 	v := strings.TrimSpace(os.Getenv(key))
