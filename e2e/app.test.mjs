@@ -82,8 +82,9 @@ test('strona główna: bez animacji semestru przy prefers-reduced-motion', { ski
     }
 });
 
-test('bez błędów CSP i Permissions-Policy na stronach i w akcjach', { skip }, async () => {
+test('bez błędów CSP i Permissions-Policy na stronach i w akcjach', { skip }, async (t) => {
     page.policyErrors.length = 0;
+    page.policyNotes.length = 0;
     await page.goto(server.base + '/?landing');
     await page.waitFor(`document.querySelector('[data-sem-weeks]')?.textContent.length > 0`);
     await page.goto(server.base + '/o-watplan');
@@ -103,6 +104,7 @@ test('bez błędów CSP i Permissions-Policy na stronach i w akcjach', { skip },
         await page.waitFor(`document.readyState === 'complete' && document.querySelectorAll('.ev-card').length > 0`);
     }
     assert.ok(shown, 'pasek nowej wersji się nie pokazał');
+    for (const note of new Set(page.policyNotes)) t.diagnostic(`zależne od przeglądarki: ${note}`);
     assert.deepEqual(page.policyErrors, []);
     assert.deepEqual(page.errors, []);
 });

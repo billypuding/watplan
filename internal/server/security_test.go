@@ -5,12 +5,15 @@ import (
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/store"
 )
+
+var permissionsPolicyFormat = regexp.MustCompile(`^[a-z][a-z-]*=\(\)(, [a-z][a-z-]*=\(\))*$`)
 
 func TestSecurityHeaders(t *testing.T) {
 	st, err := store.NewStore(t.TempDir())
@@ -54,6 +57,12 @@ func TestSecurityHeaders(t *testing.T) {
 			if !strings.Contains(pp, feature) {
 				t.Errorf("%s%s: Permissions-Policy bez %s", c.host, c.path, feature)
 			}
+		}
+		if !permissionsPolicyFormat.MatchString(pp) {
+			t.Errorf("%s%s: zły format Permissions-Policy: %q", c.host, c.path, pp)
+		}
+		if strings.Contains(pp, "bluetooth") {
+			t.Errorf("%s%s: bluetooth w Permissions-Policy (Chrome na Linuksie zgłasza nieznaną funkcję)", c.host, c.path)
 		}
 		csp := rec.Header().Get("Content-Security-Policy")
 		for _, part := range []string{"default-src 'self'", "frame-ancestors 'none'", "object-src 'none'", "base-uri 'none'", "https://cloud.umami.is", "https://gateway.umami.is"} {

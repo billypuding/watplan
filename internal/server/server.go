@@ -867,7 +867,7 @@ func htmlPage(page []byte) http.HandlerFunc {
 	}
 }
 
-const permissionsPolicy = "accelerometer=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), hid=(), magnetometer=(), microphone=(), midi=(), payment=(), publickey-credentials-get=(), serial=(), usb=(), xr-spatial-tracking=()"
+const permissionsPolicy = "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), hid=(), magnetometer=(), microphone=(), midi=(), payment=(), publickey-credentials-get=(), serial=(), usb=(), xr-spatial-tracking=()"
 
 func contentSecurityPolicy(scriptHashes []string) string {
 	scripts := append([]string{"'self'"}, scriptHashes...)

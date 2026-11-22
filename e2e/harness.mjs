@@ -85,6 +85,7 @@ export async function startBrowser() {
     const port = await freePort();
     const flags = ['--headless=new', '--disable-gpu', '--no-first-run', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`];
     if (process.env.CI) flags.push('--no-sandbox', '--disable-dev-shm-usage');
+    if (process.env.E2E_CHROME_FLAGS) flags.push(...process.env.E2E_CHROME_FLAGS.split(' ').filter(Boolean));
     const proc = spawn(chromePath, [...flags, 'about:blank'], { stdio: 'ignore' });
     const target = await waitFor(async () => (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t => t.type === 'page'));
     const ws = new WebSocket(target.webSocketDebuggerUrl);
@@ -93,7 +94,13 @@ export async function startBrowser() {
     const pending = new Map();
     const errors = [];
     const policyErrors = [];
+    const policyNotes = [];
     const policyText = /Content Security Policy|Permissions.Policy|Refused to (load|execute|apply|connect|frame)/i;
+    const browserDependent = /Unrecognized feature/i;
+    const policy = (text) => {
+        if (browserDependent.test(text)) policyNotes.push(text);
+        else policyErrors.push(text);
+    };
     ws.onmessage = (m) => {
         const msg = JSON.parse(m.data);
         if (msg.id && pending.has(msg.id)) {
@@ -102,10 +109,10 @@ export async function startBrowser() {
         } else if (msg.method === 'Runtime.exceptionThrown') {
             errors.push(msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text);
         } else if (msg.method === 'Log.entryAdded' && policyText.test(msg.params.entry.text)) {
-            policyErrors.push(msg.params.entry.text);
+            policy(msg.params.entry.text);
         } else if (msg.method === 'Runtime.consoleAPICalled' && msg.params.type === 'error') {
             const text = msg.params.args.map(a => a.value ?? a.description ?? '').join(' ');
-            if (policyText.test(text) || text.startsWith('csp-violation')) policyErrors.push(text);
+            if (policyText.test(text) || text.startsWith('csp-violation')) policy(text);
         }
     };
     const send = (method, params = {}) => new Promise(resolve => {
@@ -122,6 +129,7 @@ export async function startBrowser() {
     const page = {
         errors,
         policyErrors,
+        policyNotes,
         async viewport(width, height, mobile = width < 600) {
             await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile });
         },

@@ -254,6 +254,10 @@ The end-to-end tests build the server, run it offline on the plans in
 `e2e/fixtures`, and drive a headless Chrome over the DevTools protocol with the
 clock frozen at 19 November 2026. They need Node 22+ and Chrome; set
 `CHROME_PATH` if Chrome is not in the default location. No npm packages are used.
+`E2E_CHROME_FLAGS` passes extra Chrome flags, e.g.
+`E2E_CHROME_FLAGS="--disable-features=WebBluetooth"` to mimic Chrome on the Linux CI
+runner. CSP violations fail the tests; "Unrecognized feature" messages about
+`Permissions-Policy` depend on the Chrome build and are only reported.
 
 ## Disclaimer
 
