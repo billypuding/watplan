@@ -30,6 +30,9 @@ jobs:
       - name: go vet
         run: go vet ./...
 
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...
+
       - name: go test
         run: go test ./...
 
