@@ -1,10 +1,13 @@
 package wat
 
 import (
+	"bytes"
+	"compress/gzip"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -143,5 +146,54 @@ func TestProxyRejectionPausesAllFetching(t *testing.T) {
 	}
 	if status, _ := f.ProxyError(); !strings.Contains(status, "402") {
 		t.Fatalf("ProxyError = %q", status)
+	}
+}
+
+func TestFetchRequestsAndDecodesGzip(t *testing.T) {
+	page, err := os.ReadFile("testdata/plan_wat.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var zipped bytes.Buffer
+	zw := gzip.NewWriter(&zipped)
+	zw.Write(page)
+	zw.Close()
+
+	var asked atomic.Value
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		asked.Store(r.Header.Get("Accept-Encoding"))
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Content-Encoding", "gzip")
+		w.Write(zipped.Bytes())
+	}))
+	defer srv.Close()
+
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	t.Setenv("PLANWAT_PROXY", "")
+	t.Setenv("PLANWAT_PROXY_HOST", "")
+	for _, mode := range []string{"bezpośrednio", "scrapingant"} {
+		if mode == "scrapingant" {
+			t.Setenv("PLANWAT_SCRAPER_PROVIDER", "scrapingant")
+			t.Setenv("PLANWAT_SCRAPER_KEY", "test-key")
+			t.Setenv("PLANWAT_SCRAPER_API_URL", srv.URL)
+		}
+		f, err := NewFetcher()
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, _, err := f.FetchPage(srv.URL+"/plan.htm", Validators{})
+		if err != nil {
+			t.Fatalf("%s: %v", mode, err)
+		}
+		if got, _ := asked.Load().(string); !strings.Contains(got, "gzip") {
+			t.Fatalf("%s: Accept-Encoding = %q, chcę gzip", mode, got)
+		}
+		events, err := Parse("", bytes.NewReader(body), 2026)
+		if err != nil {
+			t.Fatalf("%s: %v", mode, err)
+		}
+		if len(events) != 214 {
+			t.Fatalf("%s: %d zajęć, chcę 214", mode, len(events))
+		}
 	}
 }

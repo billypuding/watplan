@@ -1,16 +1,23 @@
 package wat
 
 import (
+	"bytes"
+	"compress/gzip"
+	"compress/zlib"
 	"errors"
 	"io"
 	"net"
 	stdhttp "net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
+
+	"github.com/andybalholm/brotli"
+	"github.com/klauspost/compress/zstd"
 )
 
 func TestProxyLogin(t *testing.T) {
@@ -196,5 +203,86 @@ func TestTLSProxyValidators(t *testing.T) {
 	}
 	if again != got {
 		t.Fatalf("validators = %+v", again)
+	}
+}
+
+func encodeBody(t *testing.T, encoding string, data []byte) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	var w io.WriteCloser
+	switch encoding {
+	case "gzip":
+		w = gzip.NewWriter(&buf)
+	case "deflate":
+		w = zlib.NewWriter(&buf)
+	case "br":
+		w = brotli.NewWriter(&buf)
+	case "zstd":
+		zw, err := zstd.NewWriter(&buf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		w = zw
+	default:
+		return data
+	}
+	if _, err := w.Write(data); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
+}
+
+func TestTLSProxyDecodesEveryEncoding(t *testing.T) {
+	page, err := os.ReadFile("testdata/plan_wat.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := Parse("", bytes.NewReader(page), 2026)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(want) != 214 {
+		t.Fatalf("fixture ma %d zajęć, chcę 214", len(want))
+	}
+
+	var asked atomic.Value
+	target := httptest.NewServer(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+		asked.Store(r.Header.Get("Accept-Encoding"))
+		encoding := r.URL.Query().Get("enc")
+		if encoding != "identity" {
+			w.Header().Set("Content-Encoding", encoding)
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(encodeBody(t, encoding, page))
+	}))
+	defer target.Close()
+
+	c := newTestTLSProxyClient(t)
+	for _, encoding := range []string{"identity", "gzip", "deflate", "br", "zstd"} {
+		body, _, err := c.fetch(target.URL+"/?enc="+encoding, Validators{})
+		if err != nil {
+			t.Fatalf("%s: %v", encoding, err)
+		}
+		if got := asked.Load(); got != "gzip, deflate, br, zstd" {
+			t.Fatalf("%s: Accept-Encoding = %q", encoding, got)
+		}
+		if !bytes.Equal(body, page) {
+			t.Fatalf("%s: treść różni się od oryginału (%d B, chcę %d B)", encoding, len(body), len(page))
+		}
+		events, err := Parse("", bytes.NewReader(body), 2026)
+		if err != nil {
+			t.Fatalf("%s: %v", encoding, err)
+		}
+		if len(events) != len(want) {
+			t.Fatalf("%s: %d zajęć, chcę %d", encoding, len(events), len(want))
+		}
+		for i := range events {
+			if events[i] != want[i] {
+				t.Fatalf("%s: zajęcia %d różnią się: %+v, chcę %+v", encoding, i, events[i], want[i])
+			}
+		}
 	}
 }
