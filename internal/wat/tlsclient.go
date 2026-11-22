@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -24,6 +26,9 @@ type tlsProxyClient struct {
 	pass    string
 	mu      sync.RWMutex
 	session string
+	usage   *Usage
+	countMu sync.Mutex
+	counted int64
 }
 
 func newTLSProxyClient() (*tlsProxyClient, error) {
@@ -56,6 +61,7 @@ func newTLSProxyClient() (*tlsProxyClient, error) {
 		tls_client.WithClientProfile(profiles.Chrome_150),
 		tls_client.WithCookieJar(jar),
 		tls_client.WithProxyUrl(c.proxyURL()),
+		tls_client.WithBandwidthTracker(),
 	)
 	if err != nil {
 		return nil, err
@@ -202,6 +208,7 @@ func (c *tlsProxyClient) do(target string, prev Validators) ([]byte, Validators,
 	}
 
 	resp, err := c.client.Do(req)
+	defer c.record(target, resp, err)
 	if err != nil {
 		return nil, Validators{}, err
 	}
@@ -230,4 +237,28 @@ func (c *tlsProxyClient) do(target string, prev Validators) ([]byte, Validators,
 	}
 	got := Validators{ETag: resp.Header.Get("ETag"), LastModified: resp.Header.Get("Last-Modified")}
 	return body, got, nil
+}
+
+func (c *tlsProxyClient) provider() string {
+	if strings.Contains(c.host, "oxylabs") {
+		return "oxylabs"
+	}
+	return "proxy"
+}
+
+func (c *tlsProxyClient) record(target string, resp *http.Response, err error) {
+	var bytes int64
+	if bw := c.client.GetBandwidthTracker(); bw != nil {
+		total := bw.GetReadBytes() + bw.GetWriteBytes()
+		c.countMu.Lock()
+		bytes = total - c.counted
+		c.counted = total
+		c.countMu.Unlock()
+	}
+	status := "błąd"
+	if err == nil && resp != nil {
+		status = strconv.Itoa(resp.StatusCode)
+	}
+	c.usage.Record(c.provider(), 0, bytes)
+	log.Printf("zużycie: %s %s (%s, %d B)", c.provider(), target, status, bytes)
 }

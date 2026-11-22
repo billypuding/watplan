@@ -40,6 +40,7 @@ func (s *Store) notify(id string, plan model.Plan) {
 const (
 	planPrefix    = "plan"
 	historyPrefix = "history"
+	metaPrefix    = "meta"
 )
 
 func (s *Store) RemotePlans() int {
@@ -101,6 +102,20 @@ func (s *Store) Restore(m durable.Mirror) (restored, uploaded int, err error) {
 			return restored, uploaded, err
 		}
 		uploaded++
+	}
+
+	metas, err := m.All(metaPrefix + "/")
+	if err != nil {
+		return restored, uploaded, err
+	}
+	for key, data := range metas {
+		path := s.metaPath(durable.TrimKey(metaPrefix, key))
+		if _, err := os.Stat(path); err == nil {
+			continue
+		}
+		if err := s.writeFile(path, data); err != nil {
+			return restored, uploaded, err
+		}
 	}
 
 	histories, err := m.All(historyPrefix + "/")
@@ -232,4 +247,22 @@ func (s *Store) historyPath(id string) string {
 
 func (s *Store) path(id string) string {
 	return filepath.Join(s.dir, id+".json")
+}
+
+func (s *Store) metaPath(name string) string {
+	return filepath.Join(s.dir, name+".meta")
+}
+
+func (s *Store) SaveMeta(name string, data []byte) error {
+	if err := s.writeFile(s.metaPath(name), data); err != nil {
+		return err
+	}
+	s.mirrorPut(durable.Keyed(metaPrefix, name), data)
+	return nil
+}
+
+func (s *Store) LoadMeta(name string) ([]byte, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return os.ReadFile(s.metaPath(name))
 }

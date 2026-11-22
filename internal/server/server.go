@@ -729,6 +729,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		"proxy_error":   proxyErrorText(s.updater),
 		"db":            s.dbStatus(),
 		"missing_plans": s.updater.MissingPlans(),
+		"usage":         s.updater.Usage().Snapshot(),
 		"now":           time.Now().In(warsawLoc).Format(timeLayout),
 	})
 }

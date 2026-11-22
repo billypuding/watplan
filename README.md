@@ -208,6 +208,11 @@ subscriptions, create a free Turso database and set:
 On start the server restores everything from the database (newer plans win),
 uploads local plans the database does not have yet, and from then on mirrors
 every write in the background. `/api/status` shows the state under `db`.
+
+Every request to the scraping API and to the proxy is logged (`zużycie: ...`) and counted.
+`/api/status` shows the counts under `usage`, per provider, for the last 24 hours and
+30 days: requests, ScrapingAnt credits (from the `Ant-Credits-Cost` header) and proxy
+bytes. The counters are stored in Turso, so they survive restarts.
 Without these variables the server works on local files only.
 
 Note that Render's filesystem is ephemeral: plans fetched at runtime disappear on

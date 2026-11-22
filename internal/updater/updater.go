@@ -463,3 +463,10 @@ func (u *Updater) ProxyHost() string {
 	}
 	return u.fetcher.ProxyHost()
 }
+
+func (u *Updater) Usage() *wat.Usage {
+	if u == nil || u.fetcher == nil {
+		return nil
+	}
+	return u.fetcher.Usage()
+}

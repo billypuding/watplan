@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -309,5 +310,31 @@ func TestVisitUsesAdaptiveInterval(t *testing.T) {
 				t.Fatalf("pobranie = %v, X-Plan-Refresh = %q, chcę pobranie = %v", fetched, got, c.fetch)
 			}
 		})
+	}
+}
+
+func TestStatusShowsUsage(t *testing.T) {
+	env := newRefreshEnv(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Ant-Credits-Cost", "1")
+		gone(w, r)
+	}, checkedAgo(time.Hour))
+	env.visit(t)
+	waitFor(t, func() bool { return env.apiHits.Load() == 1 && !env.srv.busy(refreshTestPlan) })
+
+	rec := httptest.NewRecorder()
+	env.handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/status", nil))
+	var status struct {
+		Usage map[string]struct {
+			Requests24h int `json:"requests_24h"`
+			Requests30d int `json:"requests_30d"`
+			Credits24h  int `json:"credits_24h"`
+		} `json:"usage"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &status); err != nil {
+		t.Fatal(err)
+	}
+	got := status.Usage["scrapingant"]
+	if got.Requests24h != 1 || got.Requests30d != 1 || got.Credits24h != 1 {
+		t.Fatalf("usage = %+v, chcę 1 zapytanie i 1 kredyt", status.Usage)
 	}
 }

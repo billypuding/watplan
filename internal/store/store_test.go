@@ -71,3 +71,33 @@ func keys(m map[string][]byte) []string {
 	}
 	return out
 }
+
+func TestMetaSurvivesRestore(t *testing.T) {
+	remote := durable.NewMemory()
+	first, err := NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	first.SetMirror(remote)
+	if err := first.SaveMeta("usage", []byte(`{"x":1}`)); err != nil {
+		t.Fatal(err)
+	}
+	if data, err := first.LoadMeta("usage"); err != nil || string(data) != `{"x":1}` {
+		t.Fatalf("LoadMeta = %q, %v", data, err)
+	}
+
+	second, err := NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	restored, uploaded, err := second.Restore(remote)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if restored != 0 || uploaded != 0 {
+		t.Fatalf("plik meta potraktowany jak plan: odtworzono %d, wysłano %d", restored, uploaded)
+	}
+	if data, err := second.LoadMeta("usage"); err != nil || string(data) != `{"x":1}` {
+		t.Fatalf("po odtworzeniu LoadMeta = %q, %v", data, err)
+	}
+}

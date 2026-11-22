@@ -53,6 +53,7 @@ type proxyKey struct{}
 
 type Fetcher struct {
 	client *http.Client
+	usage  *Usage
 
 	minInterval time.Duration
 	paceMu      sync.Mutex
@@ -181,7 +182,12 @@ func NewFetcher() (*Fetcher, error) {
 		proxyPause = d
 	}
 
+	usage := NewUsage()
+	if tlsProxy != nil {
+		tlsProxy.usage = usage
+	}
 	f := &Fetcher{
+		usage:         usage,
 		client:        client,
 		minInterval:   minInterval,
 		blockBackoff:  blockBackoff,
@@ -467,6 +473,9 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators, mode FetchMode) (
 		httpClient = f.scraperClient
 	}
 	resp, err := httpClient.Do(req)
+	if useScraper {
+		f.recordScraper(targetUrl, resp)
+	}
 	if err != nil {
 		if used != nil {
 			if status, ok := f.proxyRejection(err); ok {
@@ -571,4 +580,25 @@ func isWAFBlockBody(body []byte) bool {
 	return strings.Contains(text, "incapsula incident id") ||
 		strings.Contains(text, "request unsuccessful. incapsula") ||
 		(strings.Contains(text, "access denied") && strings.Contains(text, "error 17"))
+}
+
+func (f *Fetcher) Usage() *Usage {
+	if f == nil {
+		return nil
+	}
+	return f.usage
+}
+
+func (f *Fetcher) recordScraper(target string, resp *http.Response) {
+	credits := 0
+	status := "błąd"
+	if resp != nil {
+		credits, _ = strconv.Atoi(resp.Header.Get("Ant-Credits-Cost"))
+		status = strconv.Itoa(resp.StatusCode)
+		if page := resp.Header.Get("Ant-Page-Status-Code"); page != "" {
+			status += ", strona " + page
+		}
+	}
+	f.usage.Record(f.scraper.provider, credits, 0)
+	log.Printf("zużycie: %s %s (%s, kredyty %d)", f.scraper.provider, target, status, credits)
 }

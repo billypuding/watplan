@@ -206,6 +206,18 @@ func main() {
 	go func() {
 		defer close(ready)
 		restore()
+		if usage := upd.Usage(); usage != nil {
+			if data, err := st.LoadMeta("usage"); err == nil {
+				if err := usage.Load(data); err != nil {
+					log.Printf("licznik zużycia: %v", err)
+				}
+			}
+			usage.SetPersist(func(data []byte) {
+				if err := st.SaveMeta("usage", data); err != nil {
+					log.Printf("zapis licznika zużycia: %v", err)
+				}
+			})
+		}
 	}()
 
 	go func() {
