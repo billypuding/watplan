@@ -630,7 +630,7 @@ async function loadPlan(quiet = false) {
                 status = 'fetching';
                 render();
             }
-            if (response.headers.get('X-Plan-Refresh') === 'background') watchVisit(planId, null);
+            if (response.headers.get('X-Plan-Refresh') === 'background') watchVisit(planId, null, FETCH_CHECKS_MS);
             return null;
         }
         if (fetchingFor === planId) fetchingFor = '';
@@ -1182,6 +1182,7 @@ for (const dlg of [settingsModal, groupModal, weekModal]) {
 }
 
 const REFRESH_CHECKS_MS = [2000, 5000, 10000, 20000];
+const FETCH_CHECKS_MS = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 10000, 20000];
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const eventsKey = (data) => JSON.stringify((data && data.events) || []);
@@ -1208,12 +1209,12 @@ async function postRefresh(planId) {
 
 let activeWatch = null;
 
-async function watchRefresh(planId, baseline, quiet = false) {
+async function watchRefresh(planId, baseline, quiet = false, checks = REFRESH_CHECKS_MS) {
     const watch = { planId };
     activeWatch = watch;
     try {
         let waited = 0;
-        for (const at of REFRESH_CHECKS_MS) {
+        for (const at of checks) {
             await sleep(at - waited);
             waited = at;
             if (activeWatch !== watch || currentPlanId !== planId) return 'left';
@@ -1230,9 +1231,9 @@ async function watchRefresh(planId, baseline, quiet = false) {
     }
 }
 
-async function watchVisit(planId, baseline) {
+async function watchVisit(planId, baseline, checks = REFRESH_CHECKS_MS) {
     if (activeWatch && activeWatch.planId === planId) return;
-    const outcome = await watchRefresh(planId, baseline, true);
+    const outcome = await watchRefresh(planId, baseline, true, checks);
     if (outcome === 'changed' && baseline) setNotice('Plan zaktualizowany', false);
     if (outcome === 'timeout' && status === 'fetching' && currentPlanId === planId) {
         fetchingFor = '';
