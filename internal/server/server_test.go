@@ -108,27 +108,76 @@ func TestOnDemandFetchesMissingPlanOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var body []byte
-	for i := 0; i < 2; i++ {
-		req := httptest.NewRequest(http.MethodGet, "/api/plan/WMT26AX3S1", nil)
+	get := func() *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		handler.ServeHTTP(rec, req)
-		if rec.Code != http.StatusOK {
-			t.Fatalf("żądanie %d: status = %d, chcę 200; body=%s", i+1, rec.Code, rec.Body.String())
-		}
-		body = rec.Body.Bytes()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/plan/WMT26AX3S1", nil))
+		return rec
 	}
+	for i := 0; i < 2; i++ {
+		rec := get()
+		if rec.Code != http.StatusAccepted || rec.Header().Get("X-Plan-Refresh") != "background" {
+			t.Fatalf("żądanie %d: status = %d, X-Plan-Refresh = %q, chcę 202 i background; body=%s", i+1, rec.Code, rec.Header().Get("X-Plan-Refresh"), rec.Body.String())
+		}
+	}
+	waitFor(t, func() bool { return !srv.busy("WMT26AX3S1") })
 
+	rec := get()
+	if rec.Code != http.StatusOK {
+		t.Fatalf("po pobraniu: status = %d, chcę 200; body=%s", rec.Code, rec.Body.String())
+	}
 	if got := hits.Load(); got != 1 {
-		t.Fatalf("pobrań z WAT = %d, chcę 1 (drugie żądanie z cache)", got)
+		t.Fatalf("pobrań z WAT = %d, chcę 1", got)
 	}
 
 	var plan model.Plan
-	if err := json.Unmarshal(body, &plan); err != nil {
+	if err := json.Unmarshal(rec.Body.Bytes(), &plan); err != nil {
 		t.Fatal(err)
 	}
 	if len(plan.Events) == 0 {
 		t.Fatal("plan bez zajęć")
+	}
+}
+
+func TestOnDemandMissingPlanFailureIsNotRetriedAtOnce(t *testing.T) {
+	var hits atomic.Int64
+	watSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits.Add(1)
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(watSrv.Close)
+
+	st, err := store.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg := config.NewRegistry([]config.PlanConfig{{ID: "WMT26AX3S1", URL: watSrv.URL, StartYear: 2026}})
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	fetcher, err := wat.NewFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := NewServer(reg, st, updater.NewUpdater(st, fetcher), Options{OnDemand: true})
+	handler, err := srv.Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	get := func() int {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/plan/WMT26AX3S1", nil))
+		return rec.Code
+	}
+
+	if code := get(); code != http.StatusAccepted {
+		t.Fatalf("pierwsze żądanie: status = %d, chcę 202", code)
+	}
+	waitFor(t, func() bool { return !srv.busy("WMT26AX3S1") })
+	for i := 0; i < 3; i++ {
+		if code := get(); code == http.StatusAccepted || code == http.StatusOK {
+			t.Fatalf("po błędzie: status = %d, chcę błąd", code)
+		}
+	}
+	if got := hits.Load(); got != 1 {
+		t.Fatalf("pobrań z WAT = %d, chcę 1", got)
 	}
 }
 

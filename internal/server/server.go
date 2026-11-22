@@ -66,6 +66,8 @@ type Server struct {
 	mu          sync.Mutex
 	lastRefresh map[string]time.Time
 	lastVisit   map[string]time.Time
+	lastEnsure  map[string]time.Time
+	ensureErr   map[string]error
 	inflight    map[string]bool
 	rooms       roomsCache
 	semester    semesterCache
@@ -109,6 +111,8 @@ func NewServer(registry *config.Registry, store *store.Store, updater *updater.U
 		options:     options,
 		lastRefresh: make(map[string]time.Time),
 		lastVisit:   make(map[string]time.Time),
+		lastEnsure:  make(map[string]time.Time),
+		ensureErr:   make(map[string]error),
 		inflight:    make(map[string]bool),
 	}
 	store.OnSave(s.rooms.update)
@@ -248,7 +252,7 @@ func (s *Server) handlePlan(w http.ResponseWriter, r *http.Request) {
 			log.Printf("wolna odpowiedź /api/plan/%s: %s", plan.ID, t)
 		}
 	}()
-	data, ok := s.planData(w, plan, t)
+	data, ok := s.planData(w, plan, t, false)
 	if !ok {
 		return
 	}
@@ -282,10 +286,21 @@ func etagMatches(header, etag string) bool {
 	return false
 }
 
-func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig, t *timing) ([]byte, bool) {
+func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig, t *timing, wait bool) ([]byte, bool) {
 	id := plan.ID
 	data, err := s.store.Raw(id)
 	t.mark("read")
+	if errors.Is(err, fs.ErrNotExist) && s.options.OnDemand && s.updater != nil && !wait {
+		if ensureErr := s.startEnsure(plan); ensureErr != nil {
+			s.writeUpdateError(w, ensureErr)
+			return nil, false
+		}
+		t.mark("visit")
+		w.Header().Set("X-Plan-Refresh", "background")
+		w.Header().Set("Cache-Control", "no-store")
+		writeJSON(w, http.StatusAccepted, map[string]string{"status": "fetching"})
+		return nil, false
+	}
 	if errors.Is(err, fs.ErrNotExist) && s.options.OnDemand && s.updater != nil {
 		log.Printf("plan %s: brak w cache, pobieram na żądanie", id)
 		if updateErr := s.updater.Ensure(plan); updateErr != nil {
@@ -439,7 +454,7 @@ func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
 		alarm = n
 	}
 
-	data, ok := s.planData(w, plan, nil)
+	data, ok := s.planData(w, plan, nil, true)
 	if !ok {
 		return
 	}
@@ -567,6 +582,41 @@ func (s *Server) startLocked(plan config.PlanConfig, label string, run func(conf
 	}()
 }
 
+var errNoPlanData = errors.New("plan bez zajęć")
+
+func (s *Server) startEnsure(plan config.PlanConfig) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.busyLocked(plan.ID) {
+		return nil
+	}
+	if err := s.ensureErr[plan.ID]; err != nil && time.Since(s.lastEnsure[plan.ID]) < visitCheckEvery {
+		return err
+	}
+	s.lastEnsure[plan.ID] = time.Now()
+	delete(s.ensureErr, plan.ID)
+	s.inflight[plan.ID] = true
+	go func() {
+		log.Printf("plan %s: brak w cache, pobieram w tle", plan.ID)
+		err := s.updater.Ensure(plan)
+		if err == nil {
+			if _, statErr := s.store.Raw(plan.ID); errors.Is(statErr, fs.ErrNotExist) {
+				err = errNoPlanData
+			}
+		}
+		if err != nil {
+			log.Printf("pobieranie planu %s na żądanie: %v", plan.ID, err)
+		}
+		s.mu.Lock()
+		delete(s.inflight, plan.ID)
+		if err != nil {
+			s.ensureErr[plan.ID] = err
+		}
+		s.mu.Unlock()
+	}()
+	return nil
+}
+
 func (s *Server) startManual(plan config.PlanConfig) string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -639,6 +689,10 @@ func proxyErrorText(u *updater.Updater) string {
 }
 
 func (s *Server) writeUpdateError(w http.ResponseWriter, err error) {
+	if errors.Is(err, errNoPlanData) {
+		writeError(w, http.StatusServiceUnavailable, "plan nie został jeszcze pobrany")
+		return
+	}
 	if errors.Is(err, wat.ErrProxy) {
 		msg := "serwer WATplan nie może połączyć się przez skonfigurowane proxy"
 		if status, _ := s.updater.ProxyError(); status != "" {

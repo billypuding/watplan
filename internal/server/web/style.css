@@ -269,6 +269,14 @@ a.link-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .link-btn { margin-top: 12px; height: 44px; padding: 0 16px; border-radius: 22px; background: var(--surface-2); color: var(--text); font-weight: 600; }
 
 .message { margin-top: 32px; padding: 24px; text-align: center; color: var(--muted); }
+.skeleton { margin-top: 20px; }
+.sk-text { margin: 0 0 16px; text-align: center; color: var(--muted); font-size: 14px; }
+.sk-grid { display: grid; gap: 10px; }
+.sk-week { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.sk-block { height: 88px; border-radius: 14px; background: var(--surface-2); animation: sk-pulse 1.4s ease-in-out infinite; }
+.sk-week .sk-block { height: 420px; }
+@keyframes sk-pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .sk-block { animation: none; } }
 .message.error { color: var(--error); }
 
 .week-grid {

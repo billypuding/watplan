@@ -59,6 +59,8 @@ let loadCounter = 0;
 let noticeTimer = null;
 let status = 'idle';
 let statusMessage = '';
+let fetchingFor = '';
+const FETCH_FAILED = 'Nie udało się pobrać planu ze strony WAT. Spróbuj odświeżyć za chwilę.';
 
 const defaults = { v: SETTINGS_VERSION, theme: 'auto', view: 'auto', live: true, dimPast: true, calAlarm: false, semester: 'auto' };
 
@@ -610,7 +612,7 @@ async function loadPlan(quiet = false) {
     if (cached) {
         applyPlanData(cached.data);
     } else {
-        status = 'loading';
+        status = fetchingFor === planId ? 'fetching' : 'loading';
     }
     render();
     const changes = earlyChanges(planId);
@@ -622,6 +624,16 @@ async function loadPlan(quiet = false) {
         try { data = JSON.parse(text); } catch (_) { data = null; }
         if (!response.ok || !data) throw new Error((data && data.error) || `Błąd serwera (${response.status})`);
         if (requestId !== loadCounter) return null;
+        if (response.status === 202) {
+            if (!cached) {
+                fetchingFor = planId;
+                status = 'fetching';
+                render();
+            }
+            if (response.headers.get('X-Plan-Refresh') === 'background') watchVisit(planId, null);
+            return null;
+        }
+        if (fetchingFor === planId) fetchingFor = '';
         if (response.headers.get('X-Plan-Refresh') === 'background') watchVisit(planId, data);
         if (!acceptPlan(planId, text, data, cached, changes)) return data;
         render();
@@ -667,12 +679,22 @@ function updateStaleBanner(fetchedAt) {
     }
 }
 
+function planSkeleton() {
+    const week = currentView() === 'week';
+    const blocks = [];
+    for (let i = 0; i < (week ? 5 : 3); i++) blocks.push(h('div', { class: 'sk-block' }));
+    return h('div', { class: 'skeleton', 'aria-busy': 'true' },
+        h('p', { class: 'sk-text' }, 'Pobieram plan z WAT, to potrwa kilka sekund...'),
+        h('div', { class: week ? 'sk-grid sk-week' : 'sk-grid' }, ...blocks));
+}
+
 function render() {
     document.documentElement.toggleAttribute('data-wide', currentView() === 'week' && Boolean(currentPlanId) && status !== 'error');
-    document.documentElement.toggleAttribute('data-loading', status === 'loading');
+    document.documentElement.toggleAttribute('data-loading', status === 'loading' || status === 'fetching');
     todayBtn.classList.toggle('hidden', status !== 'ready' || !selectedDate || !todayOffScreen());
     refreshButton.classList.toggle('hidden', !currentPlanId);
     if (status === 'loading') { view.replaceChildren(h('div', { class: 'message' }, 'Ładowanie...')); return; }
+    if (status === 'fetching') { view.replaceChildren(planSkeleton()); return; }
     if (status === 'error') { view.replaceChildren(h('div', { class: 'message error' }, statusMessage)); return; }
     if (!currentPlanId) {
         view.replaceChildren(h('div', { class: 'empty-day' },
@@ -1210,7 +1232,14 @@ async function watchRefresh(planId, baseline, quiet = false) {
 
 async function watchVisit(planId, baseline) {
     if (activeWatch && activeWatch.planId === planId) return;
-    if (await watchRefresh(planId, baseline, true) === 'changed') setNotice('Plan zaktualizowany', false);
+    const outcome = await watchRefresh(planId, baseline, true);
+    if (outcome === 'changed' && baseline) setNotice('Plan zaktualizowany', false);
+    if (outcome === 'timeout' && status === 'fetching' && currentPlanId === planId) {
+        fetchingFor = '';
+        status = 'error';
+        statusMessage = FETCH_FAILED;
+        render();
+    }
 }
 
 async function refreshServer() {
