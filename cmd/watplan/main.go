@@ -235,6 +235,10 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	if !offline {
+		go upd.WatchCredits(ctx)
+	}
+
 	if !offline && !onDemand {
 		go func() {
 			<-ready

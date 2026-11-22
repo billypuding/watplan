@@ -71,6 +71,7 @@ type Fetcher struct {
 
 	scraperBudget int
 	proxyBudget   int
+	credits       *creditWatch
 	budgetMu      sync.Mutex
 	budgetOver    map[string]bool
 
@@ -196,6 +197,11 @@ func NewFetcher() (*Fetcher, error) {
 		return nil, err
 	}
 
+	credits, err := newCreditWatch(scraper)
+	if err != nil {
+		return nil, err
+	}
+
 	usage := NewUsage()
 	if tlsProxy != nil {
 		tlsProxy.usage = usage
@@ -203,6 +209,7 @@ func NewFetcher() (*Fetcher, error) {
 	f := &Fetcher{
 		usage:         usage,
 		scraperBudget: scraperBudget,
+		credits:       credits,
 		proxyBudget:   proxyBudget,
 		budgetOver:    map[string]bool{},
 		client:        client,

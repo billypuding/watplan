@@ -254,6 +254,11 @@ and nothing sensitive:
   night without any fetches is still healthy,
 - `budget`: the daily fetch budget is not used up.
 
+With ScrapingAnt, the server reads the remaining credits from its free `/v2/usage` endpoint
+every `PLANWAT_CREDITS_CHECK_EVERY` (default `4h`) and sends one alert per threshold from
+`PLANWAT_CREDITS_ALERT` (percent of the plan, default `30,10`) to the alert webhook. After a
+top-up the alerts are marked as resolved and the thresholds work again.
+
 Every request to the scraping API and to the proxy is logged (`zużycie: ...`) and counted.
 `/api/status` shows the counts under `usage`, per provider, for the last 24 hours and
 30 days: requests, ScrapingAnt credits (from the `Ant-Credits-Cost` header) and proxy

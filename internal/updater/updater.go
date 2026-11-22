@@ -519,3 +519,17 @@ func (u *Updater) FetchHealthy(maxAge time.Duration) bool {
 	}
 	return time.Since(since) <= maxAge
 }
+
+func (u *Updater) WatchCredits(ctx context.Context) {
+	if u == nil || u.fetcher == nil {
+		return
+	}
+	u.fetcher.WatchCredits(ctx)
+}
+
+func (u *Updater) Credits() (wat.Credits, bool) {
+	if u == nil || u.fetcher == nil {
+		return wat.Credits{}, false
+	}
+	return u.fetcher.Credits()
+}
