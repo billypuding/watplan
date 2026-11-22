@@ -593,8 +593,17 @@ function applyPlanData(data) {
     status = 'ready';
 }
 
+function acceptPlan(planId, text, data, cached) {
+    storePlan(planId, text);
+    scheduleStaleRecheck(planId, data.fetched_at);
+    loadChangeChip(planId);
+    if (cached && cached.raw === text) return false;
+    applyPlanData(data);
+    return true;
+}
+
 async function loadPlan() {
-    if (!currentPlanId) return;
+    if (!currentPlanId) return null;
     const requestId = ++loadCounter;
     const planId = currentPlanId;
     const cached = cachedPlan(planId);
@@ -610,17 +619,15 @@ async function loadPlan() {
         let data = null;
         try { data = JSON.parse(text); } catch (_) { data = null; }
         if (!response.ok || !data) throw new Error((data && data.error) || `Błąd serwera (${response.status})`);
-        if (requestId !== loadCounter) return;
-        storePlan(planId, text);
-        scheduleStaleRecheck(planId, data.fetched_at);
-        loadChangeChip(planId);
-        if (cached && cached.raw === text) return;
-        applyPlanData(data);
+        if (requestId !== loadCounter) return null;
+        if (!acceptPlan(planId, text, data, cached)) return data;
+        render();
+        return data;
     } catch (err) {
-        if (requestId !== loadCounter) return;
+        if (requestId !== loadCounter) return null;
         if (cached) {
             setNotice('Nie udało się pobrać planu, pokazuję zapisaną wersję', true);
-            return;
+            return null;
         }
         indexEvents([]);
         updateStaleBanner('');
@@ -630,6 +637,7 @@ async function loadPlan() {
         statusMessage = err.message;
     }
     render();
+    return null;
 }
 
 function parseFetched(fetchedAt) {
@@ -1146,16 +1154,49 @@ for (const dlg of [settingsModal, groupModal, weekModal]) {
     dlg.addEventListener('click', (e) => { if (e.target === dlg || e.target.closest('[data-close]')) dlg.close(); });
 }
 
+const REFRESH_CHECKS_MS = [2000, 5000, 10000, 20000];
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const eventsKey = (data) => JSON.stringify((data && data.events) || []);
+
+async function postRefresh(planId) {
+    const response = await fetch('/api/refresh?plan=' + encodeURIComponent(planId), { method: 'POST' });
+    const text = await response.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (_) { data = null; }
+    if (!response.ok) throw new Error((data && data.error) || `Błąd serwera (${response.status})`);
+    if (!data || !Array.isArray(data.events)) return null;
+    if (currentPlanId === planId && acceptPlan(planId, text, data, cachedPlan(planId))) render();
+    return data;
+}
+
+async function watchRefresh(planId, baseline) {
+    let waited = 0;
+    for (const at of REFRESH_CHECKS_MS) {
+        await sleep(at - waited);
+        waited = at;
+        if (currentPlanId !== planId) return;
+        const data = await loadPlan();
+        if (!data || currentPlanId !== planId) continue;
+        if (!baseline || data.fetched_at !== baseline.fetched_at) {
+            const same = baseline && eventsKey(data) === eventsKey(baseline);
+            setNotice(same ? 'Plan aktualny' : 'Plan zaktualizowany', false);
+            return;
+        }
+    }
+    if (currentPlanId === planId) setNotice('Odświeżanie trwa dłużej niż zwykle, spróbuj ponownie później', true);
+}
+
 async function refreshServer() {
     if (!currentPlanId || refreshButton.disabled) return;
+    const planId = currentPlanId;
     refreshButton.disabled = true;
     refreshButton.classList.add('spinning');
     refreshButton.setAttribute('aria-busy', 'true');
     try {
-        await fetchJSON('/api/refresh?plan=' + encodeURIComponent(currentPlanId), { method: 'POST' });
-        await loadPlan();
+        const baseline = await postRefresh(planId);
         setNotice('Odświeżanie w tle...', false);
-        setTimeout(() => { if (currentPlanId) loadPlan(); }, 1500);
+        await watchRefresh(planId, baseline);
     } catch (err) {
         setNotice(err.message, true);
     } finally {
