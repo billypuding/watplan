@@ -190,12 +190,12 @@ func TestVisitChecksAPIOncePerWindow(t *testing.T) {
 	}
 
 	env.srv.mu.Lock()
-	env.srv.lastVisit[refreshTestPlan] = time.Now().Add(-visitIntervals[len(visitIntervals)-1].every - time.Second)
+	env.srv.lastVisit[refreshTestPlan] = time.Now().Add(-model.CheckIntervals[len(model.CheckIntervals)-1].Every - time.Second)
 	env.srv.mu.Unlock()
 	env.visit(t)
 	waitFor(t, func() bool { return !env.srv.busy(refreshTestPlan) })
 	if env.apiHits.Load() != 2 {
-		t.Fatalf("zapytań do API po %v = %d, chcę 2", visitIntervals[len(visitIntervals)-1].every, env.apiHits.Load())
+		t.Fatalf("zapytań do API po %v = %d, chcę 2", model.CheckIntervals[len(model.CheckIntervals)-1].Every, env.apiHits.Load())
 	}
 	if env.proxyHits.Load() != 0 {
 		t.Fatalf("zapytań do proxy = %d, chcę 0", env.proxyHits.Load())
@@ -281,7 +281,7 @@ func TestVisitIntervalThresholds(t *testing.T) {
 		{0, false, 10 * time.Minute},
 	}
 	for _, c := range cases {
-		if got := visitInterval(now.Add(-c.unchanged), c.known, now); got != c.want {
+		if got := model.CheckInterval(now.Add(-c.unchanged), c.known, now); got != c.want {
 			t.Errorf("bez zmian od %v (znane: %v): co %v, chcę %v", c.unchanged, c.known, got, c.want)
 		}
 	}

@@ -39,27 +39,6 @@ const (
 	timeLayout = "2006-01-02 15:04:05"
 )
 
-var visitIntervals = []struct {
-	unchangedFor time.Duration
-	every        time.Duration
-}{
-	{7 * 24 * time.Hour, 4 * time.Hour},
-	{24 * time.Hour, time.Hour},
-	{0, 10 * time.Minute},
-}
-
-func visitInterval(modified time.Time, known bool, now time.Time) time.Duration {
-	if known {
-		age := now.Sub(modified)
-		for _, v := range visitIntervals {
-			if age >= v.unchangedFor {
-				return v.every
-			}
-		}
-	}
-	return visitIntervals[len(visitIntervals)-1].every
-}
-
 var warsawLoc = func() *time.Location {
 	loc, err := time.LoadLocation("Europe/Warsaw")
 	if err != nil {
@@ -729,7 +708,7 @@ func (s *Server) startManual(plan config.PlanConfig, ip string) string {
 
 func (s *Server) checkOnVisit(plan config.PlanConfig, data []byte, ip string) bool {
 	times := readPlanTimes(data)
-	every := visitInterval(times.modified, times.modifiedKnown, time.Now())
+	every := model.CheckInterval(times.modified, times.modifiedKnown, time.Now())
 	if times.checkedKnown && time.Since(times.checked) < every {
 		return false
 	}

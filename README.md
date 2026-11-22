@@ -143,7 +143,7 @@ A manual refresh also returns the cached plan immediately, with `X-Plan-Refresh`
 - `cooldown`: refreshed less than a minute ago,
 - `background`: fetched through the proxy, falling back to the scraping API.
 
-The intervals are `visitIntervals` and the 15 minute window is `manualFreshFor` in
+The intervals are `CheckIntervals` in `internal/model/check.go` (also used for plans watched through push notifications) and the 15 minute window is `manualFreshFor` in
 `internal/server/server.go`.
 
 ScrapingAnt's free plan includes 10,000 credits a month; a plain datacenter request

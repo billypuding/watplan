@@ -11,6 +11,7 @@ import (
 
 	"github.com/billypuding/watplan/internal/alert"
 	"github.com/billypuding/watplan/internal/config"
+	"github.com/billypuding/watplan/internal/model"
 	"github.com/billypuding/watplan/internal/wat"
 )
 
@@ -28,7 +29,6 @@ type MaintainOptions struct {
 	FetchGap      time.Duration
 	RetryAfter    time.Duration
 	Watched       func() []string
-	WatchEvery    time.Duration
 }
 
 func (o MaintainOptions) withDefaults() MaintainOptions {
@@ -46,9 +46,6 @@ func (o MaintainOptions) withDefaults() MaintainOptions {
 	}
 	if o.RetryAfter <= 0 {
 		o.RetryAfter = 24 * time.Hour
-	}
-	if o.WatchEvery <= 0 {
-		o.WatchEvery = 2 * time.Hour
 	}
 	return o
 }
@@ -270,10 +267,11 @@ func (u *Updater) refreshWatched(ctx context.Context, reg *config.Registry, opts
 		if !ok || u.fetcher.Blocked(p.URL) {
 			continue
 		}
-		if stored, err := u.store.Load(id); err == nil {
-			if at, err := time.ParseInLocation(timeLayout, stored.FetchedAt, warsawLoc); err == nil && time.Since(at) < opts.WatchEvery {
-				continue
-			}
+		if !u.FetchAllowed(false) {
+			break
+		}
+		if stored, err := u.store.Load(id); err == nil && !checkDue(stored, time.Now()) {
+			continue
 		}
 		res, err := u.update(p)
 		switch {
@@ -304,4 +302,13 @@ func sleepCtx(ctx context.Context, d time.Duration) bool {
 	case <-t.C:
 		return true
 	}
+}
+
+func checkDue(p model.Plan, now time.Time) bool {
+	checked, err := time.ParseInLocation(timeLayout, p.LastChecked(), warsawLoc)
+	if err != nil {
+		return true
+	}
+	modified, err := time.ParseInLocation(timeLayout, p.ModifiedAt, warsawLoc)
+	return now.Sub(checked) >= model.CheckInterval(modified, err == nil, now)
 }
