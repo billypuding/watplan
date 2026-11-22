@@ -613,10 +613,10 @@ async function loadPlan(quiet = false) {
         status = 'loading';
     }
     render();
-    const changes = fetchChanges(planId);
+    const changes = earlyChanges(planId);
     changes.catch(() => undefined);
     try {
-        const response = await fetch('/api/plan/' + encodeURIComponent(planId));
+        const response = await earlyPlanResponse(planId);
         const text = await response.text();
         let data = null;
         try { data = JSON.parse(text); } catch (_) { data = null; }
@@ -1314,6 +1314,31 @@ const CHIP_DAYS = 7;
 
 async function fetchChanges(planId) {
     return fetchJSON('/api/changes/' + encodeURIComponent(planId));
+}
+
+function takeEarly(planId, key) {
+    const early = window.earlyPlan;
+    if (!early || early.id !== planId || !early[key]) return null;
+    const pending = early[key];
+    early[key] = null;
+    return pending;
+}
+
+async function earlyChanges(planId) {
+    const pending = takeEarly(planId, 'changes');
+    if (!pending) return fetchChanges(planId);
+    let response;
+    try { response = await pending; } catch (_) { return fetchChanges(planId); }
+    if (!response.ok) throw new Error(`Błąd serwera (${response.status})`);
+    return response.json();
+}
+
+async function earlyPlanResponse(planId) {
+    const pending = takeEarly(planId, 'plan');
+    if (pending) {
+        try { return await pending; } catch (_) { }
+    }
+    return fetch('/api/plan/' + encodeURIComponent(planId));
 }
 
 function parseStamp(text) {

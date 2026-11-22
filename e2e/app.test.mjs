@@ -56,6 +56,16 @@ test('telefon: domyślnie widok dnia z bieżącymi zajęciami', { skip }, async 
     assert.deepEqual(page.errors, []);
 });
 
+test('plan pobiera się raz, już z nagłówka strony', { skip }, async () => {
+    await page.goto(app());
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    const paths = JSON.parse(await page.eval(`JSON.stringify(performance.getEntriesByType('resource').map(r => new URL(r.name).pathname))`));
+    assert.equal(paths.filter(p => p === '/api/plan/WMT26AX3S1').length, 1);
+    assert.equal(paths.filter(p => p === '/api/changes/WMT26AX3S1').length, 1);
+    assert.equal(await page.eval(`window.earlyPlan.id === 'WMT26AX3S1' && window.earlyPlan.plan === null && window.earlyPlan.changes === null`), true);
+    assert.deepEqual(page.errors, []);
+});
+
 test('komputer: domyślnie siatka tygodnia z dzisiejszą kolumną', { skip }, async () => {
     await page.viewport(1280, 900);
     await page.goto(app());
