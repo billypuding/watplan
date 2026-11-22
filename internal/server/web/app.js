@@ -602,7 +602,7 @@ function acceptPlan(planId, text, data, cached) {
     return true;
 }
 
-async function loadPlan() {
+async function loadPlan(quiet = false) {
     if (!currentPlanId) return null;
     const requestId = ++loadCounter;
     const planId = currentPlanId;
@@ -620,13 +620,14 @@ async function loadPlan() {
         try { data = JSON.parse(text); } catch (_) { data = null; }
         if (!response.ok || !data) throw new Error((data && data.error) || `Błąd serwera (${response.status})`);
         if (requestId !== loadCounter) return null;
+        if (response.headers.get('X-Plan-Refresh') === 'background') watchVisit(planId, data);
         if (!acceptPlan(planId, text, data, cached)) return data;
         render();
         return data;
     } catch (err) {
         if (requestId !== loadCounter) return null;
         if (cached) {
-            setNotice('Nie udało się pobrać planu, pokazuję zapisaną wersję', true);
+            if (!quiet) setNotice('Nie udało się pobrać planu, pokazuję zapisaną wersję', true);
             return null;
         }
         indexEvents([]);
@@ -1179,21 +1180,33 @@ async function postRefresh(planId) {
     return { plan: data, state, checked };
 }
 
-async function watchRefresh(planId, baseline) {
-    let waited = 0;
-    for (const at of REFRESH_CHECKS_MS) {
-        await sleep(at - waited);
-        waited = at;
-        if (currentPlanId !== planId) return;
-        const data = await loadPlan();
-        if (!data || currentPlanId !== planId) continue;
-        if (!baseline || checkedKey(data) !== checkedKey(baseline)) {
-            const same = baseline && eventsKey(data) === eventsKey(baseline);
-            setNotice(same ? 'Plan aktualny' : 'Plan zaktualizowany', false);
-            return;
+let activeWatch = null;
+
+async function watchRefresh(planId, baseline, quiet = false) {
+    const watch = { planId };
+    activeWatch = watch;
+    try {
+        let waited = 0;
+        for (const at of REFRESH_CHECKS_MS) {
+            await sleep(at - waited);
+            waited = at;
+            if (activeWatch !== watch || currentPlanId !== planId) return 'left';
+            const data = await loadPlan(quiet);
+            if (activeWatch !== watch || currentPlanId !== planId) return 'left';
+            if (!data) continue;
+            if (!baseline || checkedKey(data) !== checkedKey(baseline)) {
+                return baseline && eventsKey(data) === eventsKey(baseline) ? 'same' : 'changed';
+            }
         }
+        return 'timeout';
+    } finally {
+        if (activeWatch === watch) activeWatch = null;
     }
-    if (currentPlanId === planId) setNotice('Odświeżanie trwa dłużej niż zwykle, spróbuj ponownie później', true);
+}
+
+async function watchVisit(planId, baseline) {
+    if (activeWatch && activeWatch.planId === planId) return;
+    if (await watchRefresh(planId, baseline, true) === 'changed') setNotice('Plan zaktualizowany', false);
 }
 
 async function refreshServer() {
@@ -1213,7 +1226,10 @@ async function refreshServer() {
             return;
         }
         setNotice(state === 'pending' ? 'Sprawdzam plan...' : 'Odświeżanie w tle...', false);
-        await watchRefresh(planId, plan);
+        const outcome = await watchRefresh(planId, plan);
+        if (outcome === 'same') setNotice('Plan aktualny', false);
+        else if (outcome === 'changed') setNotice('Plan zaktualizowany', false);
+        else if (outcome === 'timeout') setNotice('Odświeżanie trwa dłużej niż zwykle, spróbuj ponownie później', true);
     } catch (err) {
         setNotice(err.message, true);
     } finally {

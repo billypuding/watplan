@@ -283,7 +283,11 @@ func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig) ([]byte
 		return nil, false
 	}
 	if err == nil && s.options.OnDemand && s.updater != nil {
-		s.checkOnVisit(plan, data)
+		refresh := "none"
+		if s.checkOnVisit(plan, data) {
+			refresh = "background"
+		}
+		w.Header().Set("X-Plan-Refresh", refresh)
 	}
 	if err != nil {
 		log.Printf("odczyt planu %s: %v", id, err)
@@ -557,17 +561,18 @@ func (s *Server) startManual(plan config.PlanConfig) string {
 	return "background"
 }
 
-func (s *Server) checkOnVisit(plan config.PlanConfig, data []byte) {
+func (s *Server) checkOnVisit(plan config.PlanConfig, data []byte) bool {
 	if checked, ok := checkedAt(data); ok && time.Since(checked) < visitCheckEvery {
-		return
+		return false
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if time.Since(s.lastVisit[plan.ID]) < visitCheckEvery || s.busyLocked(plan.ID) {
-		return
+		return false
 	}
 	s.lastVisit[plan.ID] = time.Now()
 	s.startLocked(plan, "sprawdzanie przy wejściu", s.updater.Update)
+	return true
 }
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {

@@ -76,13 +76,14 @@ func newRefreshEnv(t *testing.T, api http.HandlerFunc, checkedAt string) *refres
 	return env
 }
 
-func (e *refreshEnv) visit(t *testing.T) {
+func (e *refreshEnv) visit(t *testing.T) string {
 	t.Helper()
 	rec := httptest.NewRecorder()
 	e.handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/plan/"+refreshTestPlan, nil))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("GET planu: status = %d", rec.Code)
 	}
+	return rec.Header().Get("X-Plan-Refresh")
 }
 
 func (e *refreshEnv) refresh(t *testing.T) *httptest.ResponseRecorder {
@@ -205,5 +206,25 @@ func TestVisitSkipsRecentlyCheckedPlan(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 	if env.apiHits.Load() != 0 {
 		t.Fatalf("zapytań do API = %d, chcę 0", env.apiHits.Load())
+	}
+}
+
+func TestVisitRefreshHeader(t *testing.T) {
+	env := newRefreshEnv(t, gone, checkedAgo(time.Hour))
+
+	if got := env.visit(t); got != "background" {
+		t.Fatalf("pierwsze wejście: X-Plan-Refresh = %q, chcę background", got)
+	}
+	waitFor(t, func() bool { return !env.srv.busy(refreshTestPlan) })
+	if got := env.visit(t); got != "none" {
+		t.Fatalf("drugie wejście: X-Plan-Refresh = %q, chcę none", got)
+	}
+}
+
+func TestVisitFreshPlanHeader(t *testing.T) {
+	env := newRefreshEnv(t, gone, checkedAgo(time.Minute))
+
+	if got := env.visit(t); got != "none" {
+		t.Fatalf("X-Plan-Refresh = %q, chcę none", got)
 	}
 }
