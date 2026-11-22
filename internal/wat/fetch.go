@@ -12,6 +12,7 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -350,7 +351,8 @@ func (f *Fetcher) fetchPage(targetUrl string, prev Validators, mode FetchMode) (
 }
 
 type statusError struct {
-	status int
+	status  int
+	charged bool
 }
 
 func (e *statusError) Error() string {
@@ -387,6 +389,9 @@ func retryable(err error) bool {
 	}
 	var se *statusError
 	if errors.As(err, &se) {
+		if se.charged {
+			return false
+		}
 		switch se.status {
 		case http.StatusRequestTimeout, http.StatusTooManyRequests,
 			http.StatusInternalServerError, http.StatusBadGateway,
@@ -477,6 +482,13 @@ func (f *Fetcher) fetchBody(targetUrl string, prev Validators, mode FetchMode) (
 		return fetched{}, err
 	}
 	defer resp.Body.Close()
+
+	if useScraper && resp.StatusCode == http.StatusOK {
+		if code, err := strconv.Atoi(resp.Header.Get("Ant-Page-Status-Code")); err == nil && (code < 200 || code > 299) {
+			log.Printf("fetch %s przez %s: strona zwróciła %d", targetUrl, f.scraper.provider, code)
+			return fetched{}, &statusError{status: code, charged: true}
+		}
+	}
 
 	if resp.StatusCode == http.StatusNotModified && !prev.empty() {
 		if used != nil {

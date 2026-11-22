@@ -1,10 +1,12 @@
 package wat
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"testing"
 )
 
@@ -91,5 +93,46 @@ func TestScraperRequiresKey(t *testing.T) {
 
 	if _, err := NewFetcher(); err == nil {
 		t.Fatal("NewFetcher bez klucza powinien zwrócić błąd")
+	}
+}
+
+func TestScrapingAntTargetStatus(t *testing.T) {
+	status := "404"
+	var calls atomic.Int64
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		w.Header().Set("Ant-Page-Status-Code", status)
+		w.Header().Set("Ant-Credits-Cost", "1")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write([]byte("<html><body>Not Found</body></html>"))
+	}))
+	defer api.Close()
+
+	t.Setenv("PLANWAT_PROXY", "")
+	t.Setenv("PLANWAT_PROXY_HOST", "")
+	t.Setenv("PLANWAT_FETCH_INTERVAL", "0")
+	t.Setenv("PLANWAT_SCRAPER_PROVIDER", "scrapingant")
+	t.Setenv("PLANWAT_SCRAPER_KEY", "test-key")
+	t.Setenv("PLANWAT_SCRAPER_API_URL", api.URL)
+	f, err := NewFetcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, _, err := f.FetchPage("https://example.test/plan.htm", Validators{}); !errors.Is(err, ErrGone) {
+		t.Fatalf("404 strony przez API: err = %v, chcę ErrGone", err)
+	}
+	status = "500"
+	before := calls.Load()
+	if _, _, err := f.FetchPage("https://example.test/plan.htm", Validators{}); err == nil || errors.Is(err, ErrGone) {
+		t.Fatalf("500 strony przez API: err = %v, chcę błąd statusu", err)
+	}
+	if got := calls.Load() - before; got != 1 {
+		t.Fatalf("500 strony przez API: %d zapytań, chcę 1 (każda próba kosztuje kredyt)", got)
+	}
+	status = "200"
+	body, _, err := f.FetchPage("https://example.test/plan.htm", Validators{})
+	if err != nil || !strings.Contains(string(body), "Not Found") {
+		t.Fatalf("200 strony przez API: err = %v, body = %q", err, body)
 	}
 }
