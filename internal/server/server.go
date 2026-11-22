@@ -60,7 +60,12 @@ type Options struct {
 	TrustProxy     bool
 	RefreshPerHour int
 	ChecksPerHour  int
+
+	DBRequired        bool
+	HealthFetchMaxAge time.Duration
 }
+
+const defaultHealthFetchMaxAge = 3 * time.Hour
 
 const (
 	defaultRefreshPerHour = 10
@@ -161,6 +166,7 @@ func (s *Server) Handler() (http.Handler, error) {
 	mux.HandleFunc("/api/plan/", s.waitReady(s.handlePlan))
 	mux.HandleFunc("/api/refresh", s.waitReady(s.handleRefresh))
 	mux.HandleFunc("/api/status", s.handleStatus)
+	mux.HandleFunc("/healthz", s.handleHealth)
 	mux.HandleFunc("/api/changes/", s.waitReady(withGzip(s.handleChanges)))
 	mux.HandleFunc("/api/rooms", s.waitReady(withGzip(s.handleRooms)))
 	mux.HandleFunc("/api/semester", s.waitReady(s.handleSemester))
@@ -749,6 +755,51 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		"usage":         s.updater.Usage().Snapshot(),
 		"now":           time.Now().In(warsawLoc).Format(timeLayout),
 	})
+}
+
+func (s *Server) dataReady() bool {
+	if s.ready != nil {
+		select {
+		case <-s.ready:
+		default:
+			return false
+		}
+	}
+	return s.store.Count() > 0
+}
+
+func (s *Server) dbHealthy() bool {
+	s.dbMu.RLock()
+	db := s.options.DB
+	s.dbMu.RUnlock()
+	if db == nil {
+		return !s.options.DBRequired
+	}
+	failed, _ := db.Status()
+	return failed == ""
+}
+
+func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
+	maxAge := s.options.HealthFetchMaxAge
+	if maxAge <= 0 {
+		maxAge = defaultHealthFetchMaxAge
+	}
+	checks := map[string]bool{
+		"data":   s.dataReady(),
+		"db":     s.dbHealthy(),
+		"fetch":  s.options.Offline || s.updater.FetchHealthy(maxAge),
+		"budget": s.options.Offline || s.updater.FetchAllowed(false),
+	}
+	ok := true
+	for _, v := range checks {
+		ok = ok && v
+	}
+	status := http.StatusOK
+	if !ok {
+		status = http.StatusServiceUnavailable
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, status, map[string]any{"ok": ok, "checks": checks})
 }
 
 func (s *Server) dbStatus() map[string]any {

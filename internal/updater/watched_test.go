@@ -2,6 +2,8 @@ package updater
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -81,5 +83,33 @@ func TestRefreshWatchedUsesAdaptiveInterval(t *testing.T) {
 	}
 	if got := hits.Load(); got != 2 {
 		t.Fatalf("pobrań = %d, chcę 2 (STALE10D i CHANGED, bez FRESH10D)", got)
+	}
+}
+
+func TestFetchHealthy(t *testing.T) {
+	u := &Updater{started: time.Now()}
+	if !u.FetchHealthy(time.Hour) {
+		t.Fatal("bez prób pobierania ma być zdrowo")
+	}
+	u.recordFetch(fmt.Errorf("pobieranie: %w", wat.ErrGone))
+	if u.lastFail.Load() != 0 {
+		t.Fatal("404 grupy nie powinno liczyć się jako awaria pobierania")
+	}
+	u.lastOK.Store(time.Now().Add(-4 * time.Hour).UnixNano())
+	u.recordFetch(errors.New("timeout"))
+	if u.FetchHealthy(3 * time.Hour) {
+		t.Fatal("błędy od 4 h bez sukcesu: chcę niezdrowo")
+	}
+	if !u.FetchHealthy(5 * time.Hour) {
+		t.Fatal("przy progu 5 h jeszcze zdrowo")
+	}
+	u.recordFetch(nil)
+	if !u.FetchHealthy(3 * time.Hour) {
+		t.Fatal("po udanym pobraniu znów zdrowo")
+	}
+	fresh := &Updater{started: time.Now().Add(-4 * time.Hour)}
+	fresh.recordFetch(errors.New("blokada"))
+	if fresh.FetchHealthy(3 * time.Hour) {
+		t.Fatal("same błędy od startu 4 h temu: chcę niezdrowo")
 	}
 }

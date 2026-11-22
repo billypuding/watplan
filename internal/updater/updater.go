@@ -52,6 +52,9 @@ type Updater struct {
 
 	onChange func(config.PlanConfig, model.Change)
 	clock    func() time.Time
+	started  time.Time
+	lastOK   atomic.Int64
+	lastFail atomic.Int64
 	alert    *alert.Notifier
 }
 
@@ -86,6 +89,7 @@ func NewUpdater(store *store.Store, fetcher *wat.Fetcher) *Updater {
 		workers: workers,
 		locks:   make(map[string]*sync.Mutex),
 		busy:    make(map[string]int),
+		started: time.Now(),
 	}
 }
 
@@ -270,7 +274,8 @@ func (u *Updater) updateLocked(cfg config.PlanConfig) (updateResult, error) {
 	return u.updateLockedMode(cfg, wat.FetchAuto)
 }
 
-func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (updateResult, error) {
+func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (res updateResult, err error) {
+	defer func() { u.recordFetch(err) }()
 	old, err := u.store.Load(cfg.ID)
 	if err != nil {
 		old = model.Plan{}
@@ -486,4 +491,31 @@ func (u *Updater) Budget() map[string]wat.BudgetStatus {
 		return nil
 	}
 	return u.fetcher.Budget()
+}
+
+func (u *Updater) recordFetch(err error) {
+	now := time.Now().UnixNano()
+	switch {
+	case err == nil:
+		u.lastOK.Store(now)
+	case errors.Is(err, wat.ErrGone), errors.Is(err, wat.ErrBudget):
+	default:
+		u.lastFail.Store(now)
+	}
+}
+
+func (u *Updater) FetchHealthy(maxAge time.Duration) bool {
+	if u == nil {
+		return true
+	}
+	fail := u.lastFail.Load()
+	ok := u.lastOK.Load()
+	if fail == 0 || fail <= ok {
+		return true
+	}
+	since := u.started
+	if ok > 0 {
+		since = time.Unix(0, ok)
+	}
+	return time.Since(since) <= maxAge
 }

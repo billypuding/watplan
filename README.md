@@ -244,6 +244,16 @@ only when the request really came from Cloudflare: either the peer is in Cloudfl
 ranges, or the peer is a private address and `PLANWAT_TRUST_PROXY=1` (Render, where all
 traffic goes through Cloudflare). Otherwise the TCP peer address is used.
 
+`GET /healthz` answers `200` or `503` with `{"ok": ..., "checks": {"data", "db", "fetch", "budget"}}`
+and nothing sensitive:
+
+- `data`: plans restored from the database and present on disk,
+- `db`: Turso reachable (no pending write error; required when `PLANWAT_DB_URL` is set),
+- `fetch`: fetching from WAT is not failing: it only turns false when fetches keep failing and
+  the last success is older than `PLANWAT_HEALTH_FETCH_MAX_AGE` (default `3h`), so a quiet
+  night without any fetches is still healthy,
+- `budget`: the daily fetch budget is not used up.
+
 Every request to the scraping API and to the proxy is logged (`zużycie: ...`) and counted.
 `/api/status` shows the counts under `usage`, per provider, for the last 24 hours and
 30 days: requests, ScrapingAnt credits (from the `Ant-Credits-Cost` header) and proxy

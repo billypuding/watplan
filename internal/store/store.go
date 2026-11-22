@@ -266,3 +266,20 @@ func (s *Store) LoadMeta(name string) ([]byte, error) {
 	defer s.mu.RUnlock()
 	return os.ReadFile(s.metaPath(name))
 }
+
+func (s *Store) Count() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	entries, err := os.ReadDir(s.dir)
+	if err != nil {
+		return 0
+	}
+	n := 0
+	for _, e := range entries {
+		name := e.Name()
+		if !e.IsDir() && strings.HasSuffix(name, ".json") && !strings.HasSuffix(name, ".history.json") {
+			n++
+		}
+	}
+	return n
+}

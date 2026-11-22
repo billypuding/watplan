@@ -150,6 +150,9 @@ func main() {
 		TrustProxy:     envBool("PLANWAT_TRUST_PROXY"),
 		RefreshPerHour: envInt("PLANWAT_LIMIT_REFRESH_PER_HOUR"),
 		ChecksPerHour:  envInt("PLANWAT_LIMIT_CHECKS_PER_HOUR"),
+
+		DBRequired:        os.Getenv("PLANWAT_DB_URL") != "",
+		HealthFetchMaxAge: envDuration("PLANWAT_HEALTH_FETCH_MAX_AGE"),
 	})
 	handler, err := srvApp.Handler()
 	if err != nil {
@@ -301,6 +304,18 @@ func envOr(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func envDuration(key string) time.Duration {
+	v := strings.TrimSpace(os.Getenv(key))
+	if v == "" {
+		return 0
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil || d < 0 {
+		log.Fatalf("zły %s %q (np. 3h, 90m)", key, v)
+	}
+	return d
 }
 
 func envInt(key string) int {
