@@ -1158,6 +1158,13 @@ const REFRESH_CHECKS_MS = [2000, 5000, 10000, 20000];
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const eventsKey = (data) => JSON.stringify((data && data.events) || []);
+const checkedKey = (data) => (data && (data.checked_at || data.fetched_at)) || '';
+
+function checkedAgo(iso) {
+    const minutes = Math.floor((Date.now() - Date.parse(iso)) / 60000);
+    if (!Number.isFinite(minutes) || minutes < 1) return 'przed chwilą';
+    return `${minutes} min temu`;
+}
 
 async function postRefresh(planId) {
     const response = await fetch('/api/refresh?plan=' + encodeURIComponent(planId), { method: 'POST' });
@@ -1165,10 +1172,11 @@ async function postRefresh(planId) {
     let data = null;
     try { data = JSON.parse(text); } catch (_) { data = null; }
     if (!response.ok) throw new Error((data && data.error) || `Błąd serwera (${response.status})`);
-    const cooldown = response.headers.get('X-Plan-Refresh') === 'cooldown';
-    if (!data || !Array.isArray(data.events)) return { plan: null, cooldown };
+    const state = response.headers.get('X-Plan-Refresh') || '';
+    const checked = response.headers.get('X-Plan-Checked-At') || '';
+    if (!data || !Array.isArray(data.events)) return { plan: null, state, checked };
     if (currentPlanId === planId && acceptPlan(planId, text, data, cachedPlan(planId))) render();
-    return { plan: data, cooldown };
+    return { plan: data, state, checked };
 }
 
 async function watchRefresh(planId, baseline) {
@@ -1179,7 +1187,7 @@ async function watchRefresh(planId, baseline) {
         if (currentPlanId !== planId) return;
         const data = await loadPlan();
         if (!data || currentPlanId !== planId) continue;
-        if (!baseline || data.fetched_at !== baseline.fetched_at) {
+        if (!baseline || checkedKey(data) !== checkedKey(baseline)) {
             const same = baseline && eventsKey(data) === eventsKey(baseline);
             setNotice(same ? 'Plan aktualny' : 'Plan zaktualizowany', false);
             return;
@@ -1195,12 +1203,16 @@ async function refreshServer() {
     refreshButton.classList.add('spinning');
     refreshButton.setAttribute('aria-busy', 'true');
     try {
-        const { plan, cooldown } = await postRefresh(planId);
-        if (cooldown) {
+        const { plan, state, checked } = await postRefresh(planId);
+        if (state === 'fresh') {
+            setNotice(`Plan aktualny (sprawdzony ${checkedAgo(checked)})`, false);
+            return;
+        }
+        if (state === 'cooldown') {
             setNotice('Plan był odświeżany przed chwilą', false);
             return;
         }
-        setNotice('Odświeżanie w tle...', false);
+        setNotice(state === 'pending' ? 'Sprawdzam plan...' : 'Odświeżanie w tle...', false);
         await watchRefresh(planId, plan);
     } catch (err) {
         setNotice(err.message, true);

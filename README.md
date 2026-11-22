@@ -92,10 +92,22 @@ The client uses a Chrome profile from `tls-client`, one shared cookie jar, and a
 sticky proxy session. On `403`, `407`, or timeout it generates a new session ID and
 retries once. If the proxy still fails, the refresh falls back to the scraping API.
 The proxy login is built as
-`customer-<user>-cc-PL-sessid-<id>-sesstime-10`.
+`customer-<user>-cc-PL-sessid-<id>-sesstime-1440` (24 hours, Oxylabs' maximum).
 
-A manual refresh returns the cached plan immediately and fetches in the background.
-The same group is fetched at most once per minute; further clicks return the cache.
+Opening a plan always returns the cached copy right away. If the plan was last
+checked (`checked_at`, updated on `200` and `304`) more than 10 minutes ago, the
+server checks it in the background through the scraping API, at most once per
+plan every 10 minutes and never while another fetch of that plan is running.
+
+A manual refresh also returns the cached plan immediately, with `X-Plan-Refresh`:
+
+- `fresh`: checked in the last 15 minutes, nothing is fetched (`X-Plan-Checked-At` gives the time),
+- `pending`: a fetch of this plan is already running, the proxy is not used,
+- `cooldown`: refreshed less than a minute ago,
+- `background`: fetched through the proxy, falling back to the scraping API.
+
+The 10 and 15 minute windows are `visitCheckEvery` and `manualFreshFor` in
+`internal/server/server.go`.
 
 ScrapingAnt's free plan includes 10,000 credits a month; a plain datacenter request
 costs 1 credit, while residential costs 25. Use `PLANWAT_ON_DEMAND=1` and

@@ -32,10 +32,9 @@ var webFS embed.FS
 
 const (
 	refreshCooldown = time.Minute
+	visitCheckEvery = 10 * time.Minute
+	manualFreshFor  = 15 * time.Minute
 
-	staleAfter = time.Hour
-	staleRetry = 30 * time.Minute
-	staleWait  = 4 * time.Second
 	timeLayout = "2006-01-02 15:04:05"
 )
 
@@ -65,7 +64,8 @@ type Server struct {
 	options     Options
 	mu          sync.Mutex
 	lastRefresh map[string]time.Time
-	lastStale   map[string]time.Time
+	lastVisit   map[string]time.Time
+	inflight    map[string]bool
 	rooms       roomsCache
 	semester    semesterCache
 	dbMu        sync.RWMutex
@@ -105,7 +105,8 @@ func NewServer(registry *config.Registry, store *store.Store, updater *updater.U
 		updater:     updater,
 		options:     options,
 		lastRefresh: make(map[string]time.Time),
-		lastStale:   make(map[string]time.Time),
+		lastVisit:   make(map[string]time.Time),
+		inflight:    make(map[string]bool),
 	}
 	store.OnSave(s.rooms.update)
 	return s
@@ -282,15 +283,7 @@ func (s *Server) planData(w http.ResponseWriter, plan config.PlanConfig) ([]byte
 		return nil, false
 	}
 	if err == nil && s.options.OnDemand && s.updater != nil {
-		if done := s.refreshIfStale(plan); done != nil {
-			select {
-			case <-done:
-				if fresh, freshErr := s.store.Raw(id); freshErr == nil {
-					data = fresh
-				}
-			case <-time.After(staleWait):
-			}
-		}
+		s.checkOnVisit(plan, data)
 	}
 	if err != nil {
 		log.Printf("odczyt planu %s: %v", id, err)
@@ -499,60 +492,82 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refresh := "cooldown"
-	if wait := s.reserveRefresh(plan.ID); wait <= 0 {
-		refresh = "background"
-		go func() {
-			if err := s.updater.UpdateManual(plan); err != nil {
-				log.Printf("ręczne odświeżanie planu %s: %v", plan.ID, err)
-			}
-		}()
-	}
-
 	data, err := s.store.Raw(plan.ID)
 	if err == nil {
+		if checked, ok := checkedAt(data); ok && time.Since(checked) < manualFreshFor {
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-Plan-Refresh", "fresh")
+			w.Header().Set("X-Plan-Checked-At", checked.Format(time.RFC3339))
+			w.Write(data)
+			return
+		}
+	}
+
+	refresh := s.startManual(plan)
+	w.Header().Set("X-Plan-Refresh", refresh)
+	if err == nil {
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("X-Plan-Refresh", refresh)
 		w.Write(data)
 		return
 	}
-
-	w.Header().Set("X-Plan-Refresh", refresh)
 	status := "refreshing"
-	if refresh == "cooldown" {
-		status = "cooldown"
+	if refresh != "background" {
+		status = refresh
 	}
 	writeJSON(w, http.StatusAccepted, map[string]string{"status": status})
 }
 
-func (s *Server) refreshIfStale(plan config.PlanConfig) <-chan struct{} {
-	cached, err := s.store.Load(plan.ID)
-	if err != nil {
-		return nil
+func checkedAt(data []byte) (time.Time, bool) {
+	var plan model.Plan
+	if err := json.Unmarshal(data, &plan); err != nil {
+		return time.Time{}, false
 	}
-	fetched, err := time.ParseInLocation(timeLayout, cached.FetchedAt, warsawLoc)
-	if err == nil && time.Since(fetched) < staleAfter {
-		return nil
-	}
+	at, err := time.ParseInLocation(timeLayout, plan.LastChecked(), warsawLoc)
+	return at, err == nil
+}
 
-	s.mu.Lock()
-	if time.Since(s.lastStale[plan.ID]) < staleRetry {
-		s.mu.Unlock()
-		return nil
-	}
-	s.lastStale[plan.ID] = time.Now()
-	s.mu.Unlock()
+func (s *Server) busyLocked(id string) bool {
+	return s.inflight[id] || s.updater.Busy(id)
+}
 
-	done := make(chan struct{})
+func (s *Server) startLocked(plan config.PlanConfig, label string, run func(config.PlanConfig) error) {
+	s.inflight[plan.ID] = true
 	go func() {
-		defer close(done)
-		if err := s.updater.Update(plan); err != nil {
-			log.Printf("odświeżanie nieaktualnego planu %s: %v", plan.ID, err)
-			return
+		defer func() {
+			s.mu.Lock()
+			delete(s.inflight, plan.ID)
+			s.mu.Unlock()
+		}()
+		if err := run(plan); err != nil {
+			log.Printf("%s planu %s: %v", label, plan.ID, err)
 		}
-		log.Printf("plan %s: odświeżony na żądanie (poprzednio %s)", plan.ID, cached.FetchedAt)
 	}()
-	return done
+}
+
+func (s *Server) startManual(plan config.PlanConfig) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.busyLocked(plan.ID) {
+		return "pending"
+	}
+	if s.reserveRefreshLocked(plan.ID) > 0 {
+		return "cooldown"
+	}
+	s.startLocked(plan, "ręczne odświeżanie", s.updater.UpdateManual)
+	return "background"
+}
+
+func (s *Server) checkOnVisit(plan config.PlanConfig, data []byte) {
+	if checked, ok := checkedAt(data); ok && time.Since(checked) < visitCheckEvery {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if time.Since(s.lastVisit[plan.ID]) < visitCheckEvery || s.busyLocked(plan.ID) {
+		return
+	}
+	s.lastVisit[plan.ID] = time.Now()
+	s.startLocked(plan, "sprawdzanie przy wejściu", s.updater.Update)
 }
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -616,10 +631,7 @@ func (s *Server) writeUpdateError(w http.ResponseWriter, err error) {
 	writeError(w, http.StatusBadGateway, "nie udało się pobrać planu ze strony WAT")
 }
 
-func (s *Server) reserveRefresh(planID string) time.Duration {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
+func (s *Server) reserveRefreshLocked(planID string) time.Duration {
 	if s.lastRefresh == nil {
 		s.lastRefresh = make(map[string]time.Time)
 	}

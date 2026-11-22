@@ -46,7 +46,7 @@ func TestRefreshCooldownHeader(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := st.Save("TST26XX1S0", model.Plan{FetchedAt: "2026-11-22 10:00:00"}); err != nil {
+	if err := st.Save("TST26XX1S0", model.Plan{FetchedAt: "2020-01-01 10:00:00"}); err != nil {
 		t.Fatal(err)
 	}
 	reg := config.NewRegistry([]config.PlanConfig{{
@@ -132,7 +132,7 @@ func TestOnDemandFetchesMissingPlanOnce(t *testing.T) {
 	}
 }
 
-func TestOnDemandServesRefreshedStalePlan(t *testing.T) {
+func TestOnDemandVisitServesCacheAndRefreshesInBackground(t *testing.T) {
 	page, err := os.ReadFile("../wat/testdata/plan_wat.html")
 	if err != nil {
 		t.Fatal(err)
@@ -173,9 +173,13 @@ func TestOnDemandServesRefreshedStalePlan(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &plan); err != nil {
 		t.Fatal(err)
 	}
-	if plan.FetchedAt == old {
-		t.Fatalf("serwer oddał nieaktualny plan (%s) zamiast odświeżonego", plan.FetchedAt)
+	if plan.FetchedAt != old {
+		t.Fatalf("serwer czekał na pobranie zamiast od razu oddać cache (%s)", plan.FetchedAt)
 	}
+	waitFor(t, func() bool {
+		saved, err := st.Load("WMT26AX3S1")
+		return err == nil && saved.CheckedAt != "" && !srv.busy("WMT26AX3S1")
+	})
 }
 
 func TestRouting(t *testing.T) {

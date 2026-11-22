@@ -46,6 +46,7 @@ type Updater struct {
 	workers int
 	mu      sync.Mutex
 	locks   map[string]*sync.Mutex
+	busy    map[string]int
 	sources map[string]FacultyStatus
 	missing atomic.Int64
 
@@ -84,7 +85,30 @@ func NewUpdater(store *store.Store, fetcher *wat.Fetcher) *Updater {
 		fetcher: fetcher,
 		workers: workers,
 		locks:   make(map[string]*sync.Mutex),
+		busy:    make(map[string]int),
 	}
+}
+
+func (u *Updater) track(id string) func() {
+	u.mu.Lock()
+	u.busy[id]++
+	u.mu.Unlock()
+	return func() {
+		u.mu.Lock()
+		if u.busy[id]--; u.busy[id] <= 0 {
+			delete(u.busy, id)
+		}
+		u.mu.Unlock()
+	}
+}
+
+func (u *Updater) Busy(id string) bool {
+	if u == nil {
+		return false
+	}
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	return u.busy[id] > 0
 }
 
 func (u *Updater) planLock(id string) *sync.Mutex {
@@ -194,6 +218,7 @@ func (u *Updater) Update(cfg config.PlanConfig) error {
 }
 
 func (u *Updater) UpdateManual(cfg config.PlanConfig) error {
+	defer u.track(cfg.ID)()
 	_, err := u.updateMode(cfg, wat.FetchViaProxy)
 	if err == nil {
 		return nil
@@ -214,6 +239,7 @@ func manualFallback(err error) bool {
 }
 
 func (u *Updater) Ensure(cfg config.PlanConfig) error {
+	defer u.track(cfg.ID)()
 	lock := u.planLock(cfg.ID)
 	lock.Lock()
 	defer lock.Unlock()
@@ -233,6 +259,7 @@ func (u *Updater) update(cfg config.PlanConfig) (updateResult, error) {
 }
 
 func (u *Updater) updateMode(cfg config.PlanConfig, mode wat.FetchMode) (updateResult, error) {
+	defer u.track(cfg.ID)()
 	lock := u.planLock(cfg.ID)
 	lock.Lock()
 	defer lock.Unlock()
@@ -258,8 +285,10 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (u
 	}
 
 	events, got, err := u.fetchEvents(cfg, prev, mode)
+	checked := time.Now().In(warsawLoc).Format(timeLayout)
 	if errors.Is(err, wat.ErrNotModified) {
-		old.FetchedAt = time.Now().In(warsawLoc).Format(timeLayout)
+		old.FetchedAt = checked
+		old.CheckedAt = checked
 		if err := u.store.Save(cfg.ID, old); err != nil {
 			return updateResult{}, fmt.Errorf("zapis: %w", err)
 		}
@@ -285,6 +314,7 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (u
 			pending := old
 			pending.DropCount = len(events)
 			pending.DropStreak = streak
+			pending.CheckedAt = checked
 			if err := u.store.Save(cfg.ID, pending); err != nil {
 				return updateResult{}, fmt.Errorf("zapis: %w", err)
 			}
@@ -318,7 +348,7 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (u
 		change.Since = old.FetchedAt
 	}
 
-	plan := model.Plan{Events: events, FetchedAt: now, ModifiedAt: modifiedAt, ETag: got.ETag, LastMod: got.LastModified}
+	plan := model.Plan{Events: events, FetchedAt: now, CheckedAt: checked, ModifiedAt: modifiedAt, ETag: got.ETag, LastMod: got.LastModified}
 	if err := u.store.Save(cfg.ID, plan); err != nil {
 		return updateResult{}, fmt.Errorf("zapis: %w", err)
 	}

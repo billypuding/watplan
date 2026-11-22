@@ -16,11 +16,19 @@ type Event struct {
 type Plan struct {
 	Events     []Event `json:"events"`
 	FetchedAt  string  `json:"fetched_at"`
+	CheckedAt  string  `json:"checked_at,omitempty"`
 	ModifiedAt string  `json:"modified_at"`
 	DropCount  int     `json:"drop_count,omitempty"`
 	DropStreak int     `json:"drop_streak,omitempty"`
 	ETag       string  `json:"etag,omitempty"`
 	LastMod    string  `json:"last_modified,omitempty"`
+}
+
+func (p Plan) LastChecked() string {
+	if p.CheckedAt != "" {
+		return p.CheckedAt
+	}
+	return p.FetchedAt
 }
 
 func SortEvents(events []Event) {
