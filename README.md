@@ -73,6 +73,16 @@ keeps what is safe to share:
 - everything under `/api/`: `private, no-store`, or `private, no-cache` with an `ETag`
   for `/api/plan` and `/api/plans`; compressed responses carry `Vary: Accept-Encoding`.
 
+### Plansoft cells (WLO)
+
+WLO publishes plans with a Plansoft layout where each cell is `Subject(type)` / group list /
+teacher / room (plus optional `T1W`-style markers and a `50%` share line). The parser detects
+this layout and maps the fields; teacher abbreviations such as `ZCzajko` or `Hut.V` are expanded
+from the legend only when exactly one person matches. Plans are stored with a parser version.
+A plan read by an older parser that shows the old misreading (group names in the room field) is
+fetched again in full and saved without a history entry or push notification, and on start the
+server repairs such plans in the background (one every 90 seconds).
+
 ## Getting started
 
 ```bash

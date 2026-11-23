@@ -22,6 +22,7 @@ type Plan struct {
 	DropStreak int     `json:"drop_streak,omitempty"`
 	ETag       string  `json:"etag,omitempty"`
 	LastMod    string  `json:"last_modified,omitempty"`
+	Parser     int     `json:"parser,omitempty"`
 }
 
 func (p Plan) LastChecked() string {

@@ -305,8 +305,9 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (r
 		}
 	}
 
+	reparse := old.Parser < wat.ParserVersion && wat.Misparsed(old.Events)
 	var prev wat.Validators
-	if len(old.Events) > 0 && old.DropStreak == 0 && len(cfg.Extra) == 0 {
+	if len(old.Events) > 0 && old.DropStreak == 0 && len(cfg.Extra) == 0 && !reparse {
 		prev = wat.Validators{ETag: old.ETag, LastModified: old.LastMod}
 	}
 
@@ -333,7 +334,7 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (r
 		return updateResult{skipped: true}, nil
 	}
 
-	if suspiciousDrop(len(old.Events), len(events)) {
+	if !reparse && suspiciousDrop(len(old.Events), len(events)) {
 		streak := 1
 		if old.DropCount == len(events) {
 			streak = old.DropStreak + 1
@@ -359,6 +360,13 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (r
 
 	now := time.Now().In(warsawLoc).Format(timeLayout)
 	diff := model.Diff(old.Events, events)
+	if reparse {
+		log.Printf("plan %s: poprawiony odczyt (parser %d), zapis bez historii zmian i powiadomień", cfg.ID, wat.ParserVersion)
+		diff = model.PlanDiff{}
+		if old.ModifiedAt == "" {
+			old.ModifiedAt = now
+		}
+	}
 
 	modifiedAt := old.ModifiedAt
 	if modifiedAt == "" || !diff.Empty() {
@@ -380,7 +388,7 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (r
 		change.Since = old.FetchedAt
 	}
 
-	plan := model.Plan{Events: events, FetchedAt: now, CheckedAt: checked, ModifiedAt: modifiedAt, ETag: got.ETag, LastMod: got.LastModified}
+	plan := model.Plan{Events: events, FetchedAt: now, CheckedAt: checked, ModifiedAt: modifiedAt, ETag: got.ETag, LastMod: got.LastModified, Parser: wat.ParserVersion}
 	if err := u.store.Save(cfg.ID, plan); err != nil {
 		return updateResult{}, fmt.Errorf("zapis: %w", err)
 	}

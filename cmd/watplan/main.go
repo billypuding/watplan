@@ -313,6 +313,10 @@ func main() {
 
 	if !offline {
 		go upd.WatchCredits(ctx)
+		go func() {
+			<-ready
+			upd.RepairMisparsed(ctx, reg, 0)
+		}()
 	}
 
 	if !offline && !onDemand {
