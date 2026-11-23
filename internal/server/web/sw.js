@@ -8,6 +8,7 @@ const PRECACHE = [
     '/style.css?v=0',
     '/app.js?v=0',
     '/groups.js?v=0',
+    '/more.js?v=0',
     '/manifest.json?v=0',
     '/fonts/geist-latin.woff2?v=0',
     '/fonts/geist-latin-pl.woff2?v=0',

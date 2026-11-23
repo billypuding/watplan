@@ -183,35 +183,12 @@
     <button class="tool-item" type="button" data-tool="changes"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v4l3 2"/><path d="M3.05 11a9 9 0 1 1 .5 4"/><path d="M3 4v5h5"/></svg><span><b>Historia zmian</b><small>Przeniesione, odwołane i nowe zajęcia</small></span></button>
     <button class="tool-item" type="button" data-tool="print"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg><span><b>Miesiąc do PDF</b><small>Zapisz albo wydrukuj plan miesiąca</small></span></button>
     <button class="tool-item" type="button" data-tool="extras"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span><b>Moje zajęcia</b><small>Lektorat, konsultacje i inne poza planem</small></span></button>
+    <button class="tool-item" type="button" data-tool="stats"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M8 16v-3M13 16V8M18 16v-6"/></svg><span><b>Statystyki planu</b><small>Godziny, przedmioty i najcięższe dni</small></span></button>
+    <button class="tool-item" type="button" data-tool="share"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span><b>Udostępnij plan</b><small>Link i kod QR dla znajomych z grupy</small></span></button>
+    <button class="tool-item" type="button" data-tool="install" id="installTool" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg><span><b>Zainstaluj aplikację</b><small>WATplan na ekranie początkowym</small></span></button>
   </div>
 </dialog>
 
-<dialog id="extrasModal" class="fullscreen">
-  <div class="series-head">
-    <button class="round-btn" type="button" data-close aria-label="Wróć">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-    </button>
-    <div class="series-title">
-      <h2>Moje zajęcia</h2>
-      <p>Pokazują się w planie razem z zajęciami grupy</p>
-    </div>
-  </div>
-  <div class="series-body">
-    <form id="extraForm" class="tool-filters extra-form" novalidate>
-      <label class="wide"><span>Nazwa</span><input id="extraName" maxlength="80" autocomplete="off" placeholder="np. Lektorat angielskiego"></label>
-      <label><span>Powtarzanie</span><select id="extraRepeat"><option value="weekly">Co tydzień</option><option value="once">Jednorazowo</option></select></label>
-      <label id="extraWeekdayLabel"><span>Dzień</span><select id="extraWeekday"></select></label>
-      <label id="extraDateLabel" hidden><span>Data</span><input type="date" id="extraDate"></label>
-      <label><span>Od</span><input type="time" id="extraStart" value="08:00"></label>
-      <label><span>Do</span><input type="time" id="extraEnd" value="09:35"></label>
-      <label><span>Sala (opcjonalnie)</span><input id="extraRoom" maxlength="40" autocomplete="off"></label>
-      <p class="hint error wide" id="extraError" role="alert" hidden></p>
-      <button class="primary-btn wide" type="submit">Dodaj</button>
-    </form>
-    <div id="extraList"></div>
-    <p class="hint tool-note">Własne zajęcia są zapisane tylko na tym urządzeniu. Nie trafiają do subskrypcji kalendarza.</p>
-  </div>
-</dialog>
 
 <dialog id="examsModal" class="fullscreen">
   <div class="series-head">

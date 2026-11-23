@@ -246,7 +246,12 @@ test('moje zajęcia: dodanie, kolizja z planem, zapis i usunięcie', { skip }, a
     const target = JSON.parse(await page.eval(`JSON.stringify((({ date, start, end, subject }) => ({ date, start, end, subject, weekday: dayIndex(parseISO(date)) }))(allEvents.find(e => mondayOf(e.date) === mondayOf(selectedDate))))`));
     await page.click('#toolsBtn');
     await page.click('[data-tool="extras"]');
-    await page.waitFor(`document.getElementById('extrasModal').open`);
+    await page.waitFor(`document.getElementById('extrasModal')?.open`);
+    assert.equal(await page.eval(`getComputedStyle(document.getElementById('extraDateLabel')).display`), 'none');
+    await page.eval(`(() => { const r = document.getElementById('extraRepeat'); r.value = 'once'; r.dispatchEvent(new Event('change')); return true; })()`);
+    assert.equal(await page.eval(`getComputedStyle(document.getElementById('extraWeekdayLabel')).display`), 'none');
+    assert.notEqual(await page.eval(`getComputedStyle(document.getElementById('extraDateLabel')).display`), 'none');
+    await page.eval(`(() => { const r = document.getElementById('extraRepeat'); r.value = 'weekly'; r.dispatchEvent(new Event('change')); return true; })()`);
     await page.eval(`document.getElementById('extraName').value = ''; true`);
     await page.click('#extraForm button[type=submit]');
     assert.equal(await page.text('#extraError'), 'Podaj nazwę zajęć.');
@@ -272,10 +277,67 @@ test('moje zajęcia: dodanie, kolizja z planem, zapis i usunięcie', { skip }, a
     await page.waitFor(`document.querySelectorAll('.wk-cell.extra').length > 0`);
     await page.click('#toolsBtn');
     await page.click('[data-tool="extras"]');
+    await page.waitFor(`document.querySelectorAll('.extra-item').length === 1`);
     await page.click('.extra-item .link-btn');
     await page.waitFor(`document.querySelectorAll('.extra-item').length === 0`);
     assert.equal(await page.eval(`document.querySelectorAll('.wk-cell.extra').length`), 0);
     assert.equal(await page.eval(`localStorage.getItem('extraClasses')`), '{}');
+    assert.deepEqual(page.errors, []);
+});
+
+test('statystyki planu liczą godziny, przedmioty i dni tygodnia', { skip }, async () => {
+    await page.reset();
+    await page.goto(app());
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    const expected = JSON.parse(await page.eval(`JSON.stringify({ mins: allEvents.reduce((n, e) => n + toMin(e.end) - toMin(e.start), 0), subjects: new Set(allEvents.map(e => e.subject)).size })`));
+    await page.click('#toolsBtn');
+    await page.click('[data-tool="stats"]');
+    await page.waitFor(`document.getElementById('statsModal')?.open`);
+    const first = await page.text('#statsModalBody .stat b');
+    assert.equal(first, `${String(Math.round(expected.mins / 6) / 10).replace('.', ',')} h`);
+    assert.equal(await page.eval(`document.querySelectorAll('#statsModalBody .stat-bars')[0].children.length`), expected.subjects);
+    assert.ok(await page.eval(`document.querySelectorAll('#statsModalBody .stat-bars')[1].children.length`) >= 5);
+    assert.match(await page.text('#statsModalSub'), /semestr (zimowy|letni)/);
+    assert.equal(await page.eval(`[...document.querySelectorAll('script[src]')].filter(s => s.src.includes('/more.js?v=')).length`), 1);
+    assert.deepEqual(page.errors, []);
+});
+
+test('udostępnianie pokazuje link i działający kod QR', { skip }, async () => {
+    await page.goto(app());
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    await page.click('#toolsBtn');
+    await page.click('[data-tool="share"]');
+    await page.waitFor(`document.querySelector('.share-qr')?.complete && document.querySelector('.share-qr').naturalWidth > 0`);
+    assert.equal(await page.eval(`document.getElementById('shareLink').value`), `${server.base}/plan/WMT26AX3S1`);
+    const decoded = await page.eval(`(async () => {
+        if (!('BarcodeDetector' in window)) return null;
+        const c = document.createElement('canvas');
+        c.width = c.height = 440;
+        c.getContext('2d').drawImage(document.querySelector('.share-qr'), 0, 0, 440, 440);
+        const found = await new BarcodeDetector({ formats: ['qr_code'] }).detect(c);
+        return found.map(x => x.rawValue).join('|');
+    })()`);
+    if (decoded !== null) assert.equal(decoded, `${server.base}/plan/WMT26AX3S1`);
+    assert.deepEqual(page.errors, []);
+});
+
+test('przycisk instalacji pojawia się po beforeinstallprompt i wywołuje prompt', { skip }, async () => {
+    await page.goto(app());
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    await page.eval(`(() => {
+        document.getElementById('installTool').hidden = true;
+        const e = new Event('beforeinstallprompt', { cancelable: true });
+        e.prompt = () => { window.__prompted = true; return Promise.resolve(); };
+        e.userChoice = Promise.resolve({ outcome: 'accepted' });
+        window.dispatchEvent(e);
+        window.__prevented = e.defaultPrevented;
+        return true;
+    })()`);
+    assert.equal(await page.eval(`document.getElementById('installTool').hidden`), false);
+    assert.equal(await page.eval(`window.__prevented`), true);
+    await page.click('#toolsBtn');
+    await page.click('[data-tool="install"]');
+    await page.waitFor(`window.__prompted === true && document.getElementById('installTool').hidden`);
     assert.deepEqual(page.errors, []);
 });
 

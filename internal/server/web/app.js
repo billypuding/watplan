@@ -864,7 +864,7 @@ function eventCard(e) {
         return tint(h('button', {
             type: 'button', class: 'ev-card tint extra', 'data-start': start, 'data-end': end,
             'aria-label': `${e.subject}, moje zajęcia${e.room ? ', sala ' + e.room : ''}${e._clash.length ? ', kolizja z ' + e._clash.join(', ') : ''}. Edytuj`,
-            onclick: () => openExtras(),
+            onclick: () => moreTool('openExtras'),
         },
             h('div', { class: 'ev-subject' }, e.subject),
             h('div', { class: e._clash.length ? 'ev-type sub clash' : 'ev-type sub' }, h('span', { class: 'dot' }), extraLabel(e)),
@@ -984,7 +984,7 @@ function weekCell(e) {
             type: 'button', class: 'wk-cell tint extra', 'data-start': start, 'data-end': end,
             title: `${e.start}–${e.end} ${e.subject}${e.room ? ', sala ' + e.room : ''}. ${extraLabel(e)}`,
             'aria-label': `${e.subject}, moje zajęcia, ${e.start}–${e.end}${e._clash.length ? ', kolizja z ' + e._clash.join(', ') : ''}. Edytuj`,
-            onclick: () => openExtras(),
+            onclick: () => moreTool('openExtras'),
         },
             h('span', { class: 'time sub' }, `${e.start}–${e.end}`),
             h('span', { class: 'ab' }, abbreviate(e.subject)),
@@ -1752,90 +1752,42 @@ toolsModal.querySelectorAll('[data-tool]').forEach(btn => btn.addEventListener('
     else if (tool === 'compare') openCompare();
     else if (tool === 'changes') openChanges(currentPlanId);
     else if (tool === 'print') printMonth();
-    else if (tool === 'extras') openExtras();
+    else if (tool === 'install' && installPrompt) promptInstall();
+    else moreTool({ extras: 'openExtras', stats: 'openStats', share: 'openShare', install: 'openInstall' }[tool]);
 }));
 
-const extrasModal = $('extrasModal');
-const extraForm = $('extraForm');
-const extraRepeat = $('extraRepeat');
-const extraError = $('extraError');
-const extraList = $('extraList');
-extrasModal.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) extrasModal.close(); });
-extraRepeat.addEventListener('change', syncExtraForm);
-$('extraWeekday').append(...DAY_NAMES.map((name, i) => h('option', { value: String(i) }, name)));
-
-function syncExtraForm() {
-    const once = extraRepeat.value === 'once';
-    $('extraWeekdayLabel').hidden = once;
-    $('extraDateLabel').hidden = !once;
-}
-
-function describeExtra(x) {
-    const when = x.repeat === 'once' ? longDate(x.date) : `co tydzień, ${DAY_NAMES[Number(x.weekday)].toLowerCase()}`;
-    return `${when}, ${x.start}–${x.end}${x.room ? ', sala ' + x.room : ''}`;
-}
-
-function renderExtras() {
-    const list = extrasFor(currentPlanId);
-    const clashes = new Map();
-    for (const e of allEvents) if (e._extra && e._clash.length) clashes.set(e._extra, (clashes.get(e._extra) || 0) + 1);
-    extraList.replaceChildren(list.length ? h('div', { class: 'extra-list' }, list.map(x => h('div', { class: 'extra-item' },
-        h('div', null, h('b', null, x.subject), h('small', null, describeExtra(x)),
-            clashes.get(x.id) ? h('small', { class: 'clash' }, `Kolizje z planem: ${clashes.get(x.id)}`) : null),
-        h('button', { type: 'button', class: 'link-btn', 'aria-label': `Usuń ${x.subject}`, onclick: () => removeExtra(x.id) }, 'Usuń'),
-    ))) : h('p', { class: 'hint' }, 'Nie masz jeszcze własnych zajęć w tej grupie.'));
-}
-
-function openExtras() {
-    if (!currentPlanId) return;
-    extraError.hidden = true;
-    syncExtraForm();
-    if (!$('extraDate').value) $('extraDate').value = selectedDate || todayISO();
-    renderExtras();
-    if (!extrasModal.open) extrasModal.showModal();
-}
-
-function removeExtra(id) {
-    saveExtras(currentPlanId, extrasFor(currentPlanId).filter(x => x.id !== id));
-    indexEvents(planEvents);
-    render();
-    renderExtras();
-}
-
-extraForm.addEventListener('submit', (ev) => {
-    ev.preventDefault();
-    const subject = $('extraName').value.trim();
-    const start = $('extraStart').value;
-    const end = $('extraEnd').value;
-    const repeat = extraRepeat.value;
-    const date = $('extraDate').value;
-    let problem = '';
-    if (!subject) problem = 'Podaj nazwę zajęć.';
-    else if (!start || !end) problem = 'Podaj godzinę początku i końca.';
-    else if (toMin(end) <= toMin(start)) problem = 'Koniec musi być później niż początek.';
-    else if (repeat === 'once' && !date) problem = 'Wybierz datę.';
-    if (problem) {
-        extraError.textContent = problem;
-        extraError.hidden = false;
-        return;
-    }
-    extraError.hidden = true;
-    const list = extrasFor(currentPlanId);
-    list.push({
-        id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
-        subject: subject.slice(0, 80), start, end, repeat,
-        weekday: repeat === 'once' ? dayIndex(parseISO(date)) : Number($('extraWeekday').value),
-        date: repeat === 'once' ? date : '',
-        room: $('extraRoom').value.trim().slice(0, 40),
+let morePromise = null;
+function moreTool(name) {
+    morePromise ||= new Promise((resolve, reject) => {
+        document.head.append(h('script', { src: '/more.js?v=0', onload: resolve, onerror: reject }));
     });
-    saveExtras(currentPlanId, list);
-    $('extraName').value = '';
-    $('extraRoom').value = '';
-    indexEvents(planEvents);
-    render();
-    renderExtras();
-    setNotice('Dodano własne zajęcia', false);
+    morePromise.then(() => window[name](), () => {
+        morePromise = null;
+        setNotice(navigator.onLine ? 'Nie udało się otworzyć. Spróbuj ponownie.' : 'Brak internetu. Spróbuj, gdy wróci połączenie.', true);
+    });
+}
+
+let installPrompt = null;
+const installTool = $('installTool');
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+if (!standalone() && (/iP(hone|ad|od)/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1))) installTool.hidden = false;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    installPrompt = e;
+    installTool.hidden = false;
 });
+window.addEventListener('appinstalled', () => {
+    installPrompt = null;
+    installTool.hidden = true;
+});
+
+async function promptInstall() {
+    const prompt = installPrompt;
+    installPrompt = null;
+    await prompt.prompt();
+    const { outcome } = await prompt.userChoice;
+    if (outcome === 'accepted') installTool.hidden = true;
+}
 
 const SESSION_RE = /^\s*sesja/i;
 const isSessionMarker = (e) => SESSION_RE.test(e.subject);
