@@ -110,6 +110,7 @@ test('bez błędów CSP i Permissions-Policy na stronach i w akcjach', { skip },
 });
 
 test('offline: polskie komunikaty i zapisany plan', { skip }, async () => {
+    const alertText = `document.querySelector('p.sr-only[role=alert]')?.textContent || ''`;
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
     await page.offline(true);
@@ -120,6 +121,7 @@ test('offline: polskie komunikaty i zapisany plan', { skip }, async () => {
         assert.match(message, /Brak połączenia z internetem/);
         assert.doesNotMatch(message, /Failed to fetch|NetworkError|Load failed/);
         assert.equal(await page.eval(`document.querySelector('#notice').classList.contains('show')`), false);
+        await page.waitFor(`(${alertText}).includes('Brak połączenia z internetem')`);
 
         await page.eval(`selectPlan('WMT26AX3S1', 'WMT26AX3S1'), true`);
         await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
@@ -128,6 +130,7 @@ test('offline: polskie komunikaty i zapisany plan', { skip }, async () => {
         await page.click('#refreshButton');
         await page.waitFor(`document.querySelector('#notice').textContent.includes('Brak połączenia')`);
         assert.doesNotMatch(await page.text('#notice'), /Failed to fetch/);
+        await page.waitFor(`(${alertText}).includes('Brak połączenia')`);
     } finally {
         await page.offline(false);
     }
@@ -374,6 +377,11 @@ test('dostępność: nazwy dialogów, Esc, powrót fokusu i krótkie komunikaty'
     await page.waitFor(`${live}.textContent.length > 0`);
     assert.match(await page.eval(`${live}.textContent`), /^(Tydzień .+|[A-ZŚ][a-ząęłńóśźż]+, .+): (\d+ zaj|brak zajęć)/);
     assert.ok(await page.eval(`${live}.textContent.length < 80`));
+    assert.equal(await page.eval(`document.getElementById('notice').getAttribute('aria-hidden')`), 'true');
+    await page.eval(`setNotice('Testowy błąd', true), true`);
+    await page.waitFor(`document.querySelector('p.sr-only[role=alert]').textContent === 'Testowy błąd'`);
+    await page.eval(`setNotice('Skopiowano link', false), true`);
+    await page.waitFor(`${live}.textContent === 'Skopiowano link'`);
     assert.deepEqual(page.errors, []);
 });
 

@@ -38,6 +38,16 @@ const fetchedLabel = $('fetched');
 const modifiedLabel = $('modified');
 const notice = $('notice');
 const srStatus = document.body.appendChild(h('p', { class: 'sr-only', 'aria-live': 'polite' }));
+let lastAnnounced = '';
+const srAlert = document.body.appendChild(h('p', { class: 'sr-only', role: 'alert' }));
+notice.removeAttribute('role');
+notice.setAttribute('aria-hidden', 'true');
+
+function announce(text, urgent) {
+    const region = urgent ? srAlert : srStatus;
+    region.textContent = '';
+    if (text) setTimeout(() => { region.textContent = text; }, 50);
+}
 const seriesModal = $('seriesModal');
 const seriesBack = $('seriesBack');
 const seriesSubject = $('seriesSubject');
@@ -296,6 +306,7 @@ function setNotice(text, isError) {
     notice.textContent = text;
     notice.classList.toggle('error', Boolean(isError));
     notice.classList.toggle('show', Boolean(text));
+    if (text) announce(text, isError);
     if (text) noticeTimer = setTimeout(() => notice.classList.remove('show'), NOTICE_MS);
 }
 
@@ -755,7 +766,11 @@ function render() {
     refreshButton.classList.toggle('hidden', !currentPlanId);
     if (status === 'loading') { view.replaceChildren(h('div', { class: 'message' }, 'Ładowanie...')); return; }
     if (status === 'fetching') { view.replaceChildren(planSkeleton()); return; }
-    if (status === 'error') { view.replaceChildren(h('div', { class: 'message error' }, statusMessage)); return; }
+    if (status === 'error') {
+        view.replaceChildren(h('div', { class: 'message error' }, statusMessage));
+        if (statusMessage !== lastAnnounced) announce(lastAnnounced = statusMessage, true);
+        return;
+    }
     if (!currentPlanId) {
         view.replaceChildren(h('div', { class: 'empty-day' },
             h('b', null, 'Wybierz swoją grupę'),
@@ -785,7 +800,6 @@ function render() {
     announceView();
 }
 
-let lastAnnounced = '';
 function announceView() {
     const count = (n) => n ? classesWord(n) : 'brak zajęć';
     let text;
@@ -798,7 +812,7 @@ function announceView() {
         text = `${DAY_NAMES[dayIndex(parseISO(selectedDate))]}, ${longDate(selectedDate)}: ${count((eventsByDate[selectedDate] || []).length)}`;
     }
     if (text === lastAnnounced) return;
-    if (lastAnnounced) srStatus.textContent = text;
+    if (lastAnnounced) announce(text, false);
     lastAnnounced = text;
 }
 
