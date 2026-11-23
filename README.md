@@ -53,6 +53,12 @@ the group for crawlers. `/app` stays `noindex`. The landing page and favourites 
 change. Requests from crawlers and monitors (user agents with `bot`, `crawl`, `spider`, ...)
 never start a fetch from WAT, so indexing costs no scraping credits; `robots.txt` lets them
 read `/api/plan/` and `/api/plans`, which the page needs to render.
+When the group has a stored plan, `/plan/<ID>` is rendered on the server: the day view
+for today (the same markup the app draws, so nothing moves when the script takes over), a
+"Przedmioty grupy …" list with types and lecturers that stays on the page, and the plan
+JSON in a `<script type="application/json">` block that the app uses instead of waiting
+for `/api/plan`. The plan is visible without JavaScript and is in the first response.
+`PLANWAT_TEST_NOW` (RFC3339) fixes "today" for this rendering; the e2e tests use it.
 `/plan/<ID>/qr.svg` returns a QR code with the group's link (used by "Udostępnij plan").
 Link previews use generated 1200×630 PNG cards: `/plan/<ID>/og.png` with the group code and
 faculty, and `/og.png` for the other pages. They are drawn in Go with Geist (SIL Open Font

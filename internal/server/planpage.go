@@ -84,7 +84,7 @@ func planTitle(plan config.PlanConfig) string {
 	return fmt.Sprintf("Plan zajęć %s – %s WAT | WATplan", id, html.EscapeString(facultyCode(plan)))
 }
 
-func renderPlanPage(tpl []byte, plan config.PlanConfig, site string) []byte {
+func renderPlanPage(tpl []byte, plan config.PlanConfig, site string, ssr *ssrPage) []byte {
 	id := html.EscapeString(plan.ID)
 	faculty := html.EscapeString(facultyName(plan))
 	title := planTitle(plan)
@@ -107,7 +107,13 @@ func renderPlanPage(tpl []byte, plan config.PlanConfig, site string) []byte {
 	out = robotsRe.ReplaceAll(out, []byte(`<meta name="robots" content="index, follow">`))
 	out = canonicalRe.ReplaceAll(out, []byte(`<link rel="canonical" href="`+canonical+`">`))
 	out = bytes.Replace(out, []byte(`<main id="view"`), []byte(`<h1 class="sr-only">Plan zajęć `+id+`</h1>`+"\n"+`<main id="view"`), 1)
-	out = viewRe.ReplaceAll(out, []byte(`${1}<p class="message">Plan zajęć grupy `+id+` – `+faculty+`, Wojskowa Akademia Techniczna.</p>${2}`))
+	out = bytes.Replace(out, []byte(`<span id="groupLabel">Wybierz grupę</span>`), []byte(`<span id="groupLabel">`+id+`</span>`), 1)
+	if ssr != nil {
+		out = viewRe.ReplaceAllLiteral(out, []byte(`<main id="view" class="view">`+ssr.view+`</main>`+"\n"+ssr.info+"\n"+`<script type="application/json" id="ssrPlan" data-id="`+id+`">`+string(ssr.data)+`</script>`))
+		out = bytes.Replace(out, []byte("</head>"), []byte(`<meta name="watplan-ssr" content="`+id+`">`+"\n</head>"), 1)
+	} else {
+		out = viewRe.ReplaceAll(out, []byte(`${1}<p class="message">Plan zajęć grupy `+id+` – `+faculty+`, Wojskowa Akademia Techniczna.</p>${2}`))
+	}
 	return bytes.Replace(out, []byte("</head>"), []byte(`<script type="application/ld+json">`+string(crumbs)+"</script>\n</head>"), 1)
 }
 
@@ -170,7 +176,15 @@ func (s *Server) handlePlanPage(tpl []byte) http.HandlerFunc {
 			w.Write(tpl)
 			return
 		}
-		page := renderPlanPage(tpl, plan, s.siteURL(r))
+		var ssr *ssrPage
+		if raw, err := s.store.Raw(plan.ID); err == nil {
+			now := time.Now
+			if s.options.Now != nil {
+				now = s.options.Now
+			}
+			ssr = renderSSR(plan.ID, raw, now())
+		}
+		page := renderPlanPage(tpl, plan, s.siteURL(r), ssr)
 		sum := sha1.Sum(page)
 		etag := `"` + hex.EncodeToString(sum[:10]) + `"`
 		w.Header().Set("Cache-Control", cacheHTML)

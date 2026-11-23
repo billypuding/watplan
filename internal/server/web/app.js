@@ -453,8 +453,21 @@ function readPlanCache() {
 
 function cachedPlan(id) {
     const entry = readPlanCache().find(c => c.id === id);
-    if (!entry) return null;
+    if (!entry) return serverPlan(id);
     try { return { raw: entry.raw, data: JSON.parse(entry.raw) }; } catch (_) { return null; }
+}
+
+function serverPlan(id) {
+    const el = document.getElementById('ssrPlan');
+    if (!el || el.dataset.id !== id) return null;
+    el.remove();
+    try {
+        const raw = el.textContent;
+        const data = JSON.parse(raw);
+        return data && Array.isArray(data.events) ? { raw, data } : null;
+    } catch (_) {
+        return null;
+    }
 }
 
 function storePlan(id, raw) {

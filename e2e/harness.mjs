@@ -55,7 +55,7 @@ export async function startServer(extraEnv = {}) {
     const port = await freePort();
     const proc = spawn(bin, ['-offline'], {
         cwd: work,
-        env: { ...process.env, PLANWAT_ADDR: `127.0.0.1:${port}`, PLANWAT_CONFIG: join(work, 'plans.json'), PLANWAT_DATA: join(work, 'data'), ...extraEnv },
+        env: { ...process.env, PLANWAT_ADDR: `127.0.0.1:${port}`, PLANWAT_CONFIG: join(work, 'plans.json'), PLANWAT_DATA: join(work, 'data'), PLANWAT_TEST_NOW: FIXED_NOW, ...extraEnv },
         stdio: 'ignore',
     });
     const base = `http://127.0.0.1:${port}`;

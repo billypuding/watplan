@@ -5,6 +5,7 @@ import (
 	"image/png"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -260,7 +261,7 @@ func TestPlanTitleAndDescriptionLength(t *testing.T) {
 		if n := utf8.RuneCountInString(title); n > maxTitle {
 			t.Errorf("%s: tytuł ma %d znaków: %q", code, n, title)
 		}
-		page := string(renderPlanPage([]byte(`<title>x</title><meta name="description" content="x"><main id="view" class="view"></main></head>`), plan, "https://watplan.me"))
+		page := string(renderPlanPage([]byte(`<title>x</title><meta name="description" content="x"><main id="view" class="view"></main></head>`), plan, "https://watplan.me", nil))
 		desc := descriptionRe.FindString(page)
 		if n := utf8.RuneCountInString(desc) - len(`<meta name="description" content="">`); n > 160 {
 			t.Errorf("%s: opis ma %d znaków", code, n)
@@ -331,5 +332,45 @@ func TestFacultyTitlesFit(t *testing.T) {
 		if !strings.Contains(title, code) || !strings.Contains(title, name) {
 			t.Errorf("%s: tytuł bez skrótu albo pełnej nazwy: %q", code, title)
 		}
+	}
+}
+
+func TestPlanPageEmbedsServerRenderedPlan(t *testing.T) {
+	dir := t.TempDir()
+	raw, err := os.ReadFile("../../e2e/fixtures/data/WMT26AX3S1.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(dir+"/WMT26AX3S1.json", raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	st, err := store.NewStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg := config.NewRegistry([]config.PlanConfig{{ID: "WMT26AX3S1", URL: "http://example.invalid/a.htm", Faculty: "WML"}, {ID: "BRAK", URL: "http://example.invalid/b.htm", Faculty: "WML"}})
+	fixed := time.Date(2026, 11, 19, 10, 15, 0, 0, warsawLoc)
+	h, err := NewServer(reg, st, nil, Options{Offline: true, CanonicalHost: "watplan.me", Now: func() time.Time { return fixed }}).Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	get := func(path string) string {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		req.Host = "watplan.me"
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec.Body.String()
+	}
+	body := get("/plan/WMT26AX3S1")
+	for _, want := range []string{`<span id="groupLabel">WMT26AX3S1</span>`, `<meta name="watplan-ssr" content="WMT26AX3S1">`, `<main id="view" class="view"><div class="day-title"><h1>Czwartek</h1>`, `<section class="plan-info"`, `<script type="application/json" id="ssrPlan" data-id="WMT26AX3S1">{`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("strona grupy bez %q", want)
+		}
+	}
+	if !strings.Contains(get("/plan/BRAK"), `<p class="message">Plan zajęć grupy BRAK`) {
+		t.Error("grupa bez planu powinna dostać zwykłą stronę")
+	}
+	if strings.Contains(get("/app"), "ssrPlan") && strings.Contains(get("/app"), `id="ssrPlan"`) {
+		t.Error("/app nie powinno zawierać planu z serwera")
 	}
 }

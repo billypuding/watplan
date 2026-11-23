@@ -171,6 +171,8 @@ func main() {
 
 		CDNURL:    cdnURL,
 		CDNStatus: cdnStatus(publisher),
+
+		Now: testClock(),
 	})
 	handler, err := srvApp.Handler()
 	if err != nil {
@@ -493,4 +495,18 @@ func cdnStatus(p *cdn.Publisher) func() (string, int) {
 		return nil
 	}
 	return p.Status
+}
+
+func testClock() func() time.Time {
+	v := os.Getenv("PLANWAT_TEST_NOW")
+	if v == "" {
+		return nil
+	}
+	at, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		log.Fatalf("zły PLANWAT_TEST_NOW %q (RFC3339, np. 2026-11-19T10:15:00+01:00)", v)
+	}
+	log.Printf("PLANWAT_TEST_NOW: strony grup renderuję na %s", at.Format(time.RFC3339))
+	start := time.Now()
+	return func() time.Time { return at.Add(time.Since(start)) }
 }

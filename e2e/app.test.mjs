@@ -152,6 +152,29 @@ test('strona grupy /plan/ID: tytuł, indeksowanie i przełączanie', { skip }, a
     assert.deepEqual(page.errors, []);
 });
 
+test('strona grupy z planem z serwera: widać go bez /api/plan, bez przesunięć i tak samo jak w JS', { skip }, async () => {
+    const html = await (await fetch(server.base + '/plan/WMT26AX3S1')).text();
+    const ssrSubjects = [...html.split('<section class="plan-info"')[0].matchAll(/<div class="ev-subject">([^<]*)<\/div>/g)].map(m => m[1].replace(/&#34;/g, '"').replace(/&amp;/g, '&'));
+    assert.ok(ssrSubjects.length > 0, 'brak zajęć w HTML z serwera');
+    await page.blockURLs(['*/api/plan/*']);
+    await page.goto(server.base + '/plan/WMT26AX3S1');
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    await new Promise(r => setTimeout(r, 400));
+    const jsSubjects = JSON.parse(await page.eval(`JSON.stringify([...document.querySelectorAll('#view .ev-subject')].map(e => e.textContent))`));
+    assert.deepEqual(jsSubjects, ssrSubjects);
+    assert.equal(await page.eval(`document.getElementById('ssrPlan')`), null);
+    assert.equal(await page.eval(`document.querySelector('#view .message.error')`), null);
+    assert.ok(await page.eval(`document.querySelectorAll('.plan-info li').length`) > 3);
+    const cls = await page.eval(`new Promise((resolve) => {
+        let total = 0;
+        new PerformanceObserver((list) => { for (const e of list.getEntries()) if (!e.hadRecentInput) total += e.value; }).observe({ type: 'layout-shift', buffered: true });
+        setTimeout(() => resolve(total), 300);
+    })`);
+    assert.ok(cls < 0.05, `CLS ${cls}`);
+    assert.deepEqual(page.errors, []);
+    await page.blockURLs([]);
+});
+
 test('telefon: domyślnie widok dnia z bieżącymi zajęciami', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);

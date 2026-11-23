@@ -73,6 +73,8 @@ type Options struct {
 
 	CDNURL    string
 	CDNStatus func() (string, int)
+
+	Now func() time.Time
 }
 
 const defaultHealthFetchMaxAge = 3 * time.Hour

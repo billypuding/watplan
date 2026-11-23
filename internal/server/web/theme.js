@@ -18,7 +18,7 @@
             window.earlyPlan.plan.catch(function () {});
             window.earlyPlan.changes.catch(function () {});
             var cdn = document.querySelector('meta[name="watplan-cdn"]');
-            if (cdn && (localStorage.getItem('planCache') || '').indexOf('"id":' + JSON.stringify(planId)) < 0) {
+            if (cdn && !document.querySelector('meta[name="watplan-ssr"]') && (localStorage.getItem('planCache') || '').indexOf('"id":' + JSON.stringify(planId)) < 0) {
                 window.earlyPlan.cdn = fetch(cdn.content + '/plans/' + path + '.json', { mode: 'cors', credentials: 'omit' });
                 window.earlyPlan.cdn.catch(function () {});
             }
