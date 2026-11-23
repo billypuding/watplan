@@ -28,8 +28,8 @@ func TestStatusRequiresToken(t *testing.T) {
 		return body
 	}
 	basic := func(name string, body map[string]any) {
-		if len(body) != 2 || body["mode"] != "on-demand" || body["now"] == nil {
-			t.Fatalf("%s: chcę tylko mode i now, jest %v", name, body)
+		if len(body) != 3 || body["mode"] != "on-demand" || body["now"] == nil || body["version"] == nil {
+			t.Fatalf("%s: chcę tylko mode, now i version, jest %v", name, body)
 		}
 	}
 	basic("bez tokenu w konfiguracji", get("", "Bearer cokolwiek"))

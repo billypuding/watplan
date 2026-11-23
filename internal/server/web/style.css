@@ -725,3 +725,4 @@ dialog::backdrop { background: var(--scrim); }
 .plan-info ul { margin: 0; padding-left: 18px; }
 .plan-info b { color: var(--text); font-weight: 600; }
 :root[data-wide][data-loading] .plan-info { display: none; }
+.setting.status .version-update { margin-top: 6px; height: 36px; font-size: 13px; }

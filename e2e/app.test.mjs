@@ -459,6 +459,24 @@ test('dostępność: nazwy dialogów, Esc, powrót fokusu i krótkie komunikaty'
     assert.deepEqual(page.errors, []);
 });
 
+test('ustawienia pokazują wersję i informują o nowszej', { skip }, async () => {
+    await page.goto(app());
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    const version = await page.eval(`document.querySelector('meta[name="watplan-version"]').content`);
+    assert.ok(version.length >= 7);
+    await page.click('#settingsBtn');
+    await page.waitFor(`document.getElementById('settingsModal').open`);
+    await new Promise(r => setTimeout(r, 300));
+    assert.equal(await page.text('.setting.status .version b'), version);
+    assert.equal(await page.eval(`document.querySelector('.version-update')`), null, 'przy tej samej wersji nie ma przycisku');
+    await page.eval(`document.getElementById('settingsModal').close(), true`);
+    await page.eval(`(() => { const real = window.fetch; window.fetch = (url, opts) => String(url).includes('/api/status') ? Promise.resolve(new Response(JSON.stringify({ version: 'nowa1234' }), { headers: { 'Content-Type': 'application/json' } })) : real(url, opts); return true; })()`);
+    await page.click('#settingsBtn');
+    await page.waitFor(`document.querySelector('.version-update') !== null`);
+    assert.match(await page.text('.version-update'), /Dostępna nowsza wersja/);
+    assert.deepEqual(page.errors, []);
+});
+
 test('wolne sale pokazują sale dla wybranego bloku', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);

@@ -1144,6 +1144,19 @@ view.addEventListener('touchend', (e) => {
 }, { passive: true });
 
 settingsBtn.addEventListener('click', () => settingsModal.showModal());
+
+const APP_VERSION = (document.querySelector('meta[name="watplan-version"]') || {}).content || '';
+const versionLine = h('span', { class: 'version' }, 'Wersja: ', h('b', null, APP_VERSION || '-'));
+settingsModal.querySelector('.setting.status').append(versionLine);
+settingsBtn.addEventListener('click', async () => {
+    if (!APP_VERSION || versionLine.querySelector('button')) return;
+    try {
+        const live = (await fetchJSON('/api/status')).version;
+        if (live && live !== APP_VERSION) {
+            versionLine.append(' ', h('button', { type: 'button', class: 'link-btn version-update', onclick: () => location.reload() }, 'Dostępna nowsza wersja, odśwież'));
+        }
+    } catch (_) { }
+});
 const weekModal = $('weekModal');
 const weekList = $('weekList');
 for (const dlg of [settingsModal, groupModal, weekModal]) {

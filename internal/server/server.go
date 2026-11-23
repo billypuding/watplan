@@ -104,6 +104,7 @@ type Server struct {
 	checkIPs    *rateLimiter
 	pushIPs     *rateLimiter
 	cards       *shareCards
+	version     string
 	backupMu    sync.Mutex
 	blobs       planBlobs
 	lastEnsure  map[string]time.Time
@@ -205,6 +206,8 @@ func (s *Server) Handler() (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.version = buildVersion(static.version)
+	appPage = bytes.Replace(appPage, []byte("<head>\n"), []byte("<head>\n"+`<meta name="watplan-version" content="`+html.EscapeString(s.version)+`">`+"\n"), 1)
 	if s.options.CDNURL != "" {
 		appPage = bytes.Replace(appPage, []byte("<head>\n"), []byte("<head>\n"+`<meta name="watplan-cdn" content="`+html.EscapeString(s.options.CDNURL)+`">`+"\n"), 1)
 	}
@@ -793,7 +796,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	now := time.Now().In(warsawLoc).Format(timeLayout)
 	if !s.statusAuthorized(r) {
-		writeJSON(w, http.StatusOK, map[string]any{"mode": mode, "now": now})
+		writeJSON(w, http.StatusOK, map[string]any{"mode": mode, "now": now, "version": s.version})
 		return
 	}
 	blocked := map[string]string{}
@@ -802,6 +805,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	detail := map[string]any{
 		"mode":          mode,
+		"version":       s.version,
 		"blocked_hosts": blocked,
 		"proxy":         s.updater.ProxyHost(),
 		"faculties":     s.updater.SourceStatus(),
