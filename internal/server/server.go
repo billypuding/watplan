@@ -61,6 +61,7 @@ type Options struct {
 	TrustProxy     bool
 	RefreshPerHour int
 	ChecksPerHour  int
+	PushPerHour    int
 
 	DBRequired        bool
 	HealthFetchMaxAge time.Duration
@@ -73,6 +74,7 @@ const defaultHealthFetchMaxAge = 3 * time.Hour
 const (
 	defaultRefreshPerHour = 10
 	defaultChecksPerHour  = 30
+	defaultPushPerHour    = 20
 )
 
 var (
@@ -90,6 +92,7 @@ type Server struct {
 	lastVisit   map[string]time.Time
 	refreshIPs  *rateLimiter
 	checkIPs    *rateLimiter
+	pushIPs     *rateLimiter
 	blobs       planBlobs
 	lastEnsure  map[string]time.Time
 	ensureErr   map[string]error
@@ -138,6 +141,7 @@ func NewServer(registry *config.Registry, store *store.Store, updater *updater.U
 		lastVisit:   make(map[string]time.Time),
 		refreshIPs:  newRateLimiter(orDefault(options.RefreshPerHour, defaultRefreshPerHour), time.Hour),
 		checkIPs:    newRateLimiter(orDefault(options.ChecksPerHour, defaultChecksPerHour), time.Hour),
+		pushIPs:     newRateLimiter(orDefault(options.PushPerHour, defaultPushPerHour), time.Hour),
 		lastEnsure:  make(map[string]time.Time),
 		ensureErr:   make(map[string]error),
 		inflight:    make(map[string]bool),
@@ -408,6 +412,11 @@ func (s *Server) handlePushSubscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sub := req.Subscription
+	if len(req.Plans) > 0 && !s.options.Push.Has(sub.Endpoint) && !s.pushIPs.allow(s.clientIP(r)) {
+		w.Header().Set("Retry-After", "3600")
+		writeError(w, http.StatusTooManyRequests, "za dużo nowych subskrypcji z tej sieci, spróbuj za godzinę")
+		return
+	}
 	sub.Plans = nil
 	for _, id := range req.Plans {
 		if _, ok := s.registry.Get(id); ok {

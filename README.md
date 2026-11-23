@@ -278,7 +278,8 @@ serving cached plans and sends one alert; `/api/refresh` answers `X-Plan-Refresh
 
 Per-IP limits (per hour) protect the budgets: `PLANWAT_LIMIT_REFRESH_PER_HOUR` (default 10)
 for `/api/refresh` and `PLANWAT_LIMIT_CHECKS_PER_HOUR` (default 30) for checks started by
-opening a plan; `-1` turns a limit off. Over the limit, refresh answers `X-Plan-Refresh: limited`
+opening a plan, and `PLANWAT_LIMIT_PUSH_PER_HOUR` (default 20) for new push subscriptions
+(re-syncing an existing device is not counted); `-1` turns a limit off. Over the limit, refresh answers `X-Plan-Refresh: limited`
 and opening a plan just shows the cached copy. The client IP is taken from `CF-Connecting-IP`
 only when the request really came from Cloudflare: either the peer is in Cloudflare's IP
 ranges, or the peer is a private address and `PLANWAT_TRUST_PROXY=1` (Render, where all

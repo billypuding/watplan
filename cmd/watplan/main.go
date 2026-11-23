@@ -151,6 +151,7 @@ func main() {
 		TrustProxy:     envBool("PLANWAT_TRUST_PROXY"),
 		RefreshPerHour: envInt("PLANWAT_LIMIT_REFRESH_PER_HOUR"),
 		ChecksPerHour:  envInt("PLANWAT_LIMIT_CHECKS_PER_HOUR"),
+		PushPerHour:    envInt("PLANWAT_LIMIT_PUSH_PER_HOUR"),
 
 		DBRequired:        os.Getenv("PLANWAT_DB_URL") != "",
 		HealthFetchMaxAge: envDuration("PLANWAT_HEALTH_FETCH_MAX_AGE"),

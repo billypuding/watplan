@@ -211,6 +211,13 @@ func (s *Service) Subscribe(sub Subscription) error {
 	return s.saveLocked()
 }
 
+func (s *Service) Has(endpoint string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, ok := s.subs[endpoint]
+	return ok
+}
+
 func (s *Service) Unsubscribe(endpoint string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
