@@ -396,6 +396,15 @@ Then on Render:
 Without these variables nothing changes. An incomplete or invalid setup turns only the CDN
 off, with a log line and an alert.
 
+**Daily database backup.** With `PLANWAT_BACKUP_BUCKET` set (and R2 plus Turso configured), the
+server writes the whole database (plans, history, push subscriptions, index state) to
+`backups/YYYY-MM-DD.json.gz` in that bucket, 15 minutes after start and then every 24 hours.
+Use a **separate private bucket** without a custom domain, because the backup contains push
+subscriptions; give the R2 token access to both buckets. A lifecycle rule
+(`wrangler r2 bucket lifecycle add <bucket> --prefix backups/ --expire-days 30`) removes old
+copies. A failed backup raises the `backup` alert. The file is gzipped JSON:
+`{"created": ..., "keys": n, "data": {"<key>": "<base64 value>"}}`, the same keys as in Turso.
+
 ## Tests
 
 ```bash

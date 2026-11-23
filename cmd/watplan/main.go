@@ -14,10 +14,12 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
 	"github.com/billypuding/watplan/internal/alert"
+	"github.com/billypuding/watplan/internal/backup"
 	"github.com/billypuding/watplan/internal/cdn"
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/durable"
@@ -125,7 +127,7 @@ func main() {
 		}
 	}
 
-	publisher, cdnURL := setupCDN(alerts)
+	publisher, cdnURL, bucket := setupCDN(alerts)
 	if publisher != nil {
 		st.SetPublisher(publisher.Publish)
 	}
@@ -194,6 +196,7 @@ func main() {
 		}
 		db := durable.NewQueue(turso)
 		db.SetAlert(alerts)
+		dbMirror.Store(db)
 		st.SetMirror(db)
 		srvApp.SetDB(db)
 		log.Printf("baza: odtworzono %d planów, do wysłania %d, %v", restored, uploaded, time.Since(started).Round(time.Millisecond))
@@ -289,6 +292,19 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	if name := os.Getenv("PLANWAT_BACKUP_BUCKET"); name != "" {
+		if bucket == nil || dbURL == "" {
+			log.Printf("PLANWAT_BACKUP_BUCKET bez R2 albo bez bazy: kopia wyłączona")
+		} else {
+			go runBackups(ctx, bucket, name, func() durable.Mirror {
+				if q := dbMirror.Load(); q != nil {
+					return q
+				}
+				return nil
+			}, alerts)
+		}
+	}
+
 	if !offline {
 		go upd.WatchCredits(ctx)
 	}
@@ -363,6 +379,8 @@ func envOr(key, fallback string) string {
 	}
 	return fallback
 }
+
+var dbMirror atomic.Pointer[durable.Queue]
 
 var dbStartDelays = []time.Duration{5 * time.Second, 10 * time.Second, 20 * time.Second, 40 * time.Second}
 
@@ -468,14 +486,14 @@ func discoverFaculty(faculty, sourcesFile, plansFile string, static []config.Pla
 	return nil
 }
 
-func setupCDN(alerts *alert.Notifier) (*cdn.Publisher, string) {
+func setupCDN(alerts *alert.Notifier) (*cdn.Publisher, string, *cdn.Bucket) {
 	endpoint := os.Getenv("PLANWAT_R2_ENDPOINT")
 	cdnURL := strings.TrimRight(os.Getenv("PLANWAT_CDN_URL"), "/")
 	if endpoint == "" {
 		if cdnURL != "" {
 			log.Printf("PLANWAT_CDN_URL bez PLANWAT_R2_*: CDN wyłączony")
 		}
-		return nil, ""
+		return nil, "", nil
 	}
 	bucket, err := cdn.New(endpoint, os.Getenv("PLANWAT_R2_BUCKET"), os.Getenv("PLANWAT_R2_ACCESS_KEY_ID"), os.Getenv("PLANWAT_R2_SECRET_ACCESS_KEY"), os.Getenv("PLANWAT_R2_REGION"))
 	if err == nil && !strings.HasPrefix(cdnURL, "https://") && !strings.HasPrefix(cdnURL, "http://127.0.0.1:") && !strings.HasPrefix(cdnURL, "http://localhost:") {
@@ -484,10 +502,43 @@ func setupCDN(alerts *alert.Notifier) (*cdn.Publisher, string) {
 	if err != nil {
 		log.Printf("CDN WYŁĄCZONY: %v", err)
 		alerts.Raise("cdn-config", fmt.Sprintf("CDN jest wyłączony: %v", err))
-		return nil, ""
+		return nil, "", nil
 	}
 	log.Printf("CDN włączony: plany idą do R2 i są czytane z %s", cdnURL)
-	return cdn.NewPublisher(bucket, alerts), cdnURL
+	return cdn.NewPublisher(bucket, alerts), cdnURL, bucket
+}
+
+const (
+	backupFirstAfter = 15 * time.Minute
+	backupEvery      = 24 * time.Hour
+)
+
+func runBackups(ctx context.Context, bucket *cdn.Bucket, name string, db func() durable.Mirror, alerts *alert.Notifier) {
+	dst := bucket.WithBucket(name)
+	log.Printf("kopia bazy: codziennie do R2 %s", name)
+	timer := time.NewTimer(backupFirstAfter)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+		}
+		timer.Reset(backupEvery)
+		src := db()
+		if src == nil {
+			log.Printf("kopia bazy: baza niepodłączona, pomijam")
+			continue
+		}
+		key, keys, size, err := backup.Run(src, dst, time.Now())
+		if err != nil {
+			log.Printf("kopia bazy: %v", err)
+			alerts.Raise("backup", fmt.Sprintf("Kopia bazy do R2 (%s) nie powiodła się: %v", name, err))
+			continue
+		}
+		log.Printf("kopia bazy: %s, %d kluczy, %d KB", key, keys, size/1024)
+		alerts.Resolved("backup", "Kopia bazy do R2 znów działa.")
+	}
 }
 
 func cdnStatus(p *cdn.Publisher) func() (string, int) {

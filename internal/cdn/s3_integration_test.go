@@ -21,11 +21,7 @@ func testBucket(t *testing.T) *Bucket {
 	if err != nil {
 		t.Fatal(err)
 	}
-	u := *b.endpoint
-	u.Path += "/" + name
-	req, _ := http.NewRequest(http.MethodPut, u.String(), nil)
-	b.sign(req, nil)
-	if err := b.do(req, http.StatusOK); err != nil {
+	if err := b.CreateBucket(); err != nil {
 		t.Fatalf("tworzenie bucketu: %v", err)
 	}
 	return b

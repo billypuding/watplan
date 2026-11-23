@@ -57,14 +57,52 @@ func (b *Bucket) objectURL(key string) *url.URL {
 }
 
 func (b *Bucket) Put(key string, value []byte) error {
+	return b.PutObject(key, value, "application/json; charset=utf-8", planCache)
+}
+
+func (b *Bucket) PutObject(key string, value []byte, contentType, cacheControl string) error {
 	req, err := http.NewRequest(http.MethodPut, b.objectURL(key).String(), bytes.NewReader(value))
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	req.Header.Set("Cache-Control", planCache)
+	req.Header.Set("Content-Type", contentType)
+	if cacheControl != "" {
+		req.Header.Set("Cache-Control", cacheControl)
+	}
 	b.sign(req, value)
 	return b.do(req, http.StatusOK)
+}
+
+func (b *Bucket) CreateBucket() error {
+	u := *b.endpoint
+	u.Path += "/" + b.bucket
+	req, err := http.NewRequest(http.MethodPut, u.String(), nil)
+	if err != nil {
+		return err
+	}
+	b.sign(req, nil)
+	return b.do(req, http.StatusOK)
+}
+
+func (b *Bucket) Get(key string) ([]byte, int, error) {
+	req, err := http.NewRequest(http.MethodGet, b.objectURL(key).String(), nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	b.sign(req, nil)
+	resp, err := b.client.Do(req)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer resp.Body.Close()
+	data, err := io.ReadAll(resp.Body)
+	return data, resp.StatusCode, err
+}
+
+func (b *Bucket) WithBucket(name string) *Bucket {
+	c := *b
+	c.bucket = name
+	return &c
 }
 
 func (b *Bucket) All(string) (map[string][]byte, error) {
