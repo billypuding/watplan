@@ -366,6 +366,12 @@ clock frozen at 19 November 2026. They need Node 22+ and Chrome; set
 runner. CSP violations fail the tests; "Unrecognized feature" messages about
 `Permissions-Policy` depend on the Chrome build and are only reported.
 
+CI (`.github/workflows/ci.yml`) also runs every Monday morning, so a new vulnerability
+reported by `govulncheck` shows up even when nothing was pushed; Dependabot opens weekly
+pull requests for Go modules and GitHub Actions. Dependabot does not raise the `go` line in
+`go.mod`: when `govulncheck` reports a fixed standard-library issue, bump it to the latest
+patch release (`go mod edit -go=1.27.x`), which also makes Render build with that version.
+
 `go test ./cmd/watplan` starts the real server binary offline and checks that it serves
 pages, shuts down cleanly on SIGTERM, refuses to start with a broken `plans.json` or bad
 `PLANWAT_*` values, and turns push off (with an alert) when the VAPID keys are invalid.
