@@ -75,6 +75,8 @@ type Options struct {
 	CDNStatus func() (string, int)
 
 	Now func() time.Time
+
+	Backup func() (key string, keys, size int, err error)
 }
 
 const defaultHealthFetchMaxAge = 3 * time.Hour
@@ -102,6 +104,7 @@ type Server struct {
 	checkIPs    *rateLimiter
 	pushIPs     *rateLimiter
 	cards       *shareCards
+	backupMu    sync.Mutex
 	blobs       planBlobs
 	lastEnsure  map[string]time.Time
 	ensureErr   map[string]error
@@ -187,6 +190,7 @@ func (s *Server) Handler() (http.Handler, error) {
 	mux.HandleFunc("/api/plan/", s.waitReady(s.handlePlan))
 	mux.HandleFunc("/api/refresh", s.waitReady(s.handleRefresh))
 	mux.HandleFunc("/api/status", s.handleStatus)
+	mux.HandleFunc("/api/backup", s.handleBackup)
 	mux.HandleFunc("/healthz", s.handleHealth)
 	mux.HandleFunc("/api/changes/", s.waitReady(withGzip(s.handleChanges)))
 	mux.HandleFunc("/api/rooms", s.waitReady(withGzip(s.handleRooms)))
@@ -824,6 +828,33 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		detail["cdn"] = map[string]any{"url": s.options.CDNURL, "uploaded": saved, "last_error": failed}
 	}
 	writeJSON(w, http.StatusOK, detail)
+}
+
+func (s *Server) handleBackup(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "wymagana metoda POST")
+		return
+	}
+	if !s.statusAuthorized(r) {
+		writeError(w, http.StatusUnauthorized, "wymagany token")
+		return
+	}
+	if s.options.Backup == nil {
+		writeError(w, http.StatusNotFound, "kopia bazy nie jest skonfigurowana")
+		return
+	}
+	if !s.backupMu.TryLock() {
+		writeError(w, http.StatusConflict, "kopia już trwa")
+		return
+	}
+	defer s.backupMu.Unlock()
+	key, keys, size, err := s.options.Backup()
+	if err != nil {
+		log.Printf("kopia bazy na żądanie: %v", err)
+		writeError(w, http.StatusBadGateway, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"key": key, "keys": keys, "bytes": size})
 }
 
 func (s *Server) statusAuthorized(r *http.Request) bool {

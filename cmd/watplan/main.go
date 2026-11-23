@@ -156,6 +156,20 @@ func main() {
 		})
 	}
 
+	var backupRun func() (string, int, int, error)
+	if name := os.Getenv("PLANWAT_BACKUP_BUCKET"); name != "" {
+		if bucket == nil || os.Getenv("PLANWAT_DB_URL") == "" {
+			log.Printf("PLANWAT_BACKUP_BUCKET bez R2 albo bez bazy: kopia wyłączona")
+		} else {
+			backupRun = backupNow(bucket, name, func() durable.Mirror {
+				if q := dbMirror.Load(); q != nil {
+					return q
+				}
+				return nil
+			}, alerts)
+		}
+	}
+
 	srvApp := server.NewServer(reg, st, upd, server.Options{
 		Push:           pushSvc,
 		Offline:        offline,
@@ -174,7 +188,8 @@ func main() {
 		CDNURL:    cdnURL,
 		CDNStatus: cdnStatus(publisher),
 
-		Now: testClock(),
+		Now:    testClock(),
+		Backup: backupRun,
 	})
 	handler, err := srvApp.Handler()
 	if err != nil {
@@ -292,17 +307,8 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if name := os.Getenv("PLANWAT_BACKUP_BUCKET"); name != "" {
-		if bucket == nil || dbURL == "" {
-			log.Printf("PLANWAT_BACKUP_BUCKET bez R2 albo bez bazy: kopia wyłączona")
-		} else {
-			go runBackups(ctx, bucket, name, func() durable.Mirror {
-				if q := dbMirror.Load(); q != nil {
-					return q
-				}
-				return nil
-			}, alerts)
-		}
+	if backupRun != nil {
+		go runBackups(ctx, os.Getenv("PLANWAT_BACKUP_BUCKET"), backupRun)
 	}
 
 	if !offline {
@@ -513,8 +519,26 @@ const (
 	backupEvery      = 24 * time.Hour
 )
 
-func runBackups(ctx context.Context, bucket *cdn.Bucket, name string, db func() durable.Mirror, alerts *alert.Notifier) {
+func backupNow(bucket *cdn.Bucket, name string, db func() durable.Mirror, alerts *alert.Notifier) func() (string, int, int, error) {
 	dst := bucket.WithBucket(name)
+	return func() (string, int, int, error) {
+		src := db()
+		if src == nil {
+			return "", 0, 0, errors.New("baza niepodłączona")
+		}
+		key, keys, size, err := backup.Run(src, dst, time.Now())
+		if err != nil {
+			log.Printf("kopia bazy: %v", err)
+			alerts.Raise("backup", fmt.Sprintf("Kopia bazy do R2 (%s) nie powiodła się: %v", name, err))
+			return "", 0, 0, err
+		}
+		log.Printf("kopia bazy: %s, %d kluczy, %d KB", key, keys, size/1024)
+		alerts.Resolved("backup", "Kopia bazy do R2 znów działa.")
+		return key, keys, size, nil
+	}
+}
+
+func runBackups(ctx context.Context, name string, run func() (string, int, int, error)) {
 	log.Printf("kopia bazy: codziennie do R2 %s", name)
 	timer := time.NewTimer(backupFirstAfter)
 	defer timer.Stop()
@@ -525,19 +549,7 @@ func runBackups(ctx context.Context, bucket *cdn.Bucket, name string, db func() 
 		case <-timer.C:
 		}
 		timer.Reset(backupEvery)
-		src := db()
-		if src == nil {
-			log.Printf("kopia bazy: baza niepodłączona, pomijam")
-			continue
-		}
-		key, keys, size, err := backup.Run(src, dst, time.Now())
-		if err != nil {
-			log.Printf("kopia bazy: %v", err)
-			alerts.Raise("backup", fmt.Sprintf("Kopia bazy do R2 (%s) nie powiodła się: %v", name, err))
-			continue
-		}
-		log.Printf("kopia bazy: %s, %d kluczy, %d KB", key, keys, size/1024)
-		alerts.Resolved("backup", "Kopia bazy do R2 znów działa.")
+		run()
 	}
 }
 
