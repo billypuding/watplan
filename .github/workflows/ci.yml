@@ -44,9 +44,17 @@ jobs:
       - name: wait for libsql
         run: for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/health && exit 0; sleep 1; done; exit 1
 
+      - name: start s3 gateway
+        run: |
+          docker run -d -p 7070:7070 -e ROOT_ACCESS_KEY=testkey -e ROOT_SECRET_KEY=testsecret123 versity/versitygw:v1.11.0 posix /tmp
+          for i in $(seq 1 30); do [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7070/)" = 403 ] && exit 0; sleep 1; done; exit 1
+
       - name: go test
         env:
           PLANWAT_TEST_DB_URL: http://127.0.0.1:8080
+          PLANWAT_TEST_S3_URL: http://127.0.0.1:7070
+          PLANWAT_TEST_S3_KEY: testkey
+          PLANWAT_TEST_S3_SECRET: testsecret123
         run: go test ./...
 
       - name: e2e
