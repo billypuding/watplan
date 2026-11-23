@@ -93,6 +93,7 @@ type Server struct {
 	refreshIPs  *rateLimiter
 	checkIPs    *rateLimiter
 	pushIPs     *rateLimiter
+	cards       *shareCards
 	blobs       planBlobs
 	lastEnsure  map[string]time.Time
 	ensureErr   map[string]error
@@ -201,6 +202,16 @@ func (s *Server) Handler() (http.Handler, error) {
 		site = "https://" + s.options.CanonicalHost
 	}
 	mux.HandleFunc(allPlansAt, htmlPage(renderAllPlans(faqPage, allPlans, site)))
+	logo, err := fs.ReadFile(sub, "favicon-192.png")
+	if err != nil {
+		return nil, err
+	}
+	cards, err := newShareCards(logo, len(allPlans))
+	if err != nil {
+		return nil, err
+	}
+	s.cards = cards
+	mux.HandleFunc("/og.png", cards.serveSite)
 	mux.HandleFunc("/app/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, withQuery("/app", r), http.StatusMovedPermanently)
 	})

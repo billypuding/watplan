@@ -54,6 +54,9 @@ change. Requests from crawlers and monitors (user agents with `bot`, `crawl`, `s
 never start a fetch from WAT, so indexing costs no scraping credits; `robots.txt` lets them
 read `/api/plan/` and `/api/plans`, which the page needs to render.
 `/plan/<ID>/qr.svg` returns a QR code with the group's link (used by "Udostępnij plan").
+Link previews use generated 1200×630 PNG cards: `/plan/<ID>/og.png` with the group code and
+faculty, and `/og.png` for the other pages. They are drawn in Go with Geist (SIL Open Font
+License, `internal/ogimage/fonts/OFL.txt`) and cached in memory and by the CDN for a day.
 
 Cache headers are set so that a CDN in front of the server (e.g. Cloudflare) only
 keeps what is safe to share:

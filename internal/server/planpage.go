@@ -35,6 +35,7 @@ var (
 	ogDescRe      = regexp.MustCompile(`<meta property="og:description" content="[^"]*">`)
 	robotsRe      = regexp.MustCompile(`<meta name="robots" content="[^"]*">`)
 	canonicalRe   = regexp.MustCompile(`<link rel="canonical" href="[^"]*">`)
+	ogURLRe       = regexp.MustCompile(`<meta property="og:url" content="[^"]*">`)
 	viewRe        = regexp.MustCompile(`(<main id="view"[^>]*>)(</main>)`)
 	botRe         = regexp.MustCompile(`(?i)bot|crawl|spider|slurp|facebookexternalhit|embedly|preview`)
 )
@@ -80,7 +81,7 @@ func renderPlanPage(tpl []byte, plan config.PlanConfig, site string) []byte {
 	out := titleRe.ReplaceAll(tpl, []byte("<title>"+title+"</title>"))
 	out = descriptionRe.ReplaceAll(out, []byte(`<meta name="description" content="`+desc+`">`))
 	out = ogTitleRe.ReplaceAll(out, []byte(`<meta property="og:title" content="`+ogTitle+`">`))
-	out = ogDescRe.ReplaceAll(out, []byte(`<meta property="og:description" content="`+desc+`">`+"\n"+`<meta property="og:type" content="website">`+"\n"+`<meta property="og:url" content="`+canonical+`">`))
+	out = ogDescRe.ReplaceAll(out, []byte(`<meta property="og:description" content="`+desc+`">`+"\n"+`<meta property="og:type" content="website">`+"\n"+`<meta property="og:url" content="`+canonical+`">`+"\n"+shareImageTags(canonical+"/og.png", "Plan zajęć "+id+" – "+faculty)))
 	out = robotsRe.ReplaceAll(out, []byte(`<meta name="robots" content="index, follow">`))
 	out = canonicalRe.ReplaceAll(out, []byte(`<link rel="canonical" href="`+canonical+`">`))
 	out = viewRe.ReplaceAll(out, []byte(`${1}<p class="message">Plan zajęć grupy `+id+` – `+faculty+`, Wojskowa Akademia Techniczna.</p>${2}`))
@@ -122,6 +123,14 @@ func (s *Server) handlePlanQR(w http.ResponseWriter, r *http.Request, plan confi
 func (s *Server) handlePlanPage(tpl []byte) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := strings.Trim(strings.TrimPrefix(r.URL.Path, "/plan/"), "/")
+		if base, ok := strings.CutSuffix(id, "/og.png"); ok {
+			if plan, found := s.registry.Get(base); found && s.cards != nil {
+				s.cards.servePlan(w, r, plan)
+				return
+			}
+			http.NotFound(w, r)
+			return
+		}
 		if base, ok := strings.CutSuffix(id, "/qr.svg"); ok {
 			if plan, found := s.registry.Get(base); found {
 				s.handlePlanQR(w, r, plan)
@@ -210,7 +219,7 @@ func renderAllPlans(tpl []byte, plans []config.PlanConfig, site string) []byte {
 	out = ogTitleRe.ReplaceAll(out, []byte(`<meta property="og:title" content="`+title+`">`))
 	out = ogDescRe.ReplaceAll(out, []byte(`<meta property="og:description" content="`+desc+`">`))
 	out = canonicalRe.ReplaceAll(out, []byte(`<link rel="canonical" href="`+site+allPlansAt+`">`))
-	return out
+	return ogURLRe.ReplaceAll(out, []byte(`<meta property="og:url" content="`+site+allPlansAt+`">`))
 }
 
 func (s *Server) handleSitemap(w http.ResponseWriter, r *http.Request) {

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"image/png"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -58,6 +59,9 @@ func TestPlanPage(t *testing.T) {
 		`<meta property="og:title" content="Plan zajęć WMT26AX3S1`,
 		`"@type":"BreadcrumbList"`,
 		`<meta property="og:url" content="https://watplan.me/plan/WMT26AX3S1">`,
+		`<meta property="og:image" content="https://watplan.me/plan/WMT26AX3S1/og.png">`,
+		`<meta property="og:image:alt" content="Plan zajęć WMT26AX3S1 – Wydział Mechatroniki, Uzbrojenia i Lotnictwa">`,
+		`<meta name="twitter:card" content="summary_large_image">`,
 		`<meta property="og:title" content="Plan zajęć WMT26AX3S1 – Wydział Mechatroniki, Uzbrojenia i Lotnictwa">`,
 		`<p class="message">Plan zajęć grupy WMT26AX3S1 – Wydział Mechatroniki`,
 	} {
@@ -178,6 +182,8 @@ func TestAllPlansPage(t *testing.T) {
 	for _, want := range []string{
 		"<title>Plany zajęć wszystkich grup WAT | WATplan</title>",
 		`<link rel="canonical" href="https://watplan.me/plany">`,
+		`<meta property="og:url" content="https://watplan.me/plany">`,
+		`<meta property="og:image" content="https://watplan.me/og.png">`,
 		`<a href="#WCY">WCY</a><a href="#WML">WML</a>`,
 		`<h2 id="h-WCY">Wydział Cybernetyki <span>WCY, 1 grupa</span></h2>`,
 		`<li><a href="/plan/WMT26AX3S1">WMT26AX3S1</a></li>`,
@@ -199,6 +205,47 @@ func TestGroupsWord(t *testing.T) {
 	for n, want := range map[int]string{1: "1 grupa", 2: "2 grupy", 4: "4 grupy", 5: "5 grup", 12: "12 grup", 14: "14 grup", 22: "22 grupy", 112: "112 grup", 182: "182 grupy", 831: "831 grup"} {
 		if got := groupsWord(n); got != want {
 			t.Errorf("groupsWord(%d) = %q, chcę %q", n, got, want)
+		}
+	}
+}
+
+func TestShareCards(t *testing.T) {
+	h := planPageServer(t)
+	get := func(path string, header ...string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		req.Host = "watplan.me"
+		for i := 0; i+1 < len(header); i += 2 {
+			req.Header.Set(header[i], header[i+1])
+		}
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec
+	}
+	for _, path := range []string{"/og.png", "/plan/WMT26AX3S1/og.png", "/plan/WCY26KY4S1/og.png"} {
+		rec := get(path)
+		if rec.Code != http.StatusOK || rec.Header().Get("Content-Type") != "image/png" {
+			t.Fatalf("%s: %d %q", path, rec.Code, rec.Header().Get("Content-Type"))
+		}
+		cfg, err := png.DecodeConfig(rec.Body)
+		if err != nil || cfg.Width != 1200 || cfg.Height != 630 {
+			t.Fatalf("%s: %v %dx%d", path, err, cfg.Width, cfg.Height)
+		}
+		if !strings.HasPrefix(rec.Header().Get("Cache-Control"), "public") {
+			t.Fatalf("%s: Cache-Control %q", path, rec.Header().Get("Cache-Control"))
+		}
+		if again := get(path, "If-None-Match", rec.Header().Get("ETag")); again.Code != http.StatusNotModified {
+			t.Fatalf("%s: If-None-Match %d", path, again.Code)
+		}
+	}
+	if a, b := get("/plan/WMT26AX3S1/og.png").Body.String(), get("/plan/WCY26KY4S1/og.png").Body.String(); a == b {
+		t.Fatal("grafiki różnych grup są takie same")
+	}
+	if get("/plan/NIEMA/og.png").Code != http.StatusNotFound {
+		t.Fatal("grafika nieznanej grupy powinna dawać 404")
+	}
+	for _, page := range []string{"/", "/o-watplan"} {
+		if body := get(page).Body.String(); !strings.Contains(body, `<meta property="og:image" content="https://watplan.me/og.png">`) {
+			t.Errorf("%s bez og:image", page)
 		}
 	}
 }
