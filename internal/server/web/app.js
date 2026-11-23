@@ -625,6 +625,7 @@ function selectPlan(id, name) {
         url.searchParams.set('plan', currentPlanId);
     }
     window.history.replaceState(window.history.state, '', url);
+    document.title = `Plan zajęć ${currentPlanId} | WATplan`;
     selectedDate = '';
     renderFavorites();
     loadPlan();

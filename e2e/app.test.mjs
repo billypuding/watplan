@@ -148,6 +148,7 @@ test('strona grupy /plan/ID: tytuł, indeksowanie i przełączanie', { skip }, a
     assert.equal(await page.eval(`window.earlyPlan && window.earlyPlan.id`), 'WMT26AX3S1');
     await page.eval(`selectPlan('WMT26AX1S1', 'WMT26AX1S1'), true`);
     await page.waitFor(`location.pathname === '/plan/WMT26AX1S1' && !location.search.includes('plan=')`);
+    assert.equal(await page.eval('document.title'), 'Plan zajęć WMT26AX1S1 | WATplan');
     assert.deepEqual(page.errors, []);
 });
 
