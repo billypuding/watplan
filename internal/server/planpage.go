@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/billypuding/watplan/internal/config"
 	"rsc.io/qr"
@@ -62,11 +63,32 @@ func (s *Server) siteURL(r *http.Request) string {
 	return s.baseURL(r)
 }
 
+const maxTitle = 60
+
+func facultyCode(plan config.PlanConfig) string {
+	if plan.Faculty != "" {
+		return plan.Faculty
+	}
+	if len(plan.ID) >= 3 {
+		return strings.ToUpper(plan.ID[:3])
+	}
+	return ""
+}
+
+func planTitle(plan config.PlanConfig) string {
+	id := html.EscapeString(plan.ID)
+	full := fmt.Sprintf("Plan zajęć %s – %s, WAT | WATplan", id, html.EscapeString(facultyName(plan)))
+	if utf8.RuneCountInString(html.UnescapeString(full)) <= maxTitle {
+		return full
+	}
+	return fmt.Sprintf("Plan zajęć %s – %s WAT | WATplan", id, html.EscapeString(facultyCode(plan)))
+}
+
 func renderPlanPage(tpl []byte, plan config.PlanConfig, site string) []byte {
 	id := html.EscapeString(plan.ID)
 	faculty := html.EscapeString(facultyName(plan))
-	title := fmt.Sprintf("Plan zajęć %s – %s, WAT | WATplan", id, faculty)
-	desc := fmt.Sprintf("Plan zajęć grupy %s (%s WAT): zajęcia na dziś, tydzień i miesiąc, sale, prowadzący i eksport do kalendarza. Za darmo i bez logowania.", id, faculty)
+	title := planTitle(plan)
+	desc := fmt.Sprintf("Plan zajęć grupy %s (%s WAT): dziś, tydzień i miesiąc, sale, prowadzący, eksport do kalendarza. Bez logowania.", id, faculty)
 	ogTitle := fmt.Sprintf("Plan zajęć %s – %s", id, faculty)
 	canonical := site + "/plan/" + id
 	crumbs, _ := json.Marshal(map[string]any{
@@ -84,6 +106,7 @@ func renderPlanPage(tpl []byte, plan config.PlanConfig, site string) []byte {
 	out = ogDescRe.ReplaceAll(out, []byte(`<meta property="og:description" content="`+desc+`">`+"\n"+`<meta property="og:type" content="website">`+"\n"+`<meta property="og:url" content="`+canonical+`">`+"\n"+shareImageTags(canonical+"/og.png", "Plan zajęć "+id+" – "+faculty)))
 	out = robotsRe.ReplaceAll(out, []byte(`<meta name="robots" content="index, follow">`))
 	out = canonicalRe.ReplaceAll(out, []byte(`<link rel="canonical" href="`+canonical+`">`))
+	out = bytes.Replace(out, []byte(`<main id="view"`), []byte(`<h1 class="sr-only">Plan zajęć `+id+`</h1>`+"\n"+`<main id="view"`), 1)
 	out = viewRe.ReplaceAll(out, []byte(`${1}<p class="message">Plan zajęć grupy `+id+` – `+faculty+`, Wojskowa Akademia Techniczna.</p>${2}`))
 	return bytes.Replace(out, []byte("</head>"), []byte(`<script type="application/ld+json">`+string(crumbs)+"</script>\n</head>"), 1)
 }

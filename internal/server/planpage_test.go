@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/model"
@@ -52,7 +53,8 @@ func TestPlanPage(t *testing.T) {
 		t.Fatalf("status %d", rec.Code)
 	}
 	for _, want := range []string{
-		"<title>Plan zajęć WMT26AX3S1 – Wydział Mechatroniki, Uzbrojenia i Lotnictwa, WAT | WATplan</title>",
+		"<title>Plan zajęć WMT26AX3S1 – WML WAT | WATplan</title>",
+		`<h1 class="sr-only">Plan zajęć WMT26AX3S1</h1>`,
 		`<meta name="description" content="Plan zajęć grupy WMT26AX3S1`,
 		`<meta name="robots" content="index, follow">`,
 		`<link rel="canonical" href="https://watplan.me/plan/WMT26AX3S1">`,
@@ -247,5 +249,23 @@ func TestShareCards(t *testing.T) {
 		if body := get(page).Body.String(); !strings.Contains(body, `<meta property="og:image" content="https://watplan.me/og.png">`) {
 			t.Errorf("%s bez og:image", page)
 		}
+	}
+}
+
+func TestPlanTitleAndDescriptionLength(t *testing.T) {
+	for code := range facultyNames {
+		plan := config.PlanConfig{ID: code + "26XX9S1", Faculty: code}
+		title := planTitle(plan)
+		if n := utf8.RuneCountInString(title); n > maxTitle {
+			t.Errorf("%s: tytuł ma %d znaków: %q", code, n, title)
+		}
+		page := string(renderPlanPage([]byte(`<title>x</title><meta name="description" content="x"><main id="view" class="view"></main></head>`), plan, "https://watplan.me"))
+		desc := descriptionRe.FindString(page)
+		if n := utf8.RuneCountInString(desc) - len(`<meta name="description" content="">`); n > 160 {
+			t.Errorf("%s: opis ma %d znaków", code, n)
+		}
+	}
+	if got := planTitle(config.PlanConfig{ID: "WCY26KY4S1", Faculty: "WCY"}); got != "Plan zajęć WCY26KY4S1 – Wydział Cybernetyki, WAT | WATplan" {
+		t.Errorf("krótka nazwa wydziału powinna zostać w tytule: %q", got)
 	}
 }
