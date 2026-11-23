@@ -108,6 +108,12 @@ func renderPlanPage(tpl []byte, plan config.PlanConfig, site string, ssr *ssrPag
 	out = canonicalRe.ReplaceAll(out, []byte(`<link rel="canonical" href="`+canonical+`">`))
 	out = bytes.Replace(out, []byte(`<main id="view"`), []byte(`<h1 class="sr-only">Plan zajęć `+id+`</h1>`+"\n"+`<main id="view"`), 1)
 	out = bytes.Replace(out, []byte(`<span id="groupLabel">Wybierz grupę</span>`), []byte(`<span id="groupLabel">`+id+`</span>`), 1)
+	if ssr != nil && ssr.stale {
+		out = bytes.Replace(out, []byte(`<p id="staleBanner" class="stale-banner hidden" role="status"></p>`), nil, 1)
+	}
+	if ssr != nil && ssr.chip {
+		out = bytes.Replace(out, []byte(`<button id="changeChip" class="change-chip hidden" type="button"></button>`), nil, 1)
+	}
 	if ssr != nil {
 		out = viewRe.ReplaceAllLiteral(out, []byte(`<main id="view" class="view">`+ssr.view+`</main>`+"\n"+ssr.info+"\n"+`<script type="application/json" id="ssrPlan" data-id="`+id+`">`+string(ssr.data)+`</script>`))
 		out = bytes.Replace(out, []byte("</head>"), []byte(`<meta name="watplan-ssr" content="`+id+`">`+"\n</head>"), 1)
@@ -182,7 +188,8 @@ func (s *Server) handlePlanPage(tpl []byte) http.HandlerFunc {
 			if s.options.Now != nil {
 				now = s.options.Now
 			}
-			ssr = renderSSR(plan.ID, raw, now())
+			history, _ := s.store.History(plan.ID)
+			ssr = renderSSR(plan.ID, raw, history, now())
 		}
 		page := renderPlanPage(tpl, plan, s.siteURL(r), ssr)
 		sum := sha1.Sum(page)

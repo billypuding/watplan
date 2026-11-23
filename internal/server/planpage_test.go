@@ -362,10 +362,13 @@ func TestPlanPageEmbedsServerRenderedPlan(t *testing.T) {
 		return rec.Body.String()
 	}
 	body := get("/plan/WMT26AX3S1")
-	for _, want := range []string{`<span id="groupLabel">WMT26AX3S1</span>`, `<meta name="watplan-ssr" content="WMT26AX3S1">`, `<main id="view" class="view"><div class="day-title"><h1>Czwartek</h1>`, `<section class="plan-info"`, `<script type="application/json" id="ssrPlan" data-id="WMT26AX3S1">{`} {
+	for _, want := range []string{`<span id="groupLabel">WMT26AX3S1</span>`, `<meta name="watplan-ssr" content="WMT26AX3S1">`, `<main id="view" class="view"><p id="staleBanner" class="stale-banner" role="status">Plan pobrany 18 listopada o 00:04`, `<div class="day-title"><h1>Czwartek</h1>`, `<section class="plan-info"`, `<script type="application/json" id="ssrPlan" data-id="WMT26AX3S1">{`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("strona grupy bez %q", want)
 		}
+	}
+	if strings.Count(body, `id="staleBanner"`) != 1 || strings.Count(body, `id="changeChip"`) != 1 {
+		t.Errorf("staleBanner: %d, changeChip: %d; każdy musi wystąpić dokładnie raz", strings.Count(body, `id="staleBanner"`), strings.Count(body, `id="changeChip"`))
 	}
 	if !strings.Contains(get("/plan/BRAK"), `<p class="message">Plan zajęć grupy BRAK`) {
 		t.Error("grupa bez planu powinna dostać zwykłą stronę")

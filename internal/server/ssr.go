@@ -26,9 +26,71 @@ var (
 )
 
 type ssrPage struct {
-	view string
-	info string
-	data []byte
+	view  string
+	info  string
+	data  []byte
+	stale bool
+	chip  bool
+}
+
+const (
+	ssrStaleAfter = 24 * time.Hour
+	ssrChipDays   = 7
+)
+
+func ssrStamp(text string) (time.Time, bool) {
+	if len(text) < 16 {
+		return time.Time{}, false
+	}
+	t, err := time.ParseInLocation("2006-01-02 15:04", text[:16], warsawLoc)
+	return t, err == nil
+}
+
+func ssrAgo(at, now time.Time) string {
+	min := int(now.Sub(at).Minutes() + 0.5)
+	if min < 0 {
+		min = 0
+	}
+	if min < 60 {
+		if min <= 1 {
+			return "przed chwilą"
+		}
+		return fmt.Sprintf("%d min temu", min)
+	}
+	hrs := int(float64(min)/60 + 0.5)
+	if hrs < 24 {
+		return fmt.Sprintf("%d godz. temu", hrs)
+	}
+	days := int(float64(hrs)/24 + 0.5)
+	if days == 1 {
+		return "wczoraj"
+	}
+	return fmt.Sprintf("%d dni temu", days)
+}
+
+func ssrStaleBanner(fetchedAt string, now time.Time) string {
+	fetched, ok := ssrStamp(fetchedAt)
+	if !ok || now.Sub(fetched) <= ssrStaleAfter {
+		return ""
+	}
+	return fmt.Sprintf("Plan pobrany %d %s o %s – może być nieaktualny. W razie wątpliwości sprawdź oficjalny plan WAT.", fetched.Day(), ssrMonthsGen[fetched.Month()-1], fetched.Format("15:04"))
+}
+
+func ssrChipText(history []model.Change, now time.Time) string {
+	if len(history) == 0 {
+		return ""
+	}
+	last := history[0]
+	at, ok := ssrStamp(last.At)
+	if !ok || now.Sub(at) > ssrChipDays*24*time.Hour {
+		return ""
+	}
+	n := last.Count()
+	when := ssrAgo(at, now)
+	if since, ok := ssrStamp(last.Since); ok && at.Sub(since) > 36*time.Hour {
+		when = fmt.Sprintf("od %d %s", since.Day(), ssrMonthsGen[since.Month()-1])
+	}
+	return fmt.Sprintf("%d %s w planie · %s", n, ssrPlural(n, "zmiana", "zmiany", "zmian"), when)
 }
 
 func ssrDate(iso string) time.Time {
@@ -128,6 +190,12 @@ type ssrEvent struct {
 	n, total int
 }
 
+func ssrEventTimes(e model.Event) (time.Time, time.Time, bool) {
+	start, err1 := time.ParseInLocation("2006-01-02 15:04", e.Date+" "+e.Start, warsawLoc)
+	end, err2 := time.ParseInLocation("2006-01-02 15:04", e.Date+" "+e.End, warsawLoc)
+	return start, end, err1 == nil && err2 == nil
+}
+
 func ssrWeekNumber(monday string, weeks []string) string {
 	var segments [][]string
 	for _, w := range weeks {
@@ -163,7 +231,7 @@ const ssrIconLeft = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"
 const ssrIconRight = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>`
 const ssrIconUser = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>`
 
-func renderSSR(planID string, raw []byte, now time.Time) *ssrPage {
+func renderSSR(planID string, raw []byte, history []model.Change, now time.Time) *ssrPage {
 	var plan model.Plan
 	if json.Unmarshal(raw, &plan) != nil {
 		return nil
@@ -215,11 +283,20 @@ func renderSSR(planID string, raw []byte, now time.Time) *ssrPage {
 
 	esc := html.EscapeString
 	var b strings.Builder
+	stale := ssrStaleBanner(plan.FetchedAt, now)
+	if stale != "" {
+		b.WriteString(`<p id="staleBanner" class="stale-banner" role="status">` + esc(stale) + `</p>`)
+	}
 	b.WriteString(`<div class="day-title"><h1>` + ssrDayNames[ssrDayIndex(sel)] + `</h1><p>` + ssrLongDate(selected) + ` · <button type="button" class="week-link" aria-haspopup="dialog">` + ssrWeekNumber(ssrMonday(selected), weeks) + `</button>`)
 	if len(day) > 0 {
 		b.WriteString(" · " + ssrClasses(len(day)))
 	}
-	b.WriteString(`</p></div><div class="week-strip"><button type="button" class="arrow" aria-label="Poprzedni tydzień">` + ssrIconLeft + `</button>`)
+	b.WriteString(`</p></div>`)
+	chip := ssrChipText(history, now)
+	if chip != "" {
+		b.WriteString(`<button id="changeChip" class="change-chip" type="button"><span class="pulse"></span>` + esc(chip) + `</button>`)
+	}
+	b.WriteString(`<div class="week-strip"><button type="button" class="arrow" aria-label="Poprzedni tydzień">` + ssrIconLeft + `</button>`)
 	monday := ssrDate(ssrMonday(selected))
 	for i := 0; i < 7; i++ {
 		d := monday.AddDate(0, 0, i)
@@ -267,7 +344,12 @@ func renderSSR(planID string, raw []byte, now time.Time) *ssrPage {
 				}
 			}
 			room, more := ssrSplitRooms(e.Room)
-			fmt.Fprintf(&b, `<div class="ev-row"><div class="ev-time"><b>%s</b><span>%s</span></div><button type="button" class="ev-card tint"><div class="ev-subject">%s</div><div class="ev-type sub"><span class="dot"></span>%s<span class="count">%d/%d</span></div>`, esc(e.Start), esc(e.End), esc(e.Subject), esc(ssrTypeLabel(e.Type)), e.n, e.total)
+			cardClass, remaining := "ev-card tint", ""
+			if start, end, ok := ssrEventTimes(e.Event); ok && !now.Before(start) && now.Before(end) {
+				cardClass += " live"
+				remaining = "zostało " + ssrFormatMinutes(int(end.Sub(now).Minutes()+0.999))
+			}
+			fmt.Fprintf(&b, `<div class="ev-row"><div class="ev-time"><b>%s</b><span>%s</span></div><button type="button" class="%s"><div class="ev-subject">%s</div><div class="ev-type sub"><span class="dot"></span>%s<span class="count">%d/%d</span></div>`, esc(e.Start), esc(e.End), cardClass, esc(e.Subject), esc(ssrTypeLabel(e.Type)), e.n, e.total)
 			if room != "" || e.Teacher != "" {
 				b.WriteString(`<div class="ev-meta sub">`)
 				if room != "" {
@@ -282,7 +364,7 @@ func renderSSR(planID string, raw []byte, now time.Time) *ssrPage {
 				}
 				b.WriteString(`</div>`)
 			}
-			b.WriteString(`</button></div>`)
+			b.WriteString(`<div class="ev-live"><div class="row"><span>Trwa teraz</span><span class="remaining">` + remaining + `</span></div><div class="track"><div class="fill"></div></div></div></button></div>`)
 		}
 		b.WriteString(`</div>`)
 	}
@@ -339,5 +421,5 @@ func renderSSR(planID string, raw []byte, now time.Time) *ssrPage {
 
 	var data bytes.Buffer
 	json.HTMLEscape(&data, raw)
-	return &ssrPage{view: b.String(), info: info.String(), data: data.Bytes()}
+	return &ssrPage{view: b.String(), info: info.String(), data: data.Bytes(), stale: stale != "", chip: chip != ""}
 }
