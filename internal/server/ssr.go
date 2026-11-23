@@ -190,6 +190,276 @@ type ssrEvent struct {
 	n, total int
 }
 
+var (
+	ssrSlots      = [][2]string{{"08:00", "09:35"}, {"09:50", "11:25"}, {"11:40", "13:15"}, {"13:30", "15:05"}, {"16:00", "17:35"}, {"17:50", "19:25"}, {"19:40", "21:15"}}
+	ssrSmallWords = map[string]bool{"i": true, "w": true, "z": true, "do": true, "na": true, "we": true, "ze": true, "o": true, "od": true, "dla": true, "oraz": true, "a": true, "-": true}
+)
+
+const ssrIconDown = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`
+const ssrIconBuilding13 = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M16 9h2a2 2 0 0 1 2 2v10"/><path d="M2 21h20"/><path d="M8 7h4M8 11h4M8 15h4"/></svg>`
+const ssrIconUser13 = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>`
+
+func ssrIsNumber(w string) bool {
+	if w == "" {
+		return false
+	}
+	for _, r := range w {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func ssrIsRoman(w string) bool {
+	if w == "" {
+		return false
+	}
+	for _, r := range w {
+		if r != 'I' && r != 'V' && r != 'X' {
+			return false
+		}
+	}
+	return true
+}
+
+func ssrAbbreviate(subject string) string {
+	cleaned := strings.Map(func(r rune) rune {
+		if strings.ContainsRune("()[]{},.;:", r) {
+			return ' '
+		}
+		return r
+	}, subject)
+	words := strings.Fields(cleaned)
+	var big, nums []string
+	for _, w := range words {
+		if ssrIsNumber(w) || ssrIsRoman(w) {
+			nums = append(nums, w)
+		} else if !ssrSmallWords[strings.ToLower(w)] {
+			big = append(big, w)
+		}
+	}
+	var ab string
+	if len(big) <= 1 {
+		w := subject
+		if len(big) == 1 {
+			w = big[0]
+		}
+		r := []rune(w)
+		n := 3
+		if w == strings.ToUpper(w) {
+			n = 5
+		}
+		if len(r) > n {
+			r = r[:n]
+		}
+		ab = string(r)
+	} else {
+		var b strings.Builder
+		for _, w := range words {
+			if ssrIsNumber(w) || ssrIsRoman(w) {
+				continue
+			}
+			first := []rune(w)[0:1]
+			if ssrSmallWords[strings.ToLower(w)] {
+				if w != "-" {
+					b.WriteString(strings.ToLower(string(first)))
+				}
+				continue
+			}
+			b.WriteString(strings.ToUpper(string(first)))
+		}
+		ab = b.String()
+	}
+	if len(nums) > 0 {
+		return ab + " " + strings.Join(nums, " ")
+	}
+	return ab
+}
+
+func ssrTypeShort(t string) string {
+	t = strings.ToLower(t)
+	for _, p := range [][2]string{{"wykład", "wykł."}, {"ćwicz", "ćw."}, {"labor", "lab."}, {"semin", "sem."}, {"projekt", "proj."}} {
+		if strings.HasPrefix(t, p[0]) {
+			return p[1]
+		}
+	}
+	return t
+}
+
+func ssrSlotStart(t string) int {
+	m, idx := ssrMinutes(t), 0
+	for i, s := range ssrSlots {
+		if ssrMinutes(s[0]) <= m {
+			idx = i
+		}
+	}
+	return idx
+}
+
+func ssrSlotEnd(t string) int {
+	m := ssrMinutes(t)
+	for i, s := range ssrSlots {
+		if ssrMinutes(s[1]) >= m {
+			return i
+		}
+	}
+	return len(ssrSlots) - 1
+}
+
+func ssrWeekRange(monday string) string {
+	m := ssrDate(monday)
+	s := m.AddDate(0, 0, 6)
+	if m.Month() == s.Month() {
+		return fmt.Sprintf("%d–%d %s", m.Day(), s.Day(), ssrMonthsGen[s.Month()-1])
+	}
+	return fmt.Sprintf("%d %s – %d %s", m.Day(), ssrMonthsShrt[m.Month()-1], s.Day(), ssrMonthsShrt[s.Month()-1])
+}
+
+func ssrWeekView(selected, today string, byDate map[string][]ssrEvent, weeks []string, chip string, now time.Time) string {
+	esc := html.EscapeString
+	mondayISO := ssrMonday(selected)
+	monday := ssrDate(mondayISO)
+	var dates []string
+	var events []ssrEvent
+	for i := 0; i < 7; i++ {
+		d := monday.AddDate(0, 0, i).Format("2006-01-02")
+		dates = append(dates, d)
+		events = append(events, byDate[d]...)
+	}
+	days := 5
+	for _, e := range events {
+		if ssrDayIndex(ssrDate(e.Date)) >= 5 {
+			days = 7
+		}
+	}
+	title := ssrWeekRange(mondayISO)
+	subtitle := ssrWeekNumber(mondayISO, weeks) + " · " + ssrClasses(len(events))
+	var b strings.Builder
+	fmt.Fprintf(&b, `<div class="nav-row ssr-w"><button type="button" class="round-btn" aria-label="Wstecz">%s</button><button type="button" class="nav-label pick" aria-haspopup="dialog" aria-label="%s"><b>%s%s</b><small>%s</small></button><button type="button" class="round-btn" aria-label="Dalej">%s</button></div>`,
+		ssrIconLeft, esc(title+", "+subtitle+". Wybierz tydzień"), esc(title), ssrIconDown, esc(subtitle), ssrIconRight)
+	if chip != "" {
+		b.WriteString(`<button class="change-chip ssr-w" type="button" tabindex="-1" aria-hidden="true"><span class="pulse"></span>` + esc(chip) + `</button>`)
+	}
+	if len(events) == 0 {
+		b.WriteString(`<div class="empty-day ssr-w"><b>Wolny tydzień</b>Brak zajęć w tym tygodniu.`)
+		var all []string
+		for d := range byDate {
+			all = append(all, d)
+		}
+		sort.Strings(all)
+		for _, d := range all {
+			if d > dates[6] {
+				b.WriteString(`<br><button type="button" class="link-btn">Następne zajęcia: ` + ssrShortDate(d) + `</button>`)
+				break
+			}
+		}
+		b.WriteString(`</div>`)
+		return b.String()
+	}
+	minSlot, maxSlot := len(ssrSlots)-1, 0
+	for _, e := range events {
+		if s := ssrSlotStart(e.Start); s < minSlot {
+			minSlot = s
+		}
+		if s := ssrSlotEnd(e.End); s > maxSlot {
+			maxSlot = s
+		}
+	}
+	grid := "week-grid ssr-w"
+	if days == 7 {
+		grid += " wd7"
+	}
+	b.WriteString(`<div class="` + grid + `">`)
+	lastRow := maxSlot - minSlot + 2
+	for s := minSlot; s <= maxSlot; s++ {
+		fmt.Fprintf(&b, `<div class="wk-line wr-s%d wc-all"></div>`, s-minSlot+2)
+	}
+	for i := 0; i < days; i++ {
+		if dates[i] == today {
+			fmt.Fprintf(&b, `<div class="wk-today wr-s1 wr-e%d wc-%d"></div>`, lastRow+1, i+2)
+		}
+	}
+	for i := 0; i < days; i++ {
+		d := ssrDate(dates[i])
+		n := len(byDate[dates[i]])
+		cls := "wk-head"
+		if dates[i] == today {
+			cls += " today"
+		}
+		count := "wolne"
+		if n > 0 {
+			count = ssrClasses(n)
+		}
+		fmt.Fprintf(&b, `<div class="%s wr-s1 wc-%d"><b class="short">%s</b><b class="long">%s</b><span class="dd"><span class="num">%d</span><span class="long"> %s</span></span><small class="long">%s</small></div>`,
+			cls, i+2, ssrDayShort[i], ssrDayNames[i], d.Day(), ssrMonthsShrt[d.Month()-1], count)
+	}
+	for s := minSlot; s <= maxSlot; s++ {
+		st, en := ssrSlots[s][0], ssrSlots[s][1]
+		fmt.Fprintf(&b, `<div class="wk-time wr-s%d wc-1"><span class="short">%s</span><span class="short">%s</span><b class="long">%s</b><span class="long">%s</span></div>`, s-minSlot+2, st[:2], st[3:], st, en)
+	}
+	type bucket struct {
+		key  string
+		list []ssrEvent
+	}
+	var buckets []*bucket
+	index := map[string]*bucket{}
+	for _, e := range events {
+		key := fmt.Sprintf("%s|%d", e.Date, ssrSlotStart(e.Start))
+		bk := index[key]
+		if bk == nil {
+			bk = &bucket{key: key}
+			index[key] = bk
+			buckets = append(buckets, bk)
+		}
+		bk.list = append(bk.list, e)
+	}
+	for _, bk := range buckets {
+		first := bk.list[0]
+		col := ssrDayIndex(ssrDate(first.Date)) + 2
+		rowStart := ssrSlotStart(first.Start) - minSlot + 2
+		rowEnd := 0
+		for _, e := range bk.list {
+			if r := ssrSlotEnd(e.End) - minSlot + 3; r > rowEnd {
+				rowEnd = r
+			}
+		}
+		fmt.Fprintf(&b, `<div class="wk-slot wc-%d wr-s%d wr-e%d">`, col, rowStart, rowEnd)
+		for _, e := range bk.list {
+			room, more := ssrSplitRooms(e.Room)
+			cls := "wk-cell tint"
+			if start, end, ok := ssrEventTimes(e.Event); ok && !now.Before(start) && now.Before(end) {
+				cls += " live"
+			}
+			title := e.Start + "–" + e.End + " " + e.Subject
+			label := e.Subject + ", " + ssrTypeLabel(e.Type) + ", " + e.Start + "–" + e.End
+			if e.Room != "" {
+				title += ", sala " + e.Room
+				label += ", sala " + e.Room
+			}
+			if e.Teacher != "" {
+				title += ", " + e.Teacher
+			}
+			fmt.Fprintf(&b, `<button type="button" class="%s" title="%s" aria-label="%s"><span class="time sub">%s–%s</span><span class="ab">%s</span><span class="full">%s</span><span class="meta sub"><span class="kind"><span class="dot"></span>%s %d/%d</span>`,
+				cls, esc(title), esc(label+". Pokaż wszystkie"), esc(e.Start), esc(e.End), esc(ssrAbbreviate(e.Subject)), esc(e.Subject), esc(ssrTypeShort(e.Type)), e.n, e.total)
+			if room != "" {
+				b.WriteString(`<span class="room">` + ssrIconBuilding13 + esc(room))
+				if more > 0 {
+					fmt.Fprintf(&b, " +%d", more)
+				}
+				b.WriteString(`</span>`)
+			}
+			if e.Teacher != "" {
+				b.WriteString(`<span class="teacher">` + ssrIconUser13 + esc(e.Teacher) + `</span>`)
+			}
+			b.WriteString(`</span><span class="wk-live"><span class="fill"></span></span></button>`)
+		}
+		b.WriteString(`</div>`)
+	}
+	b.WriteString(`</div>`)
+	return b.String()
+}
+
 func ssrEventTimes(e model.Event) (time.Time, time.Time, bool) {
 	start, err1 := time.ParseInLocation("2006-01-02 15:04", e.Date+" "+e.Start, warsawLoc)
 	end, err2 := time.ParseInLocation("2006-01-02 15:04", e.Date+" "+e.End, warsawLoc)
@@ -287,7 +557,7 @@ func renderSSR(planID string, raw []byte, history []model.Change, now time.Time)
 	if stale != "" {
 		b.WriteString(`<p id="staleBanner" class="stale-banner" role="status">` + esc(stale) + `</p>`)
 	}
-	b.WriteString(`<div class="day-title"><h1>` + ssrDayNames[ssrDayIndex(sel)] + `</h1><p>` + ssrLongDate(selected) + ` · <button type="button" class="week-link" aria-haspopup="dialog">` + ssrWeekNumber(ssrMonday(selected), weeks) + `</button>`)
+	b.WriteString(`<div class="day-title ssr-d"><h1>` + ssrDayNames[ssrDayIndex(sel)] + `</h1><p>` + ssrLongDate(selected) + ` · <button type="button" class="week-link" aria-haspopup="dialog">` + ssrWeekNumber(ssrMonday(selected), weeks) + `</button>`)
 	if len(day) > 0 {
 		b.WriteString(" · " + ssrClasses(len(day)))
 	}
@@ -296,7 +566,7 @@ func renderSSR(planID string, raw []byte, history []model.Change, now time.Time)
 	if chip != "" {
 		b.WriteString(`<button id="changeChip" class="change-chip" type="button"><span class="pulse"></span>` + esc(chip) + `</button>`)
 	}
-	b.WriteString(`<div class="week-strip"><button type="button" class="arrow" aria-label="Poprzedni tydzień">` + ssrIconLeft + `</button>`)
+	b.WriteString(`<div class="week-strip ssr-d"><button type="button" class="arrow" aria-label="Poprzedni tydzień">` + ssrIconLeft + `</button>`)
 	monday := ssrDate(ssrMonday(selected))
 	for i := 0; i < 7; i++ {
 		d := monday.AddDate(0, 0, i)
@@ -322,7 +592,7 @@ func renderSSR(planID string, raw []byte, history []model.Change, now time.Time)
 	}
 	b.WriteString(`<button type="button" class="arrow" aria-label="Następny tydzień">` + ssrIconRight + `</button></div>`)
 	if len(day) == 0 {
-		b.WriteString(`<div class="empty-day"><b>Wolne</b>Brak zajęć tego dnia.`)
+		b.WriteString(`<div class="empty-day ssr-d"><b>Wolne</b>Brak zajęć tego dnia.`)
 		dates := make([]string, 0, len(byDate))
 		for d := range byDate {
 			dates = append(dates, d)
@@ -336,7 +606,7 @@ func renderSSR(planID string, raw []byte, history []model.Change, now time.Time)
 		}
 		b.WriteString(`</div>`)
 	} else {
-		b.WriteString(`<div class="day-list">`)
+		b.WriteString(`<div class="day-list ssr-d">`)
 		for i, e := range day {
 			if i > 0 {
 				if gap := ssrMinutes(e.Start) - ssrMinutes(day[i-1].End); gap >= ssrLongGapMin {
@@ -368,6 +638,8 @@ func renderSSR(planID string, raw []byte, history []model.Change, now time.Time)
 		}
 		b.WriteString(`</div>`)
 	}
+
+	b.WriteString(ssrWeekView(selected, today, byDate, weeks, chip, now))
 
 	type subject struct {
 		name     string

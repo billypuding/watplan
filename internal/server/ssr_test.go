@@ -19,7 +19,7 @@ func TestRenderSSRDay(t *testing.T) {
 		t.Fatal("brak SSR dla planu z zajęciami w bieżącym semestrze")
 	}
 	for _, want := range []string{
-		`<div class="day-title"><h1>Czwartek</h1><p>19 listopada · <button type="button" class="week-link" aria-haspopup="dialog">tydzień `,
+		`<div class="day-title ssr-d"><h1>Czwartek</h1><p>19 listopada · <button type="button" class="week-link" aria-haspopup="dialog">tydzień `,
 		`<button type="button" class="day-pill has sel today" aria-pressed="true" aria-label="Cz 19: czwartek, 19 listopada">`,
 		`<div class="ev-row"><div class="ev-time"><b>`,
 		`<button type="button" class="ev-card tint"><div class="ev-subject">`,
@@ -43,7 +43,7 @@ func TestRenderSSRFreeDayAndOutsideSemester(t *testing.T) {
 		t.Fatal(err)
 	}
 	sunday := time.Date(2026, 11, 22, 12, 0, 0, 0, warsawLoc)
-	if page := renderSSR("WMT26AX3S1", raw, nil, sunday); page == nil || !strings.Contains(page.view, `<div class="empty-day"><b>Wolne</b>Brak zajęć tego dnia.<br><button type="button" class="link-btn">Następne zajęcia: pon. 23 lis</button>`) {
+	if page := renderSSR("WMT26AX3S1", raw, nil, sunday); page == nil || !strings.Contains(page.view, `<div class="empty-day ssr-d"><b>Wolne</b>Brak zajęć tego dnia.<br><button type="button" class="link-btn">Następne zajęcia: pon. 23 lis</button>`) {
 		t.Fatalf("niedziela bez zajęć: %+v", page)
 	}
 	summer := time.Date(2027, 4, 10, 12, 0, 0, 0, warsawLoc)
@@ -106,7 +106,7 @@ func TestSSRChipAndStaleBanner(t *testing.T) {
 	}
 	raw, _ := os.ReadFile("../../e2e/fixtures/data/WMT26AX3S1.json")
 	page := renderSSR("WMT26AX3S1", raw, change("2026-11-19 09:00:00", "", 2), time.Date(2026, 11, 19, 10, 15, 0, 0, warsawLoc))
-	if !page.chip || !strings.Contains(page.view, `</p></div><button id="changeChip" class="change-chip" type="button"><span class="pulse"></span>2 zmiany w planie · 1 godz. temu</button><div class="week-strip">`) {
+	if !page.chip || !strings.Contains(page.view, `</p></div><button id="changeChip" class="change-chip" type="button"><span class="pulse"></span>2 zmiany w planie · 1 godz. temu</button><div class="week-strip ssr-d">`) {
 		t.Fatalf("pasek zmian nie jest pod tytułem dnia: %.400s", page.view)
 	}
 }
@@ -118,11 +118,50 @@ func TestSSRMarksLiveClass(t *testing.T) {
 	if !strings.Contains(page.view, `<button type="button" class="ev-card tint live"><div class="ev-subject">Matematyka 2</div>`) || !strings.Contains(page.view, `<span class="remaining">zostało 1 h 5 min</span>`) {
 		t.Fatalf("trwające zajęcia bez paska: %.600s", page.view)
 	}
-	if strings.Count(page.view, " live\"") != 1 {
-		t.Fatalf("tylko jedne zajęcia mogą trwać")
+	if n := strings.Count(page.view, " live\""); n != 2 {
+		t.Fatalf("trwające zajęcia powinny być oznaczone w widoku dnia i tygodnia, są %d razy", n)
 	}
 	before := renderSSR("WMT26AX3S1", raw, nil, time.Date(2026, 11, 19, 10, 15, 0, 0, warsawLoc))
 	if strings.Contains(before.view, " live\"") || !strings.Contains(before.view, `<div class="ev-live">`) {
 		t.Fatal("przed zajęciami: bez klasy live, ale ze strukturą paska jak w JS")
+	}
+}
+
+func TestSSRWeekView(t *testing.T) {
+	raw, _ := os.ReadFile("../../e2e/fixtures/data/WMT26AX3S1.json")
+	page := renderSSR("WMT26AX3S1", raw, nil, time.Date(2026, 11, 19, 10, 15, 0, 0, warsawLoc))
+	for _, want := range []string{
+		`<div class="nav-row ssr-w"><button type="button" class="round-btn" aria-label="Wstecz">`,
+		`<b>16–22 listopada<svg`,
+		`<div class="week-grid ssr-w">`,
+		`<div class="wk-today wr-s1 wr-e`,
+		`<div class="wk-head today wr-s1 wc-5"><b class="short">Cz</b><b class="long">Czwartek</b>`,
+		`<div class="wk-time wr-s2 wc-1"><span class="short">08</span><span class="short">00</span><b class="long">08:00</b><span class="long">09:35</span></div>`,
+		`<button type="button" class="wk-cell tint" title="13:30–15:05 Matematyka 2`,
+	} {
+		if !strings.Contains(page.view, want) {
+			t.Errorf("widok tygodnia bez %q", want)
+		}
+	}
+	if strings.Contains(page.view, "style=") {
+		t.Error("HTML z serwera nie może mieć atrybutów style (CSP)")
+	}
+}
+
+func TestSSRAbbreviate(t *testing.T) {
+	for in, want := range map[string]string{
+		"Matematyka 2":                              "Mat 2",
+		"Język obcy (II) międzywydziałowy":          "JOM II",
+		"Podstawy grafiki inżynierskiej":            "PGI",
+		"Wychowanie fizyczne":                       "WF",
+		"Etyka zawodowa":                            "EZ",
+		"Ochrona własności intelektualnych":         "OWI",
+		"BHP":                                       "BHP",
+		"Podstawy zarządzania i przedsiębiorczości": "PZiP",
+		"Język angielski":                           "JA",
+	} {
+		if got := ssrAbbreviate(in); got != want {
+			t.Errorf("ssrAbbreviate(%q) = %q, chcę %q", in, got, want)
+		}
 	}
 }

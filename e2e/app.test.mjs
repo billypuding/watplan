@@ -175,6 +175,31 @@ test('strona grupy z planem z serwera: widać go bez /api/plan, bez przesunięć
     await page.blockURLs([]);
 });
 
+test('strona grupy na komputerze: tydzień z serwera taki sam jak z JS, bez przesunięć', { skip }, async () => {
+    await page.viewport(1366, 900, false);
+    await page.reset();
+    const html = await (await fetch(server.base + '/plan/WMT26AX3S1')).text();
+    const grid = html.split('<div class="week-grid ssr-w')[1].split('<section class="plan-info"')[0];
+    const decode = (t) => t.replace(/&#34;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'");
+    const ssrCells = [...grid.matchAll(/<span class="ab">([^<]*)<\/span><span class="full">([^<]*)<\/span><span class="meta sub"><span class="kind"><span class="dot"><\/span>([^<]*)<\/span>/g)].map(m => decode(`${m[1]}|${m[2]}|${m[3]}`));
+    assert.ok(ssrCells.length > 5, 'brak komórek tygodnia w HTML');
+    await page.blockURLs(['*/api/plan/*']);
+    await page.goto(server.base + '/plan/WMT26AX3S1');
+    await page.waitFor(`document.querySelectorAll('.wk-cell').length > 0`);
+    await new Promise(r => setTimeout(r, 400));
+    const jsCells = JSON.parse(await page.eval(`JSON.stringify([...document.querySelectorAll('#view .wk-cell')].map(c => c.querySelector('.ab').textContent + '|' + c.querySelector('.full').textContent + '|' + c.querySelector('.kind').textContent))`));
+    assert.deepEqual(jsCells, ssrCells);
+    const cls = await page.eval(`new Promise((resolve) => {
+        let total = 0;
+        new PerformanceObserver((list) => { for (const e of list.getEntries()) if (!e.hadRecentInput) total += e.value; }).observe({ type: 'layout-shift', buffered: true });
+        setTimeout(() => resolve(total), 300);
+    })`);
+    assert.ok(cls < 0.01, `CLS ${cls}`);
+    assert.deepEqual(page.errors, []);
+    assert.deepEqual(page.policyErrors, []);
+    await page.blockURLs([]);
+});
+
 test('strona grupy: service worker najpierw pyta sieć, a offline podaje zapisaną kopię', { skip }, async () => {
     await page.goto(server.base + '/plan/WMT26AX3S1');
     await page.waitFor(`navigator.serviceWorker.controller !== null`, 10000).catch(() => undefined);
