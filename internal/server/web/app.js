@@ -665,7 +665,7 @@ function weekStrip() {
         const cls = ['day-pill', has ? 'has' : 'empty', iso === selectedDate && 'sel', iso === today && 'today'].filter(Boolean).join(' ');
         pills.push(h('button', {
             type: 'button', class: cls, 'aria-pressed': String(iso === selectedDate),
-            'aria-label': `${DAY_NAMES[i]}, ${longDate(iso)}${has ? '' : ', brak zajęć'}`,
+            'aria-label': `${DAY_SHORT[i]} ${parseISO(iso).getDate()}: ${DAY_NAMES[i].toLowerCase()}, ${longDate(iso)}${has ? '' : ', brak zajęć'}`,
             onclick: () => { selectedDate = iso; render(); },
         }, h('span', { class: 'dn' }, DAY_SHORT[i]), h('span', { class: 'dd' }, parseISO(iso).getDate()), h('span', { class: 'dot' })));
     }

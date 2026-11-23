@@ -350,6 +350,12 @@ test('dostępność: nazwy dialogów, Esc, powrót fokusu i krótkie komunikaty'
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
     assert.equal(await page.eval(`document.getElementById('view').hasAttribute('aria-live')`), false);
+    const mismatched = await page.eval(`[...document.querySelectorAll('#view button[aria-label]')].filter(b => {
+        const full = b.innerText.replace(/\\s+/g, ' ').trim().toLowerCase();
+        const visible = full.length <= 12 ? full : b.innerText.trim().split('\\n')[0].trim().toLowerCase();
+        return visible && !b.getAttribute('aria-label').toLowerCase().replace(/\\s+/g, ' ').startsWith(visible);
+    }).map(b => b.innerText.replace(/\\s+/g, ' ').trim() + ' → ' + b.getAttribute('aria-label'))`);
+    assert.deepEqual(mismatched, []);
     const unnamed = await page.eval(`[...document.querySelectorAll('dialog')].filter(d => { const id = d.getAttribute('aria-labelledby'); return !id || !document.getElementById(id); }).map(d => d.id)`);
     assert.deepEqual(unnamed, []);
 
