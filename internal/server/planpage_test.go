@@ -1,6 +1,7 @@
 package server
 
 import (
+	"html"
 	"image/png"
 	"net/http"
 	"net/http/httptest"
@@ -187,7 +188,7 @@ func TestAllPlansPage(t *testing.T) {
 		`<meta property="og:url" content="https://watplan.me/plany">`,
 		`<meta property="og:image" content="https://watplan.me/og.png">`,
 		`<a href="#WCY">WCY</a><a href="#WML">WML</a>`,
-		`<h2 id="h-WCY">Wydział Cybernetyki <span>WCY, 1 grupa</span></h2>`,
+		`<h2 id="h-WCY"><a href="/plany/wcy">Wydział Cybernetyki</a> <span>WCY, 1 grupa</span></h2>`,
 		`<li><a href="/plan/WMT26AX3S1">WMT26AX3S1</a></li>`,
 		`<li><a href="/plan/WCY26KY4S1">WCY26KY4S1</a></li>`,
 		`<footer class="site-foot">`,
@@ -267,5 +268,68 @@ func TestPlanTitleAndDescriptionLength(t *testing.T) {
 	}
 	if got := planTitle(config.PlanConfig{ID: "WCY26KY4S1", Faculty: "WCY"}); got != "Plan zajęć WCY26KY4S1 – Wydział Cybernetyki, WAT | WATplan" {
 		t.Errorf("krótka nazwa wydziału powinna zostać w tytule: %q", got)
+	}
+}
+
+func TestFacultyPages(t *testing.T) {
+	h := planPageServer(t)
+	get := func(path string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		req.Host = "watplan.me"
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec
+	}
+	rec := get("/plany/wml")
+	body := rec.Body.String()
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d", rec.Code)
+	}
+	for _, want := range []string{
+		"<title>Plan zajęć WML WAT – Wydział Mechatroniki, Uzbrojenia i Lotnictwa</title>",
+		`<link rel="canonical" href="https://watplan.me/plany/wml">`,
+		`<meta property="og:url" content="https://watplan.me/plany/wml">`,
+		`<h1 class="faq-h1">Plan zajęć – Wydział Mechatroniki, Uzbrojenia i Lotnictwa (WML)</h1>`,
+		`<li><a href="/plan/WMT26AX3S1">WMT26AX3S1</a></li>`,
+		`"@type":"BreadcrumbList"`,
+		`"item":"https://watplan.me/plany/wml"`,
+		"plan lekcji",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/plany/wml bez %q", want)
+		}
+	}
+	if strings.Contains(body, "WCY26KY4S1") {
+		t.Error("strona WML zawiera grupę WCY")
+	}
+	if get("/plany/WCY/").Code != http.StatusOK {
+		t.Error("/plany/WCY/ (wielkie litery, ukośnik) powinno działać")
+	}
+	if get("/plany/xyz").Code != http.StatusNotFound {
+		t.Error("nieznany wydział powinien dawać 404")
+	}
+	if !strings.Contains(get("/plany").Body.String(), `<a href="/plany/wml">Wydział Mechatroniki`) {
+		t.Error("/plany nie linkuje do strony wydziału")
+	}
+	if !strings.Contains(get("/plan/WMT26AX3S1").Body.String(), `"item":"https://watplan.me/plany/wml"`) {
+		t.Error("okruszki strony grupy nie linkują do wydziału")
+	}
+	sitemap := get("/sitemap.xml").Body.String()
+	for _, want := range []string{"<loc>https://watplan.me/plany/wml</loc>", "<loc>https://watplan.me/plany/wcy</loc>"} {
+		if !strings.Contains(sitemap, want) {
+			t.Errorf("sitemap bez %q", want)
+		}
+	}
+}
+
+func TestFacultyTitlesFit(t *testing.T) {
+	for code, name := range facultyNames {
+		title := html.UnescapeString(facultyTitle(code, name))
+		if n := utf8.RuneCountInString(title); n > maxFacultyTitle {
+			t.Errorf("%s: %d znaków: %q", code, n, title)
+		}
+		if !strings.Contains(title, code) || !strings.Contains(title, name) {
+			t.Errorf("%s: tytuł bez skrótu albo pełnej nazwy: %q", code, title)
+		}
 	}
 }

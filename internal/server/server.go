@@ -202,6 +202,7 @@ func (s *Server) Handler() (http.Handler, error) {
 		site = "https://" + s.options.CanonicalHost
 	}
 	mux.HandleFunc(allPlansAt, htmlPage(renderAllPlans(faqPage, allPlans, site)))
+	mux.HandleFunc(allPlansAt+"/", s.handleFacultyPage(renderFacultyPages(faqPage, allPlans, site)))
 	logo, err := fs.ReadFile(sub, "favicon-192.png")
 	if err != nil {
 		return nil, err
