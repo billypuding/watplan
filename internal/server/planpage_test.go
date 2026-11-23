@@ -77,7 +77,7 @@ func TestPlanPage(t *testing.T) {
 		t.Error("strona grupy ma noindex")
 	}
 	etag := rec.Header().Get("ETag")
-	if etag == "" || rec.Header().Get("Cache-Control") != cacheHTML {
+	if etag == "" || rec.Header().Get("Cache-Control") != cacheEdgeHTML {
 		t.Fatalf("ETag %q, Cache-Control %q", etag, rec.Header().Get("Cache-Control"))
 	}
 	if again := get("/plan/WMT26AX3S1", "If-None-Match", etag); again.Code != http.StatusNotModified {
@@ -375,5 +375,26 @@ func TestPlanPageEmbedsServerRenderedPlan(t *testing.T) {
 	}
 	if strings.Contains(get("/app"), "ssrPlan") && strings.Contains(get("/app"), `id="ssrPlan"`) {
 		t.Error("/app nie powinno zawierać planu z serwera")
+	}
+}
+
+func TestEdgeCacheOnlyForIndexablePages(t *testing.T) {
+	h := planPageServer(t)
+	cc := func(path string) string {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		req.Host = "watplan.me"
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec.Header().Get("Cache-Control")
+	}
+	for _, p := range []string{"/plan/WMT26AX3S1", "/plany", "/plany/wml"} {
+		if got := cc(p); got != cacheEdgeHTML {
+			t.Errorf("%s: Cache-Control %q, chcę %q", p, got, cacheEdgeHTML)
+		}
+	}
+	for _, p := range []string{"/app", "/", "/plan/NIEMA"} {
+		if got := cc(p); strings.Contains(got, "s-maxage") {
+			t.Errorf("%s nie powinno być w cache CDN: %q", p, got)
+		}
 	}
 }

@@ -221,7 +221,7 @@ func (s *Server) Handler() (http.Handler, error) {
 	if s.options.CanonicalHost != "" {
 		site = "https://" + s.options.CanonicalHost
 	}
-	mux.HandleFunc(allPlansAt, htmlPage(renderAllPlans(faqPage, allPlans, site)))
+	mux.HandleFunc(allPlansAt, htmlPageWith(renderAllPlans(faqPage, allPlans, site), cacheEdgeHTML))
 	mux.HandleFunc(allPlansAt+"/", s.handleFacultyPage(renderFacultyPages(faqPage, allPlans, site)))
 	logo, err := fs.ReadFile(sub, "favicon-192.png")
 	if err != nil {
@@ -1039,15 +1039,20 @@ func withGzip(next http.HandlerFunc) http.HandlerFunc {
 
 const (
 	cacheHTML      = "public, max-age=0, must-revalidate"
+	cacheEdgeHTML  = "public, max-age=0, s-maxage=60, must-revalidate"
 	cacheAPI       = "private, no-store"
 	cacheAPIWithET = "private, no-cache"
 )
 
 func htmlPage(page []byte) http.HandlerFunc {
+	return htmlPageWith(page, cacheHTML)
+}
+
+func htmlPageWith(page []byte, cacheControl string) http.HandlerFunc {
 	sum := sha1.Sum(page)
 	etag := `"` + hex.EncodeToString(sum[:10]) + `"`
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", cacheHTML)
+		w.Header().Set("Cache-Control", cacheControl)
 		w.Header().Set("ETag", etag)
 		if etagMatches(r.Header.Get("If-None-Match"), etag) {
 			w.WriteHeader(http.StatusNotModified)

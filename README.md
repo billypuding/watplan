@@ -54,7 +54,7 @@ change. Requests from crawlers and monitors (user agents with `bot`, `crawl`, `s
 never start a fetch from WAT, so indexing costs no scraping credits; `robots.txt` lets them
 read `/api/plan/` and `/api/plans`, which the page needs to render.
 When the group has a stored plan, `/plan/<ID>` is rendered on the server: the day view
-for today (the same markup the app draws, so nothing moves when the script takes over), a
+and the week view (CSS shows the one that fits the screen) for today (the same markup the app draws, so nothing moves when the script takes over), a
 "Przedmioty grupy …" list with types and lecturers that stays on the page, and the plan
 JSON in a `<script type="application/json">` block that the app uses instead of waiting
 for `/api/plan`. The plan is visible without JavaScript and is in the first response.
@@ -358,6 +358,10 @@ The `watplan.me` zone is on Cloudflare, in front of Render:
   `svg` or `ico` are *Eligible for cache*, with Edge TTL taken from the origin's
   `Cache-Control`. Only `?v=` files are `immutable`; HTML and `/api/` stay uncached
   because of their own headers (see above).
+- Cache Rule "cache pages": `starts_with(http.request.uri.path, "/plan/") or starts_with(http.request.uri.path, "/plany")`
+  is *Eligible for cache* with Edge TTL from the origin. Those pages send
+  `s-maxage=60`, so Cloudflare serves them for up to a minute without asking Render, while
+  browsers still revalidate (`max-age=0`). `/app`, `/` and the API are not edge-cached.
 - Rocket Loader and Email Obfuscation are off: both rewrite the HTML, which breaks the
   inline script hashes in the CSP.
 

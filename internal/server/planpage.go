@@ -194,7 +194,7 @@ func (s *Server) handlePlanPage(tpl []byte) http.HandlerFunc {
 		page := renderPlanPage(tpl, plan, s.siteURL(r), ssr)
 		sum := sha1.Sum(page)
 		etag := `"` + hex.EncodeToString(sum[:10]) + `"`
-		w.Header().Set("Cache-Control", cacheHTML)
+		w.Header().Set("Cache-Control", cacheEdgeHTML)
 		w.Header().Set("ETag", etag)
 		if etagMatches(r.Header.Get("If-None-Match"), etag) {
 			w.WriteHeader(http.StatusNotModified)
@@ -345,7 +345,7 @@ func renderFacultyPages(tpl []byte, plans []config.PlanConfig, site string) map[
 func (s *Server) handleFacultyPage(pages map[string][]byte) http.HandlerFunc {
 	handlers := map[string]http.HandlerFunc{}
 	for code, page := range pages {
-		handlers[code] = htmlPage(page)
+		handlers[code] = htmlPageWith(page, cacheEdgeHTML)
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		code := strings.ToLower(strings.Trim(strings.TrimPrefix(r.URL.Path, allPlansAt+"/"), "/"))
