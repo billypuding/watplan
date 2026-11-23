@@ -175,6 +175,23 @@ test('strona grupy z planem z serwera: widać go bez /api/plan, bez przesunięć
     await page.blockURLs([]);
 });
 
+test('strona grupy: service worker najpierw pyta sieć, a offline podaje zapisaną kopię', { skip }, async () => {
+    await page.goto(server.base + '/plan/WMT26AX3S1');
+    await page.waitFor(`navigator.serviceWorker.controller !== null`, 10000).catch(() => undefined);
+    await page.goto(server.base + '/plan/WMT26AX3S1');
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    await page.waitFor(`caches.keys().then(async keys => { for (const k of keys) { if (await (await caches.open(k)).match('/plan/WMT26AX3S1')) return true; } return false; })`, 10000);
+    await page.offline(true);
+    try {
+        await page.goto(server.base + '/plan/WMT26AX3S1');
+        await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+        assert.match(await page.eval('document.title'), /WMT26AX3S1/);
+    } finally {
+        await page.offline(false);
+    }
+    assert.deepEqual(page.errors, []);
+});
+
 test('telefon: domyślnie widok dnia z bieżącymi zajęciami', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);

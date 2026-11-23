@@ -41,7 +41,7 @@ function shellKey(url) {
     return null;
 }
 
-async function staleWhileRevalidate(event, request, key) {
+async function staleWhileRevalidate(event, request, key, fresh) {
     const cache = await caches.open(CACHE);
     const cached = await cache.match(key);
     const network = fetch(request).then(async (response) => {
@@ -55,6 +55,9 @@ async function staleWhileRevalidate(event, request, key) {
         }
         return response;
     });
+    if (cached && fresh) {
+        return Promise.race([network, new Promise(r => setTimeout(() => r(cached), 2000))]).catch(() => cached);
+    }
     if (cached) {
         event.waitUntil(network.catch(() => undefined));
         return cached;
@@ -75,7 +78,7 @@ self.addEventListener('fetch', (event) => {
 
     if (request.mode === 'navigate') {
         const key = shellKey(url);
-        if (key) event.respondWith(staleWhileRevalidate(event, request, key));
+        if (key) event.respondWith(staleWhileRevalidate(event, request, key, key.startsWith('/plan/')));
         return;
     }
     event.respondWith(staleWhileRevalidate(event, request, request));
