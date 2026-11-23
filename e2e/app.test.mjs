@@ -146,8 +146,10 @@ test('strona grupy /plan/ID: tytuł, indeksowanie i przełączanie', { skip }, a
     const paths = JSON.parse(await page.eval(`JSON.stringify(performance.getEntriesByType('resource').map(r => new URL(r.name).pathname))`));
     assert.equal(paths.filter(p => p === '/api/plan/WMT26AX3S1').length, 1);
     assert.equal(await page.eval(`window.earlyPlan && window.earlyPlan.id`), 'WMT26AX3S1');
+    assert.match(await page.text('.plan-info h2'), /WMT26AX3S1/);
     await page.eval(`selectPlan('WMT26AX1S1', 'WMT26AX1S1'), true`);
     await page.waitFor(`location.pathname === '/plan/WMT26AX1S1' && !location.search.includes('plan=')`);
+    assert.equal(await page.eval(`document.querySelector('.plan-info')`), null, 'stopka z przedmiotami innej grupy została po przełączeniu');
     assert.equal(await page.eval('document.title'), 'Plan zajęć WMT26AX1S1 | WATplan');
     assert.deepEqual(page.errors, []);
 });

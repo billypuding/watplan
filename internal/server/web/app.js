@@ -424,6 +424,7 @@ groupBtn.addEventListener('click', openGroupPicker);
 function selectPlan(id, name) {
     groupModal.close();
     if (id === currentPlanId) return;
+    if (currentPlanId) document.querySelector('.plan-info')?.remove();
     currentPlanId = id;
     groupLabel.textContent = name;
     setNotice('');
