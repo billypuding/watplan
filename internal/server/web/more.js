@@ -9,6 +9,7 @@ function moreDialog(id, title, sub) {
             h('div', { class: 'series-title' }, h('h2', null, title), h('p', { id: id + 'Sub' }, sub))),
         h('div', { class: 'series-body', id: id + 'Body' }));
     dlg.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) dlg.close(); });
+    nameDialog(dlg);
     document.body.append(dlg);
     return dlg;
 }

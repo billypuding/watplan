@@ -37,6 +37,7 @@ const refreshButton = $('refreshButton');
 const fetchedLabel = $('fetched');
 const modifiedLabel = $('modified');
 const notice = $('notice');
+const srStatus = document.body.appendChild(h('p', { class: 'sr-only', 'aria-live': 'polite' }));
 const seriesModal = $('seriesModal');
 const seriesBack = $('seriesBack');
 const seriesSubject = $('seriesSubject');
@@ -781,7 +782,34 @@ function render() {
     if (!staleBanner.classList.contains('hidden')) view.prepend(staleBanner);
     placeChangeChip();
     tickLive();
+    announceView();
 }
+
+let lastAnnounced = '';
+function announceView() {
+    const count = (n) => n ? classesWord(n) : 'brak zajęć';
+    let text;
+    if (currentView() === 'week') {
+        const monday = mondayOf(selectedDate);
+        let n = 0;
+        for (let i = 0; i < 7; i++) n += (eventsByDate[addDaysISO(monday, i)] || []).length;
+        text = `Tydzień ${weekRange(monday)}: ${count(n)}`;
+    } else {
+        text = `${DAY_NAMES[dayIndex(parseISO(selectedDate))]}, ${longDate(selectedDate)}: ${count((eventsByDate[selectedDate] || []).length)}`;
+    }
+    if (text === lastAnnounced) return;
+    if (lastAnnounced) srStatus.textContent = text;
+    lastAnnounced = text;
+}
+
+function nameDialog(dlg) {
+    const title = dlg.querySelector('h2');
+    if (!title) return;
+    title.id ||= `${dlg.id}Title`;
+    dlg.setAttribute('aria-labelledby', title.id);
+}
+document.querySelectorAll('dialog').forEach(nameDialog);
+
 
 function todayOffScreen() {
     const today = todayISO();

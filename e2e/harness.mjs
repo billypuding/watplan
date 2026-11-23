@@ -153,6 +153,12 @@ export async function startBrowser() {
         async text(selector) {
             return page.eval(`document.querySelector(${JSON.stringify(selector)})?.textContent ?? null`);
         },
+        async key(key) {
+            const codes = { Escape: 27, Tab: 9, Enter: 13 };
+            const base = { key, code: key, windowsVirtualKeyCode: codes[key], nativeVirtualKeyCode: codes[key] };
+            await send('Input.dispatchKeyEvent', { type: 'rawKeyDown', ...base });
+            await send('Input.dispatchKeyEvent', { type: 'keyUp', ...base });
+        },
         async offline(on) {
             await send('Network.enable');
             await send('Network.emulateNetworkConditions', { offline: on, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });

@@ -341,6 +341,42 @@ test('przycisk instalacji pojawia się po beforeinstallprompt i wywołuje prompt
     assert.deepEqual(page.errors, []);
 });
 
+test('dostępność: nazwy dialogów, Esc, powrót fokusu i krótkie komunikaty', { skip }, async () => {
+    await page.reset();
+    await page.goto(app());
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    assert.equal(await page.eval(`document.getElementById('view').hasAttribute('aria-live')`), false);
+    const unnamed = await page.eval(`[...document.querySelectorAll('dialog')].filter(d => { const id = d.getAttribute('aria-labelledby'); return !id || !document.getElementById(id); }).map(d => d.id)`);
+    assert.deepEqual(unnamed, []);
+
+    await page.eval(`document.getElementById('toolsBtn').focus(), true`);
+    await page.click('#toolsBtn');
+    await page.waitFor(`document.getElementById('toolsModal').open`);
+    assert.equal(await page.eval(`document.getElementById('toolsModal').contains(document.activeElement)`), true);
+    assert.equal(await page.eval(`document.getElementById(document.getElementById('toolsModal').getAttribute('aria-labelledby')).textContent.trim().length > 0`), true);
+    await page.eval(`document.querySelector('[data-tool="stats"]').focus(), true`);
+    await page.click('[data-tool="stats"]');
+    await page.waitFor(`document.getElementById('statsModal')?.open`);
+    assert.equal(await page.eval(`document.getElementById(document.getElementById('statsModal').getAttribute('aria-labelledby')).textContent`), 'Statystyki planu');
+    await page.key('Escape');
+    await page.waitFor(`!document.getElementById('statsModal').open`);
+    await page.waitFor(`document.activeElement && document.activeElement.id === 'toolsBtn'`, 2000);
+
+    await page.eval(`document.getElementById('settingsBtn').focus(), true`);
+    await page.click('#settingsBtn');
+    await page.waitFor(`document.getElementById('settingsModal').open`);
+    await page.key('Escape');
+    await page.waitFor(`!document.getElementById('settingsModal').open && document.activeElement.id === 'settingsBtn'`, 2000);
+
+    const live = `document.querySelector('p.sr-only[aria-live]')`;
+    assert.equal(await page.eval(`${live}.textContent`), '');
+    await page.eval(`stepByView(1), true`);
+    await page.waitFor(`${live}.textContent.length > 0`);
+    assert.match(await page.eval(`${live}.textContent`), /^(Tydzień .+|[A-ZŚ][a-ząęłńóśźż]+, .+): (\d+ zaj|brak zajęć)/);
+    assert.ok(await page.eval(`${live}.textContent.length < 80`));
+    assert.deepEqual(page.errors, []);
+});
+
 test('wolne sale pokazują sale dla wybranego bloku', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
