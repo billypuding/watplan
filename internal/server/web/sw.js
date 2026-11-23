@@ -44,7 +44,7 @@ function shellKey(url) {
 async function staleWhileRevalidate(event, request, key, fresh) {
     const cache = await caches.open(CACHE);
     const cached = await cache.match(key);
-    const network = fetch(request).then(async (response) => {
+    const network = fetch(fresh ? new Request(request, { cache: 'no-cache' }) : request).then(async (response) => {
         if (response.type === 'opaqueredirect' || response.redirected) {
             await cache.delete(key, { ignoreSearch: true });
             return response;
