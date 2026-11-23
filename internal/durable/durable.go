@@ -25,20 +25,28 @@ type Turso struct {
 	db *sql.DB
 }
 
-func OpenTurso(rawURL, token string) (*Turso, error) {
+func tursoURL(rawURL, token string) (string, error) {
 	if rawURL == "" {
-		return nil, errors.New("brak adresu bazy")
+		return "", errors.New("brak adresu bazy")
 	}
 	u, err := url.Parse(rawURL)
 	if err != nil {
-		return nil, fmt.Errorf("zły adres bazy: %w", err)
+		return "", fmt.Errorf("zły adres bazy: %w", err)
 	}
 	if token != "" {
 		q := u.Query()
 		q.Set("authToken", token)
 		u.RawQuery = q.Encode()
 	}
-	db, err := sql.Open("libsql", u.String())
+	return u.String(), nil
+}
+
+func OpenTurso(rawURL, token string) (*Turso, error) {
+	dsn, err := tursoURL(rawURL, token)
+	if err != nil {
+		return nil, err
+	}
+	db, err := sql.Open("libsql", dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -86,14 +94,16 @@ func (t *Turso) Close() error {
 }
 
 type Queue struct {
-	target Mirror
-	mu     sync.Mutex
-	wait   map[string][]byte
-	wake   chan struct{}
-	failMu sync.Mutex
-	failed string
-	saved  int
-	alert  *alert.Notifier
+	target     Mirror
+	batchDelay time.Duration
+	retryDelay time.Duration
+	mu         sync.Mutex
+	wait       map[string][]byte
+	wake       chan struct{}
+	failMu     sync.Mutex
+	failed     string
+	saved      int
+	alert      *alert.Notifier
 }
 
 func (q *Queue) SetAlert(n *alert.Notifier) {
@@ -101,7 +111,11 @@ func (q *Queue) SetAlert(n *alert.Notifier) {
 }
 
 func NewQueue(target Mirror) *Queue {
-	q := &Queue{target: target, wait: map[string][]byte{}, wake: make(chan struct{}, 1)}
+	return newQueue(target, 500*time.Millisecond, 5*time.Second)
+}
+
+func newQueue(target Mirror, batchDelay, retryDelay time.Duration) *Queue {
+	q := &Queue{target: target, batchDelay: batchDelay, retryDelay: retryDelay, wait: map[string][]byte{}, wake: make(chan struct{}, 1)}
 	go q.run()
 	return q
 }
@@ -129,7 +143,7 @@ func (q *Queue) Status() (string, int) {
 
 func (q *Queue) run() {
 	for range q.wake {
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(q.batchDelay)
 		q.mu.Lock()
 		batch := q.wait
 		q.wait = map[string][]byte{}
@@ -155,7 +169,7 @@ func (q *Queue) run() {
 					q.wait[key] = value
 				}
 				q.mu.Unlock()
-				time.Sleep(5 * time.Second)
+				time.Sleep(q.retryDelay)
 			}
 		}
 		q.mu.Lock()

@@ -28,7 +28,7 @@ func (r *recorder) All(string) (map[string][]byte, error) { return nil, nil }
 
 func TestQueueCoalescesAndRetries(t *testing.T) {
 	rec := &recorder{puts: map[string][]string{}, fails: 1}
-	q := NewQueue(rec)
+	q := newQueue(rec, 50*time.Millisecond, 10*time.Millisecond)
 	_ = q.Put("plan/A", []byte("1"))
 	_ = q.Put("plan/A", []byte("2"))
 	_ = q.Put("plan/A", []byte("3"))
