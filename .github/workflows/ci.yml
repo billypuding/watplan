@@ -19,6 +19,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      libsql:
+        image: ghcr.io/tursodatabase/libsql-server:v0.24.33
+        ports:
+          - 8080:8080
     steps:
       - uses: actions/checkout@v7
 
@@ -36,7 +41,12 @@ jobs:
       - name: govulncheck
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...
 
+      - name: wait for libsql
+        run: for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/health && exit 0; sleep 1; done; exit 1
+
       - name: go test
+        env:
+          PLANWAT_TEST_DB_URL: http://127.0.0.1:8080
         run: go test ./...
 
       - name: e2e

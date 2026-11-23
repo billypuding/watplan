@@ -372,6 +372,15 @@ pull requests for Go modules and GitHub Actions. Dependabot does not raise the `
 `go.mod`: when `govulncheck` reports a fixed standard-library issue, bump it to the latest
 patch release (`go mod edit -go=1.27.x`), which also makes Render build with that version.
 
+The Turso tests (`internal/durable`, `internal/store`) run against a real libsql server
+when `PLANWAT_TEST_DB_URL` is set and are skipped otherwise. CI starts
+`ghcr.io/tursodatabase/libsql-server` as a service container; locally:
+
+```bash
+docker run -d --rm -p 18080:8080 ghcr.io/tursodatabase/libsql-server:v0.24.33
+PLANWAT_TEST_DB_URL=http://127.0.0.1:18080 go test ./internal/durable ./internal/store
+```
+
 `go test ./cmd/watplan` starts the real server binary offline and checks that it serves
 pages, shuts down cleanly on SIGTERM, refuses to start with a broken `plans.json` or bad
 `PLANWAT_*` values, and turns push off (with an alert) when the VAPID keys are invalid.
