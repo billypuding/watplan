@@ -77,12 +77,35 @@ func TestPlanPage(t *testing.T) {
 		t.Fatal("brak nazwy wydziału WCY (ze slashem na końcu)")
 	}
 
+	qrRec := get("/plan/WMT26AX3S1/qr.svg")
+	if qrRec.Code != http.StatusOK || qrRec.Header().Get("Content-Type") != "image/svg+xml" || !strings.HasPrefix(qrRec.Body.String(), "<svg") {
+		t.Fatalf("qr.svg: %d %q", qrRec.Code, qrRec.Header().Get("Content-Type"))
+	}
+	if get("/plan/NIEMA/qr.svg").Code != http.StatusNotFound {
+		t.Fatal("qr.svg dla nieznanej grupy powinien dawać 404")
+	}
+
 	missing := get("/plan/NIEMA")
 	if missing.Code != http.StatusNotFound || !strings.Contains(missing.Body.String(), "noindex") {
 		t.Fatalf("nieznana grupa: %d", missing.Code)
 	}
 	if !strings.Contains(get("/app").Body.String(), `content="noindex, follow"`) {
 		t.Fatal("/app nie powinno być indeksowane")
+	}
+}
+
+func TestQRSVG(t *testing.T) {
+	out, err := qrSVG("https://watplan.me/plan/WMT26AX3S1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(out)
+	if !strings.Contains(s, `viewBox="0 0 37 37"`) || strings.Count(s, "h1v1h-1z") < 200 {
+		t.Fatalf("nieoczekiwany kod QR: %.120s", s)
+	}
+	again, _ := qrSVG("https://watplan.me/plan/WMT26AX3S1")
+	if string(again) != s {
+		t.Fatal("kod QR nie jest deterministyczny")
 	}
 }
 

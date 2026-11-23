@@ -53,6 +53,7 @@ the group for crawlers. `/app` stays `noindex`. The landing page and favourites 
 change. Requests from crawlers and monitors (user agents with `bot`, `crawl`, `spider`, ...)
 never start a fetch from WAT, so indexing costs no scraping credits; `robots.txt` lets them
 read `/api/plan/` and `/api/plans`, which the page needs to render.
+`/plan/<ID>/qr.svg` returns a QR code with the group's link (used by "Udostępnij plan").
 
 Cache headers are set so that a CDN in front of the server (e.g. Cloudflare) only
 keeps what is safe to share:

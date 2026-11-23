@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/billypuding/watplan/internal/config"
+	"rsc.io/qr"
 )
 
 var facultyNames = map[string]string{
@@ -85,9 +86,49 @@ func renderPlanPage(tpl []byte, plan config.PlanConfig, site string) []byte {
 	return bytes.Replace(out, []byte("</head>"), []byte(`<script type="application/ld+json">`+string(crumbs)+"</script>\n</head>"), 1)
 }
 
+func qrSVG(text string) ([]byte, error) {
+	code, err := qr.Encode(text, qr.M)
+	if err != nil {
+		return nil, err
+	}
+	const quiet = 4
+	size := code.Size + 2*quiet
+	var b bytes.Buffer
+	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" shape-rendering="crispEdges"><rect width="%d" height="%d" fill="#fff"/><path fill="#000" d="`, size, size, size, size)
+	for y := 0; y < code.Size; y++ {
+		for x := 0; x < code.Size; x++ {
+			if code.Black(x, y) {
+				fmt.Fprintf(&b, "M%d %dh1v1h-1z", x+quiet, y+quiet)
+			}
+		}
+	}
+	b.WriteString(`"/></svg>`)
+	return b.Bytes(), nil
+}
+
+func (s *Server) handlePlanQR(w http.ResponseWriter, r *http.Request, plan config.PlanConfig) {
+	svg, err := qrSVG(s.siteURL(r) + "/plan/" + plan.ID)
+	if err != nil {
+		http.Error(w, "Nie udało się utworzyć kodu QR.", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Header().Set("X-Robots-Tag", "noindex")
+	w.Write(svg)
+}
+
 func (s *Server) handlePlanPage(tpl []byte) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := strings.Trim(strings.TrimPrefix(r.URL.Path, "/plan/"), "/")
+		if base, ok := strings.CutSuffix(id, "/qr.svg"); ok {
+			if plan, found := s.registry.Get(base); found {
+				s.handlePlanQR(w, r, plan)
+				return
+			}
+			http.NotFound(w, r)
+			return
+		}
 		plan, ok := s.registry.Get(id)
 		if !ok {
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
