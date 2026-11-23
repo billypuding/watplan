@@ -389,11 +389,14 @@ test('dostępność: nazwy dialogów, Esc, powrót fokusu i krótkie komunikaty'
 test('wolne sale pokazują sale dla wybranego bloku', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    const toolsScripts = `[...document.querySelectorAll('script[src]')].filter(s => s.src.includes('/tools.js?v=')).length`;
+    assert.equal(await page.eval(toolsScripts), 0, 'tools.js nie powinien ładować się na starcie');
     await page.click('#toolsBtn');
     await page.click('[data-tool="rooms"]');
     await page.waitFor(`document.querySelectorAll('.room-chip').length > 0 || !!document.querySelector('#roomsBody .empty-day')`);
     assert.ok(await page.eval(`document.querySelectorAll('.room-building').length > 0`));
     assert.match(await page.text('#roomsSub'), /\d{2}:\d{2}–\d{2}:\d{2}/);
+    assert.equal(await page.eval(toolsScripts), 1);
 });
 
 test('porównanie grup pokazuje plany obok siebie', { skip }, async () => {
@@ -434,6 +437,7 @@ test('miesiąc do PDF buduje arkusz wydruku', { skip }, async () => {
     await page.eval('window.print = () => {}; true');
     await page.click('#toolsBtn');
     await page.click('[data-tool="print"]');
+    await page.waitFor(`document.querySelector('.pr-top h1') !== null`);
     assert.match(await page.text('.pr-top h1'), /listopad 2026/);
     assert.ok(await page.eval(`document.querySelectorAll('.pr-ev').length > 20`));
     assert.deepEqual(page.errors, []);

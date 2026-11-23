@@ -366,6 +366,17 @@ clock frozen at 19 November 2026. They need Node 22+ and Chrome; set
 runner. CSP violations fail the tests; "Unrecognized feature" messages about
 `Permissions-Policy` depend on the Chrome build and are only reported.
 
+`go test ./cmd/watplan` starts the real server binary offline and checks that it serves
+pages, shuts down cleanly on SIGTERM, refuses to start with a broken `plans.json` or bad
+`PLANWAT_*` values, and turns push off (with an alert) when the VAPID keys are invalid.
+`go test ./internal/config` also validates the committed `plans.json` and `sources.json`.
+
+The frontend is plain scripts sharing one scope, loaded in order: `core.js` (dates,
+DOM helpers, fetching), `groups.js` (group search), `app.js` (state, loading and the
+day/week/month views). `tools.js` (exams, free rooms, comparing groups, PDF) and
+`more.js` (own classes, statistics, sharing, install help) load only when a tool is
+opened. `TestSizeBudget` limits the gzip size of each file and of the critical path.
+
 ## Disclaimer
 
 WATplan is an independent student project, not affiliated with the Military University of Technology. The official schedule is always the source of truth.

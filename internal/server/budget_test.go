@@ -43,12 +43,12 @@ const (
 )
 
 var budgets = []budget{
-	{"app.js", metricGzip, 28500},
+	{"app.js", metricGzip, 22500},
 	{"style.css", metricGzip, 9500},
 	{"app.html", metricGzip, 5400},
 	{"sw.js", metricGzip, 1500},
 	{budgetFonts, metricRaw, 32500},
-	{budgetCritical, metricCompact, 82500},
+	{budgetCritical, metricCompact, 78000},
 	{budgetOther, metricGzip, 16500},
 	{budgetPlan, metricBrotli, 2100},
 }

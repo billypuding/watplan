@@ -1,22 +1,10 @@
 'use strict';
 
-const DAY_NAMES = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
-const DAY_SHORT = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'];
-const DAY_ABBR = ['pon.', 'wt.', 'śr.', 'czw.', 'pt.', 'sob.', 'niedz.'];
-const MONTHS_GEN = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
-const MONTHS_NOM = ['styczeń', 'luty', 'marzec', 'kwiecień', 'maj', 'czerwiec', 'lipiec', 'sierpień', 'wrzesień', 'październik', 'listopad', 'grudzień'];
-const MONTHS_SHORT = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
-const SLOTS = [
-    ['08:00', '09:35'], ['09:50', '11:25'], ['11:40', '13:15'], ['13:30', '15:05'],
-    ['16:00', '17:35'], ['17:50', '19:25'], ['19:40', '21:15'],
-];
-const LONG_GAP_MIN = 30;
 const NOTICE_MS = 5000;
 const TICK_MS = 15000;
 const SETTINGS_KEY = 'settings';
 const SETTINGS_VERSION = 3;
 
-const $ = (id) => document.getElementById(id);
 const app = $('app');
 const view = $('view');
 const groupBtn = $('groupBtn');
@@ -142,165 +130,6 @@ wideQuery.addEventListener('change', () => {
 applyTheme();
 syncSettingsUI();
 
-function h(tag, attrs, ...children) {
-    const node = document.createElement(tag);
-    if (attrs) {
-        for (const [k, v] of Object.entries(attrs)) {
-            if (v === undefined || v === null || v === false) continue;
-            if (k === 'class') node.className = v;
-            else if (k === 'style') node.style.cssText = v;
-            else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
-            else node.setAttribute(k, v === true ? '' : v);
-        }
-    }
-    for (const c of children.flat()) {
-        if (c === null || c === undefined || c === false) continue;
-        node.append(c instanceof Node ? c : document.createTextNode(String(c)));
-    }
-    return node;
-}
-
-function svg(paths, size = 14) {
-    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    s.setAttribute('width', size);
-    s.setAttribute('height', size);
-    s.setAttribute('viewBox', '0 0 24 24');
-    s.setAttribute('fill', 'none');
-    s.setAttribute('stroke', 'currentColor');
-    s.setAttribute('stroke-width', '2');
-    s.setAttribute('stroke-linecap', 'round');
-    s.setAttribute('stroke-linejoin', 'round');
-    s.setAttribute('aria-hidden', 'true');
-    s.innerHTML = paths;
-    return s;
-}
-const ICON_BUILDING = '<path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M16 9h2a2 2 0 0 1 2 2v10"/><path d="M2 21h20"/><path d="M8 7h4M8 11h4M8 15h4"/>';
-const ICON_USER = '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>';
-const ICON_LEFT = '<path d="m15 18-6-6 6-6"/>';
-const ICON_RIGHT = '<path d="m9 18 6-6-6-6"/>';
-const ICON_DOWN = '<path d="m6 9 6 6 6-6"/>';
-const ICON_CHECK = '<path d="M20 6 9 17l-5-5"/>';
-
-const pad = (n) => String(n).padStart(2, '0');
-const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-function parseISO(str) { const [y, m, d] = str.split('-').map(Number); return new Date(y, m - 1, d); }
-function addDays(date, n) { const r = new Date(date); r.setDate(r.getDate() + n); return r; }
-const addDaysISO = (iso, n) => toISO(addDays(parseISO(iso), n));
-const dayIndex = (date) => (date.getDay() + 6) % 7;
-const mondayOf = (iso) => { const d = parseISO(iso); return toISO(addDays(d, -dayIndex(d))); };
-const toMin = (t) => { const [hh, mm] = t.split(':').map(Number); return hh * 60 + mm; };
-
-function isoWeek(date) {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const day = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - day);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-}
-
-function warsawNow() {
-    return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
-}
-const todayISO = () => toISO(warsawNow());
-
-function eventRange(e) {
-    const [y, m, d] = e.date.split('-').map(Number);
-    const [sh, sm] = e.start.split(':').map(Number);
-    const [eh, em] = e.end.split(':').map(Number);
-    return [new Date(y, m - 1, d, sh, sm).getTime(), new Date(y, m - 1, d, eh, em).getTime()];
-}
-
-function formatMinutes(mins) {
-    if (mins < 60) return `${mins} min`;
-    const hh = Math.floor(mins / 60);
-    const mm = mins % 60;
-    return mm ? `${hh} h ${mm} min` : `${hh} h`;
-}
-
-function longDate(iso) {
-    const d = parseISO(iso);
-    return `${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`;
-}
-function shortDate(iso) {
-    const d = parseISO(iso);
-    return `${DAY_ABBR[dayIndex(d)]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
-}
-
-function plural(n, one, few, many) {
-    if (n === 1) return one;
-    const d = n % 10, dd = n % 100;
-    return d >= 2 && d <= 4 && (dd < 12 || dd > 14) ? few : many;
-}
-const classesWord = (n) => `${n} ${plural(n, 'zajęcie', 'zajęcia', 'zajęć')}`;
-
-const hueCache = {};
-function hueOf(hex) {
-    if (hueCache[hex]) return hueCache[hex];
-    const m = /^#([0-9a-f]{6})$/i.exec(hex || '');
-    let res = { h: 220, s: 0 };
-    if (m) {
-        const n = parseInt(m[1], 16);
-        const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
-        const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
-        let hue = 0;
-        if (d) {
-            hue = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
-            hue = Math.round(hue * 60);
-            if (hue < 0) hue += 360;
-        }
-        res = { h: hue, s: d > 0.08 ? 1 : 0 };
-    }
-    return (hueCache[hex] = res);
-}
-function tint(node, hex) {
-    const { h: hue, s } = hueOf(hex);
-    node.style.setProperty('--h', hue);
-    node.style.setProperty('--s', s);
-    return node;
-}
-
-const SMALL_WORDS = new Set(['i', 'w', 'z', 'do', 'na', 'we', 'ze', 'o', 'od', 'dla', 'oraz', 'a', '-']);
-function abbreviate(subject) {
-    const words = subject.replace(/[()[\]{},.;:]/g, ' ').split(/\s+/).filter(Boolean);
-    const big = words.filter(w => !SMALL_WORDS.has(w.toLowerCase()) && !/^\d+$/.test(w) && !/^[IVX]+$/.test(w));
-    const nums = words.filter(w => /^\d+$/.test(w) || /^[IVX]+$/.test(w));
-    let ab;
-    if (big.length <= 1) {
-        const w = big[0] || subject;
-        ab = w === w.toUpperCase() ? w.slice(0, 5) : w.slice(0, 3);
-    } else {
-        ab = words.filter(w => !/^\d+$/.test(w) && !/^[IVX]+$/.test(w)).map(w => {
-            if (SMALL_WORDS.has(w.toLowerCase())) return w === '-' ? '' : w[0].toLowerCase();
-            return w[0].toUpperCase();
-        }).join('');
-    }
-    return nums.length ? `${ab} ${nums.join(' ')}` : ab;
-}
-
-function typeLabel(type) {
-    if (!type) return 'Zajęcia';
-    return type.charAt(0).toUpperCase() + type.slice(1);
-}
-function typeShort(type) {
-    const t = (type || '').toLowerCase();
-    if (t.startsWith('wykład')) return 'wykł.';
-    if (t.startsWith('ćwicz')) return 'ćw.';
-    if (t.startsWith('labor')) return 'lab.';
-    if (t.startsWith('semin')) return 'sem.';
-    if (t.startsWith('projekt')) return 'proj.';
-    return t;
-}
-function lastLabel(type) {
-    const t = (type || '').toLowerCase();
-    if (t.startsWith('wykład')) return 'Ostatni wykład';
-    if (t.startsWith('ćwicz')) return 'Ostatnie ćwiczenia';
-    if (t.startsWith('labor')) return 'Ostatnie laboratorium';
-    if (t.startsWith('semin')) return 'Ostatnie seminarium';
-    if (t.startsWith('projekt')) return 'Ostatni projekt';
-    if (t.startsWith('egzamin') || t.includes('(e')) return 'Egzamin';
-    return 'Ostatnie zajęcia';
-}
-
 function setNotice(text, isError) {
     clearTimeout(noticeTimer);
     notice.textContent = text;
@@ -308,24 +137,6 @@ function setNotice(text, isError) {
     notice.classList.toggle('show', Boolean(text));
     if (text) announce(text, isError);
     if (text) noticeTimer = setTimeout(() => notice.classList.remove('show'), NOTICE_MS);
-}
-
-const OFFLINE_TEXT = 'Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.';
-const OFFLINE_PLAN_TEXT = 'Brak połączenia z internetem, a tego planu nie ma jeszcze zapisanego na tym urządzeniu. Otwórz go ponownie, gdy wróci sieć.';
-
-const isNetworkError = (err) => !navigator.onLine || err instanceof TypeError;
-
-function errorText(err, fallback = 'Coś poszło nie tak. Spróbuj ponownie.') {
-    if (isNetworkError(err)) return OFFLINE_TEXT;
-    return (err && err.message) || fallback;
-}
-
-async function fetchJSON(url, options) {
-    const response = await fetch(url, options);
-    let body = null;
-    try { body = await response.json(); } catch (_) { body = null; }
-    if (!response.ok) throw new Error((body && body.error) || `Błąd serwera (${response.status})`);
-    return body;
 }
 
 const seriesKey = (e) => `${e.subject}\u0000${e.type || ''}`;
@@ -824,7 +635,6 @@ function nameDialog(dlg) {
     dlg.setAttribute('aria-labelledby', title.id);
 }
 document.querySelectorAll('dialog').forEach(nameDialog);
-
 
 function todayOffScreen() {
     const today = todayISO();
@@ -1764,51 +1574,34 @@ if (pushSupported && pushPlans().length && Notification.permission === 'granted'
 
 const toolsBtn = $('toolsBtn');
 const toolsModal = $('toolsModal');
-const roomsModal = $('roomsModal');
-const roomsDate = $('roomsDate');
-const roomsSlot = $('roomsSlot');
-const roomsBuilding = $('roomsBuilding');
-const roomsBody = $('roomsBody');
-const roomsSub = $('roomsSub');
-const compareModal = $('compareModal');
-const compareGroupsEl = $('compareGroups');
-const compareSearch = $('compareSearch');
-const compareResults = $('compareResults');
-const compareBody = $('compareBody');
-const printArea = $('printArea');
-const ROOM_RE = /^(.+?)\/?\s+(\d{1,3}[A-Z]?|[A-Z])$/;
 
 toolsModal.addEventListener('click', (e) => { if (e.target === toolsModal || e.target.closest('[data-close]')) toolsModal.close(); });
-const examsModal = $('examsModal');
-const examsBody = $('examsBody');
-const examsSub = $('examsSub');
-
-for (const dlg of [roomsModal, compareModal, examsModal]) {
-    dlg.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) dlg.close(); });
-}
 toolsBtn.addEventListener('click', () => toolsModal.showModal());
 toolsModal.querySelectorAll('[data-tool]').forEach(btn => btn.addEventListener('click', () => {
     toolsModal.close();
     const tool = btn.dataset.tool;
-    if (tool === 'exams') openExams();
-    else if (tool === 'rooms') openRooms();
-    else if (tool === 'compare') openCompare();
-    else if (tool === 'changes') openChanges(currentPlanId);
-    else if (tool === 'print') printMonth();
+    if (tool === 'changes') openChanges(currentPlanId);
     else if (tool === 'install' && installPrompt) promptInstall();
-    else moreTool({ extras: 'openExtras', stats: 'openStats', share: 'openShare', install: 'openInstall' }[tool]);
+    else if (LAZY_TOOLS[tool]) lazyTool(...LAZY_TOOLS[tool]);
 }));
 
-let morePromise = null;
-function moreTool(name) {
-    morePromise ||= new Promise((resolve, reject) => {
-        document.head.append(h('script', { src: '/more.js?v=0', onload: resolve, onerror: reject }));
+const TOOLS_JS = '/tools.js?v=0';
+const MORE_JS = '/more.js?v=0';
+const LAZY_TOOLS = {
+    exams: [TOOLS_JS, 'openExams'], rooms: [TOOLS_JS, 'openRooms'], compare: [TOOLS_JS, 'openCompare'], print: [TOOLS_JS, 'printMonth'],
+    extras: [MORE_JS, 'openExtras'], stats: [MORE_JS, 'openStats'], share: [MORE_JS, 'openShare'], install: [MORE_JS, 'openInstall'],
+};
+const lazyScripts = {};
+function lazyTool(src, name) {
+    lazyScripts[src] ||= new Promise((resolve, reject) => {
+        document.head.append(h('script', { src, onload: resolve, onerror: reject }));
     });
-    morePromise.then(() => window[name](), () => {
-        morePromise = null;
+    lazyScripts[src].then(() => window[name](), () => {
+        delete lazyScripts[src];
         setNotice(navigator.onLine ? 'Nie udało się otworzyć. Spróbuj ponownie.' : 'Brak internetu. Spróbuj, gdy wróci połączenie.', true);
     });
 }
+const moreTool = (name) => lazyTool(MORE_JS, name);
 
 let installPrompt = null;
 const installTool = $('installTool');
@@ -1832,377 +1625,12 @@ async function promptInstall() {
     if (outcome === 'accepted') installTool.hidden = true;
 }
 
-const SESSION_RE = /^\s*sesja/i;
-const isSessionMarker = (e) => SESSION_RE.test(e.subject);
-const isExam = (e) => !isSessionMarker(e) && (/egzamin|zaliczenie/i.test(e.type || '') || /egzamin|\begz\.|\(e\)\s*$|_e\s*$/i.test(e.subject));
-
-function daysUntil(iso) {
-    return Math.round((parseISO(iso) - parseISO(todayISO())) / 86400000);
-}
-
-function countdown(iso) {
-    const n = daysUntil(iso);
-    if (n === 0) return 'dziś';
-    if (n === 1) return 'jutro';
-    if (n < 0) return n === -1 ? 'wczoraj' : `${-n} dni temu`;
-    return `za ${n} ${plural(n, 'dzień', 'dni', 'dni')}`;
-}
-
-function dateRangeText(from, to) {
-    const a = parseISO(from), b = parseISO(to);
-    if (from === to) return `${a.getDate()} ${MONTHS_GEN[a.getMonth()]}`;
-    if (a.getMonth() === b.getMonth()) return `${a.getDate()}–${b.getDate()} ${MONTHS_GEN[b.getMonth()]}`;
-    return `${a.getDate()} ${MONTHS_SHORT[a.getMonth()]} – ${b.getDate()} ${MONTHS_SHORT[b.getMonth()]}`;
-}
-
-function sessionPeriods() {
-    const byName = new Map();
-    for (const e of allEvents.filter(isSessionMarker)) {
-        const name = e.subject.trim().replace(/^./, c => c.toUpperCase());
-        const p = byName.get(name) || { name, from: e.date, to: e.date };
-        if (e.date < p.from) p.from = e.date;
-        if (e.date > p.to) p.to = e.date;
-        byName.set(name, p);
-    }
-    return [...byName.values()].sort((a, b) => a.from.localeCompare(b.from));
-}
-
-function renderExams() {
-    const today = todayISO();
-    const exams = allEvents.filter(isExam);
-    const upcoming = exams.filter(e => e.date >= today);
-    const past = exams.filter(e => e.date < today);
-    const periods = sessionPeriods();
-    const sections = [];
-
-    examsSub.textContent = upcoming.length
-        ? `Najbliższy egzamin ${countdown(upcoming[0].date)}`
-        : (periods.length ? `Sesja: ${dateRangeText(periods[0].from, periods[periods.length - 1].to)}` : 'Na podstawie planu Twojej grupy');
-
-    if (periods.length) {
-        sections.push(h('section', { class: 'ex-periods' }, periods.map(p => h('div', { class: 'ex-period' + (p.to < today ? ' done' : '') },
-            h('b', null, p.name), h('span', null, dateRangeText(p.from, p.to)),
-            h('small', null, p.to < today ? 'zakończona' : p.from <= today ? 'trwa' : countdown(p.from))))));
-    }
-
-    const examRow = (e) => h('li', { class: 'ex-item' + (e.date < today ? ' done' : '') },
-        h('div', { class: 'ex-date' }, h('b', null, String(parseISO(e.date).getDate())), h('span', null, MONTHS_SHORT[parseISO(e.date).getMonth()])),
-        h('div', { class: 'ex-main' },
-            h('b', null, e.subject),
-            h('span', null, [`${shortDate(e.date)}, ${e.start}–${e.end}`, splitRooms(e.room).main && `sala ${splitRooms(e.room).main}`].filter(Boolean).join(' · '))),
-        h('span', { class: 'ex-left' + (daysUntil(e.date) <= 3 && e.date >= today ? ' soon' : '') }, countdown(e.date)));
-
-    sections.push(h('h3', { class: 'ex-h' }, 'Egzaminy'));
-    if (exams.length) {
-        sections.push(h('ol', { class: 'ex-list' }, upcoming.map(examRow), past.map(examRow)));
-    } else {
-        sections.push(h('p', { class: 'hint' }, 'W planie tej grupy nie ma jeszcze egzaminów. Wydziały często dopisują je bliżej sesji, a WATplan pokaże je tutaj od razu po pojawieniu się w planie.'));
-    }
-
-    const series = new Map();
-    for (const e of allEvents) {
-        if (isExam(e) || isSessionMarker(e)) continue;
-        const key = seriesKey(e);
-        const s = series.get(key) || { e, last: e, left: 0 };
-        if (e.date > s.last.date || (e.date === s.last.date && e.start > s.last.start)) s.last = e;
-        if (eventRange(e)[1] > warsawNow().getTime()) s.left++;
-        series.set(key, s);
-    }
-    const lasts = [...series.values()].sort((a, b) => (a.last.date + a.last.start).localeCompare(b.last.date + b.last.start));
-    if (lasts.length) {
-        sections.push(h('h3', { class: 'ex-h' }, 'Ostatnie zajęcia z przedmiotów'),
-            h('p', { class: 'hint' }, 'Zwykle wtedy jest zaliczenie albo ostatnia szansa na odrobienie.'),
-            h('ol', { class: 'ex-lasts' }, lasts.map(s => h('li', { class: s.left === 0 ? 'done' : '' },
-                h('span', { class: 'ex-main' }, h('b', null, s.e.subject), h('span', null, typeLabel(s.e.type))),
-                h('span', { class: 'ex-when' }, h('b', null, shortDate(s.last.date)), h('span', null, s.left === 0 ? 'zakończone' : `${plural(s.left, 'zostały', 'zostały', 'zostało')} ${s.left}`))))));
-    }
-    examsBody.replaceChildren(...sections);
-}
-
-function openExams() {
-    if (!currentPlanId || planEvents.length === 0) { setNotice('Najpierw wybierz grupę z planem', true); return; }
-    renderExams();
-    examsModal.showModal();
-    examsModal.scrollTo(0, 0);
-}
-
-function buildingOf(room) {
-    for (const part of String(room || '').split(/\s*[;,]\s*/)) {
-        const m = ROOM_RE.exec(part.trim());
-        if (m) return m[2];
-    }
-    return '';
-}
-
-function defaultRoomsQuery() {
-    const now = warsawNow();
-    const mins = now.getHours() * 60 + now.getMinutes();
-    let date = todayISO();
-    let slot = SLOTS.findIndex(([, end]) => toMin(end) > mins);
-    if (slot < 0) { date = addDaysISO(date, 1); slot = 0; }
-    if (dayIndex(parseISO(date)) === 6) date = addDaysISO(date, 1);
-    const mine = (eventsByDate[date] || []).find(e => toMin(e.end) > (date === todayISO() ? mins : 0) && buildingOf(e.room));
-    return { date, slot, building: mine ? buildingOf(mine.room) : '' };
-}
-
-let roomsRequest = 0;
-
-async function loadRooms() {
-    const [from, to] = SLOTS[Number(roomsSlot.value)] || SLOTS[0];
-    const params = new URLSearchParams({ date: roomsDate.value, from, to });
-    if (roomsBuilding.value) params.set('building', roomsBuilding.value);
-    const id = ++roomsRequest;
-    roomsBody.replaceChildren(h('div', { class: 'message' }, 'Szukam wolnych sal...'));
-    try {
-        const data = await fetchJSON('/api/rooms?' + params);
-        if (id !== roomsRequest) return;
-        const keep = roomsBuilding.value;
-        roomsBuilding.replaceChildren(h('option', { value: '' }, 'Wszystkie'),
-            ...data.buildings.map(b => h('option', { value: b }, `bud. ${b}`)));
-        roomsBuilding.value = data.buildings.includes(keep) ? keep : '';
-        roomsSub.textContent = `${shortDate(roomsDate.value)}, ${from}–${to}`;
-        if (!data.has_data) {
-            roomsBody.replaceChildren(h('div', { class: 'empty-day' }, h('b', null, 'Brak zajęć w planach'),
-                'Tego dnia żadna grupa nie ma zajęć, np. weekend albo dzień wolny. Wybierz inny dzień.'));
-            return;
-        }
-        const free = data.free || [];
-        const total = free.reduce((n, b) => n + b.rooms.length, 0);
-        if (total === 0) {
-            roomsBody.replaceChildren(h('div', { class: 'empty-day' }, h('b', null, 'Brak wolnych sal'), 'Spróbuj innego bloku albo budynku.'));
-            return;
-        }
-        const summary = h('p', { class: 'rooms-summary' },
-            h('b', null, `${total} ${plural(total, 'wolna sala', 'wolne sale', 'wolnych sal')}`),
-            free.length > 1 ? ` w ${free.length} budynkach` : ` w bud. ${free[0].building}`);
-        roomsBody.replaceChildren(summary, ...free.map(roomsBuildingCard));
-    } catch (err) {
-        if (id === roomsRequest) roomsBody.replaceChildren(h('div', { class: 'message error' }, errorText(err)));
-    }
-}
-
-function freeLabel(r) {
-    if (r.free_from <= '07:30' && r.free_until >= '21:30') return 'cały dzień';
-    if (r.free_from <= '07:30') return `do ${r.free_until}`;
-    if (r.free_until >= '21:30') return `od ${r.free_from}`;
-    return `${r.free_from}–${r.free_until}`;
-}
-
-function roomsBuildingCard(b) {
-    const LIMIT = 12;
-    const grid = h('div', { class: 'room-grid' });
-    const fill = (all) => grid.replaceChildren(...(all ? b.rooms : b.rooms.slice(0, LIMIT)).map(r =>
-        h('div', { class: 'room-chip' }, h('b', null, r.room), h('small', null, freeLabel(r)))));
-    fill(false);
-    const more = b.rooms.length > LIMIT
-        ? h('button', { type: 'button', class: 'link-btn', onclick: (e) => { fill(true); e.currentTarget.remove(); } }, `Pokaż wszystkie (${b.rooms.length})`)
-        : null;
-    return h('section', { class: 'room-building' },
-        h('header', null, h('b', null, `Budynek ${b.building}`), h('span', null, `${b.rooms.length} z ${b.total} wolnych`)),
-        grid, more);
-}
-
-function openRooms() {
-    if (!roomsSlot.options.length) {
-        roomsSlot.replaceChildren(...SLOTS.map(([a, b], i) => h('option', { value: String(i) }, `${a}–${b}`)));
-    }
-    const q = defaultRoomsQuery();
-    roomsDate.value = q.date;
-    roomsSlot.value = String(q.slot);
-    if (q.building && ![...roomsBuilding.options].some(o => o.value === q.building)) {
-        roomsBuilding.append(h('option', { value: q.building }, `bud. ${q.building}`));
-    }
-    roomsBuilding.value = q.building;
-    roomsModal.showModal();
-    loadRooms();
-}
-
-for (const el of [roomsDate, roomsSlot, roomsBuilding]) el.addEventListener('change', loadRooms);
-
-const COMPARE_KEY = 'compareGroups';
-const COMPARE_MAX = 4;
-const compareCache = {};
-let compareIds = [];
-let compareWeek = '';
-
-function saveCompare() { safeSet(COMPARE_KEY, JSON.stringify(compareIds)); }
-
-function loadCompareIds() {
-    let ids = [];
-    try { ids = JSON.parse(safeGet(COMPARE_KEY) || '[]'); } catch (_) { ids = []; }
-    ids = (Array.isArray(ids) ? ids : []).filter(x => typeof x === 'string');
-    if (currentPlanId && !ids.includes(currentPlanId)) ids.unshift(currentPlanId);
-    return ids.slice(0, COMPARE_MAX);
-}
-
-async function compareEvents(id) {
-    if (!compareCache[id]) {
-        compareCache[id] = fetchJSON('/api/plan/' + encodeURIComponent(id)).then(d => {
-            const byDate = {};
-            for (const e of d.events || []) (byDate[e.date] ||= []).push(e);
-            for (const list of Object.values(byDate)) list.sort((a, b) => a.start.localeCompare(b.start));
-            return byDate;
-        }).catch(err => { delete compareCache[id]; throw err; });
-    }
-    return compareCache[id];
-}
-
-function renderCompareGroups() {
-    compareGroupsEl.replaceChildren(...compareIds.map((id, i) => h('span', { class: `cmp-chip c${i}` },
-        h('span', { class: 'dot' }), id,
-        h('button', { type: 'button', 'aria-label': `Usuń ${id} z porównania`, onclick: () => { compareIds = compareIds.filter(x => x !== id); saveCompare(); renderCompare(); } }, '×'))));
-    compareSearch.disabled = compareIds.length >= COMPARE_MAX;
-    compareSearch.placeholder = compareIds.length >= COMPARE_MAX ? 'Najwyżej 4 grupy' : 'Dodaj grupę, np. WEL26EY4S0';
-}
-
-function renderCompareResults() {
-    const q = compareSearch.value.trim();
-    if (!q) { compareResults.replaceChildren(); return; }
-    const list = WatGroups.filter(q).filter(p => !compareIds.includes(p.id)).slice(0, 8);
-    compareResults.replaceChildren(...(list.length ? list.map(p => h('button', {
-        type: 'button', class: 'search-result-item', onclick: () => {
-            compareIds = [...compareIds, p.id].slice(0, COMPARE_MAX);
-            compareSearch.value = '';
-            compareResults.replaceChildren();
-            saveCompare();
-            renderCompare();
-        },
-    }, p.name)) : [h('div', { class: 'search-empty' }, 'Brak grup')]));
-}
-
-compareSearch.addEventListener('input', renderCompareResults);
-
-function slotEvents(events, s) {
-    return (events || []).filter(e => slotStart(e.start) <= s && slotEnd(e.end) >= s);
-}
-
-async function renderCompare() {
-    renderCompareGroups();
-    if (compareIds.length === 0) {
-        compareBody.replaceChildren(h('div', { class: 'empty-day' }, h('b', null, 'Dodaj grupy'), 'Wpisz kod grupy powyżej, żeby zobaczyć plany obok siebie.'));
-        return;
-    }
-    const week = compareWeek;
-    const nav = h('div', { class: 'nav-row' },
-        h('button', { type: 'button', class: 'round-btn', 'aria-label': 'Poprzedni tydzień', onclick: () => { compareWeek = addDaysISO(compareWeek, -7); renderCompare(); } }, svg(ICON_LEFT, 20)),
-        h('div', { class: 'nav-label' }, h('b', null, weekRange(week)), h('small', null, weekNumber(week))),
-        h('button', { type: 'button', class: 'round-btn', 'aria-label': 'Następny tydzień', onclick: () => { compareWeek = addDaysISO(compareWeek, 7); renderCompare(); } }, svg(ICON_RIGHT, 20)));
-    compareBody.replaceChildren(nav, h('div', { class: 'message' }, 'Ładowanie planów...'));
-
-    const ids = compareIds.slice();
-    let data;
-    try {
-        data = await Promise.all(ids.map(compareEvents));
-    } catch (err) {
-        compareBody.replaceChildren(nav, h('div', { class: 'message error' }, errorText(err)));
-        return;
-    }
-    if (week !== compareWeek || ids.join() !== compareIds.join()) return;
-
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-        const iso = addDaysISO(week, i);
-        const perGroup = data.map(byDate => byDate[iso] || []);
-        if (i >= 5 && perGroup.every(l => l.length === 0)) continue;
-        days.push(compareDay(iso, i, ids, perGroup));
-    }
-    compareBody.replaceChildren(nav, ...days);
-}
-
-function compareDay(iso, dayIdx, ids, perGroup) {
-    const dd = parseISO(iso);
-    const head = h('header', null, h('b', null, DAY_NAMES[dayIdx]), h('span', null, `${dd.getDate()} ${MONTHS_GEN[dd.getMonth()]}`));
-    const all = perGroup.flat();
-    if (all.length === 0) {
-        return h('section', { class: 'cmp-day' }, head, h('p', { class: 'cmp-free-day' }, 'Wszyscy wolni cały dzień'));
-    }
-    let lo = SLOTS.length - 1, hi = 0;
-    for (const e of all) { lo = Math.min(lo, slotStart(e.start)); hi = Math.max(hi, slotEnd(e.end)); }
-    const table = h('div', { class: 'cmp-table', style: `--cols:${ids.length}` });
-    table.append(h('span', { class: 'cmp-h' }), ...ids.map((id, i) => h('span', { class: `cmp-h c${i}` }, h('span', { class: 'dot' }), id)));
-    let shared = 0;
-    for (let s = lo; s <= hi; s++) {
-        const cells = perGroup.map(list => slotEvents(list, s));
-        const allFree = cells.every(c => c.length === 0);
-        if (allFree) shared++;
-        table.append(h('span', { class: 'cmp-time' + (allFree ? ' free' : '') }, h('b', null, SLOTS[s][0]), h('small', null, SLOTS[s][1])));
-        if (allFree) {
-            table.append(h('span', { class: 'cmp-all-free' }, 'wszyscy wolni'));
-            continue;
-        }
-        cells.forEach((list, i) => table.append(list.length
-            ? h('span', { class: `cmp-cell c${i}` }, ...list.slice(0, 2).map(e => h('span', { class: 'cmp-ev', title: `${e.subject}, ${typeLabel(e.type)}${e.room ? ', sala ' + e.room : ''}` },
-                h('b', { class: 'ab' }, abbreviate(e.subject)), h('b', { class: 'full' }, e.subject),
-                h('small', null, [typeShort(e.type), splitRooms(e.room).main].filter(Boolean).join(' · ')))))
-            : h('span', { class: 'cmp-cell empty' }, '—')));
-    }
-    const ends = perGroup.map(l => l.length ? l[l.length - 1].end : null);
-    const note = shared ? `${shared} ${plural(shared, 'wspólny wolny blok', 'wspólne wolne bloki', 'wspólnych wolnych bloków')}` : 'brak wspólnego wolnego bloku';
-    return h('section', { class: 'cmp-day' }, head, table,
-        h('p', { class: 'cmp-note' }, note + (ends.every(Boolean) ? ` · wszyscy kończą o ${ends.sort().pop()}` : '')));
-}
-
-function openCompare() {
-    compareIds = loadCompareIds();
-    compareWeek = mondayOf(selectedDate || todayISO());
-    compareSearch.value = '';
-    compareResults.replaceChildren();
-    compareModal.showModal();
-    renderCompare();
-}
-
-function printMonth() {
-    if (!currentPlanId || allEvents.length === 0) { setNotice('Najpierw wybierz grupę z planem', true); return; }
-    const base = parseISO(selectedDate || todayISO());
-    const year = base.getFullYear(), month = base.getMonth();
-    const first = new Date(year, month, 1);
-    const last = new Date(year, month + 1, 0);
-    const prefix = `${year}-${pad(month + 1)}`;
-    const weekend = Object.keys(eventsByDate).some(d => d.startsWith(prefix) && dayIndex(parseISO(d)) >= 5);
-    const cols = weekend ? 7 : 5;
-    const grid = h('div', { class: 'pr-grid', style: `--cols:${cols}` });
-    for (let i = 0; i < cols; i++) grid.append(h('div', { class: 'pr-head' }, DAY_NAMES[i]));
-    let cursor = addDays(first, -dayIndex(first));
-    let count = 0;
-    while (cursor <= last) {
-        const shown = Array.from({ length: cols }, (_, i) => addDays(cursor, i));
-        if (!shown.some(d => d.getMonth() === month)) { cursor = addDays(cursor, 7); continue; }
-        for (let i = 0; i < 7; i++) {
-            const day = addDays(cursor, i);
-            if (i >= cols) continue;
-            const iso = toISO(day);
-            const inMonth = day.getMonth() === month;
-            const events = inMonth ? (eventsByDate[iso] || []) : [];
-            count += events.length;
-            grid.append(h('div', { class: 'pr-day' + (inMonth ? '' : ' out') },
-                h('div', { class: 'pr-date' }, inMonth ? String(day.getDate()) : ''),
-                ...events.map(e => h('div', { class: 'pr-ev' },
-                    h('b', null, `${e.start}–${e.end}`), ' ', e.subject,
-                    h('span', null, ` · ${typeShort(e.type)}${e.room ? ' · ' + splitRooms(e.room).main.replace(/ /g, '\u00a0') : ''}`)))));
-        }
-        cursor = addDays(cursor, 7);
-    }
-    const name = (allPlans.find(p => p.id === currentPlanId) || {}).name || currentPlanId;
-    const hidden = hiddenSubjects(currentPlanId).size;
-    printArea.replaceChildren(
-        h('header', { class: 'pr-top' },
-            h('h1', null, `${name} · ${MONTHS_NOM[month]} ${year}`),
-            h('span', null, `${classesWord(count)}${hidden ? ` · bez ${hidden} ukrytych przedmiotów` : ''} · watplan.me`)),
-        grid);
-    const title = document.title;
-    document.title = `Plan ${name} ${MONTHS_NOM[month]} ${year}`;
-    window.addEventListener('afterprint', () => { document.title = title; }, { once: true });
-    window.print();
-}
-
-
 if (new URLSearchParams(window.location.search).has('changes')) {
     const url = new URL(window.location);
     url.searchParams.delete('changes');
     window.history.replaceState(window.history.state, '', url);
     setTimeout(() => openChanges(currentPlanId), 0);
 }
-
 
 loadPlans();
 
