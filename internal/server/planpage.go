@@ -66,6 +66,7 @@ func renderPlanPage(tpl []byte, plan config.PlanConfig, site string) []byte {
 	faculty := html.EscapeString(facultyName(plan))
 	title := fmt.Sprintf("Plan zajęć %s – %s, WAT | WATplan", id, faculty)
 	desc := fmt.Sprintf("Plan zajęć grupy %s (%s WAT): zajęcia na dziś, tydzień i miesiąc, sale, prowadzący i eksport do kalendarza. Za darmo i bez logowania.", id, faculty)
+	ogTitle := fmt.Sprintf("Plan zajęć %s – %s", id, faculty)
 	canonical := site + "/plan/" + id
 	crumbs, _ := json.Marshal(map[string]any{
 		"@context": "https://schema.org",
@@ -78,8 +79,8 @@ func renderPlanPage(tpl []byte, plan config.PlanConfig, site string) []byte {
 	})
 	out := titleRe.ReplaceAll(tpl, []byte("<title>"+title+"</title>"))
 	out = descriptionRe.ReplaceAll(out, []byte(`<meta name="description" content="`+desc+`">`))
-	out = ogTitleRe.ReplaceAll(out, []byte(`<meta property="og:title" content="`+title+`">`))
-	out = ogDescRe.ReplaceAll(out, []byte(`<meta property="og:description" content="`+desc+`">`))
+	out = ogTitleRe.ReplaceAll(out, []byte(`<meta property="og:title" content="`+ogTitle+`">`))
+	out = ogDescRe.ReplaceAll(out, []byte(`<meta property="og:description" content="`+desc+`">`+"\n"+`<meta property="og:type" content="website">`+"\n"+`<meta property="og:url" content="`+canonical+`">`))
 	out = robotsRe.ReplaceAll(out, []byte(`<meta name="robots" content="index, follow">`))
 	out = canonicalRe.ReplaceAll(out, []byte(`<link rel="canonical" href="`+canonical+`">`))
 	out = viewRe.ReplaceAll(out, []byte(`${1}<p class="message">Plan zajęć grupy `+id+` – `+faculty+`, Wojskowa Akademia Techniczna.</p>${2}`))

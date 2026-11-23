@@ -57,6 +57,8 @@ func TestPlanPage(t *testing.T) {
 		`<link rel="canonical" href="https://watplan.me/plan/WMT26AX3S1">`,
 		`<meta property="og:title" content="Plan zajęć WMT26AX3S1`,
 		`"@type":"BreadcrumbList"`,
+		`<meta property="og:url" content="https://watplan.me/plan/WMT26AX3S1">`,
+		`<meta property="og:title" content="Plan zajęć WMT26AX3S1 – Wydział Mechatroniki, Uzbrojenia i Lotnictwa">`,
 		`<p class="message">Plan zajęć grupy WMT26AX3S1 – Wydział Mechatroniki`,
 	} {
 		if !strings.Contains(body, want) {
