@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/andybalholm/brotli"
 	"github.com/billypuding/watplan/internal/config"
@@ -120,14 +121,27 @@ func servedPlanBrotli(t *testing.T) int {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req := httptest.NewRequest(http.MethodGet, "/api/plan/WMT26AX3S1", nil)
-	req.Header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-	if rec.Code != http.StatusOK || rec.Header().Get("Content-Encoding") != "br" {
-		t.Fatalf("/api/plan: status = %d, Content-Encoding = %q", rec.Code, rec.Header().Get("Content-Encoding"))
+	serve := func() int {
+		req := httptest.NewRequest(http.MethodGet, "/api/plan/WMT26AX3S1", nil)
+		req.Header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK || rec.Header().Get("Content-Encoding") != "br" {
+			t.Fatalf("/api/plan: status = %d, Content-Encoding = %q", rec.Code, rec.Header().Get("Content-Encoding"))
+		}
+		return rec.Body.Len()
 	}
-	return rec.Body.Len()
+	size := serve()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		time.Sleep(20 * time.Millisecond)
+		next := serve()
+		if next < size {
+			return next
+		}
+		size = next
+	}
+	return size
 }
 
 func TestSizeBudget(t *testing.T) {

@@ -154,6 +154,11 @@ func NewServer(registry *config.Registry, store *store.Store, updater *updater.U
 		inflight:    make(map[string]bool),
 	}
 	store.OnSave(s.rooms.update)
+	store.OnSave(func(id string, _ model.Plan) {
+		if data, err := store.Raw(id); err == nil {
+			s.blobs.warm(id, data)
+		}
+	})
 	return s
 }
 

@@ -108,3 +108,67 @@ func TestPlanResponseEncodings(t *testing.T) {
 		t.Fatal("po zmianie planu serwer oddał starą wersję")
 	}
 }
+
+func TestPlanBlobServesFastThenBest(t *testing.T) {
+	raw, err := os.ReadFile("../../e2e/fixtures/data/WMT26AX3S1.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var blobs planBlobs
+	b := blobs.get("A", raw)
+	first, enc := b.encoded("br")
+	if enc != "br" || len(first) == 0 {
+		t.Fatalf("pierwsza odpowiedź: %q, %d B", enc, len(first))
+	}
+	<-b.done
+	best, _ := b.encoded("br")
+	if len(best) > len(b.fastBr) {
+		t.Fatalf("brotli 11 (%d B) większe niż szybkie (%d B)", len(best), len(b.fastBr))
+	}
+	for name, body := range map[string][]byte{"szybkie": b.fastBr, "najlepsze": best} {
+		got, err := io.ReadAll(brotli.NewReader(bytes.NewReader(body)))
+		if err != nil || !bytes.Equal(got, raw) {
+			t.Fatalf("%s: zła dekompresja (%v)", name, err)
+		}
+	}
+	if blobs.get("A", raw) != b {
+		t.Fatal("ten sam plan nie powinien być kompresowany ponownie")
+	}
+	changed := append(append([]byte(nil), raw[:len(raw)-1]...), ' ', '}')
+	if nb := blobs.get("A", changed); nb == b || nb.etag == b.etag {
+		t.Fatal("zmieniony plan musi dostać nowy blob i ETag")
+	}
+}
+
+func TestPlanBlobWarmOnlyForRequestedPlans(t *testing.T) {
+	raw := []byte(`{"events":[]}`)
+	var blobs planBlobs
+	blobs.warm("NIKT", raw)
+	blobs.mu.Lock()
+	_, cached := blobs.m["NIKT"]
+	blobs.mu.Unlock()
+	if cached {
+		t.Fatal("plan, którego nikt nie otworzył, nie powinien być kompresowany po zapisie")
+	}
+	blobs.get("OGLADANY", raw)
+	newer := []byte(`{"events":[],"checked_at":"2026-11-23 18:00:00"}`)
+	blobs.warm("OGLADANY", newer)
+	blobs.mu.Lock()
+	b := blobs.m["OGLADANY"]
+	blobs.mu.Unlock()
+	if b.etag != blobETag(newer) || b.best.Load() == nil {
+		t.Fatal("po zapisie oglądanego planu brotli 11 powinno być gotowe przed pierwszym zapytaniem")
+	}
+}
+
+func BenchmarkPlanBlobNewVersion(b *testing.B) {
+	raw, err := os.ReadFile("../../e2e/fixtures/data/WMT26AX3S1.json")
+	if err != nil {
+		b.Fatal(err)
+	}
+	var blobs planBlobs
+	for i := 0; i < b.N; i++ {
+		data := append(append([]byte(nil), raw...), byte(' '+i%64))
+		blobs.get("A", data)
+	}
+}

@@ -7,15 +7,20 @@ import (
 	"encoding/hex"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/andybalholm/brotli"
 )
 
+const fastBrotli = 5
+
 type planBlob struct {
-	etag string
-	raw  []byte
-	gz   []byte
-	br   []byte
+	etag   string
+	raw    []byte
+	gz     []byte
+	fastBr []byte
+	best   atomic.Pointer[[]byte]
+	done   chan struct{}
 }
 
 type planBlobs struct {
@@ -23,28 +28,50 @@ type planBlobs struct {
 	m  map[string]*planBlob
 }
 
-func (c *planBlobs) get(id string, data []byte) *planBlob {
+func blobETag(data []byte) string {
 	sum := sha1.Sum(data)
-	etag := `"` + hex.EncodeToString(sum[:10]) + `"`
+	return `"` + hex.EncodeToString(sum[:10]) + `"`
+}
+
+func (c *planBlobs) get(id string, data []byte) *planBlob {
+	etag := blobETag(data)
 	c.mu.Lock()
-	b := c.m[id]
-	c.mu.Unlock()
-	if b != nil && b.etag == etag {
+	defer c.mu.Unlock()
+	if b := c.m[id]; b != nil && b.etag == etag {
 		return b
 	}
-	b = &planBlob{etag: etag, raw: data, gz: gzipBytes(data), br: brotliBytes(data)}
-	c.mu.Lock()
+	b := &planBlob{etag: etag, raw: data, gz: gzipBytes(data, gzip.BestCompression), fastBr: brotliBytes(data, fastBrotli), done: make(chan struct{})}
+	go func() {
+		best := brotliBytes(data, brotli.BestCompression)
+		b.best.Store(&best)
+		close(b.done)
+	}()
 	if c.m == nil {
 		c.m = make(map[string]*planBlob)
 	}
 	c.m[id] = b
-	c.mu.Unlock()
 	return b
+}
+
+func (c *planBlobs) warm(id string, data []byte) {
+	c.mu.Lock()
+	_, seen := c.m[id]
+	c.mu.Unlock()
+	if seen {
+		<-c.get(id, data).done
+	}
+}
+
+func (b *planBlob) br() []byte {
+	if best := b.best.Load(); best != nil {
+		return *best
+	}
+	return b.fastBr
 }
 
 func (b *planBlob) encoded(acceptEncoding string) ([]byte, string) {
 	if acceptsEncoding(acceptEncoding, "br") {
-		return b.br, "br"
+		return b.br(), "br"
 	}
 	if acceptsEncoding(acceptEncoding, "gzip") {
 		return b.gz, "gzip"
@@ -64,17 +91,17 @@ func acceptsEncoding(header, name string) bool {
 	return false
 }
 
-func gzipBytes(data []byte) []byte {
+func gzipBytes(data []byte, level int) []byte {
 	var buf bytes.Buffer
-	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	zw, _ := gzip.NewWriterLevel(&buf, level)
 	zw.Write(data)
 	zw.Close()
 	return buf.Bytes()
 }
 
-func brotliBytes(data []byte) []byte {
+func brotliBytes(data []byte, level int) []byte {
 	var buf bytes.Buffer
-	bw := brotli.NewWriterLevel(&buf, brotli.BestCompression)
+	bw := brotli.NewWriterLevel(&buf, level)
 	bw.Write(data)
 	bw.Close()
 	return buf.Bytes()
