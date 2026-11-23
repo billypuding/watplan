@@ -112,11 +112,16 @@ func main() {
 	var pushSvc *push.Service
 	if public, private := os.Getenv("PLANWAT_VAPID_PUBLIC"), os.Getenv("PLANWAT_VAPID_PRIVATE"); public != "" && private != "" {
 		pushFile := envOr("PLANWAT_PUSH_FILE", filepath.Join(dataDir, "push.json"))
-		pushSvc, err = push.New(public, private, envOr("PLANWAT_VAPID_SUBJECT", "mailto:awalczak@duck.com"), pushFile)
-		if err != nil {
-			log.Fatal(err)
+		if err := push.ValidateKeys(public, private); err != nil {
+			log.Printf("powiadomienia push WYŁĄCZONE: %v", err)
+			alerts.Raise("push-keys", fmt.Sprintf("Powiadomienia push są wyłączone: %v. Sprawdź PLANWAT_VAPID_PUBLIC i PLANWAT_VAPID_PRIVATE (nowe klucze: watplan -vapid-keys).", err))
+		} else {
+			pushSvc, err = push.New(public, private, envOr("PLANWAT_VAPID_SUBJECT", "mailto:awalczak@duck.com"), pushFile)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("powiadomienia push włączone (%d subskrypcji, %s)", pushSvc.Count(), pushFile)
 		}
-		log.Printf("powiadomienia push włączone (%d subskrypcji, %s)", pushSvc.Count(), pushFile)
 	}
 
 	var upd *updater.Updater

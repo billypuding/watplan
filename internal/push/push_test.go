@@ -123,3 +123,31 @@ func TestRestoreSubscriptionsFromMirror(t *testing.T) {
 		t.Fatalf("po deployu odtworzono %d (%v), jest %d", added, err, second.Count())
 	}
 }
+
+func TestValidateKeys(t *testing.T) {
+	public, private, err := GenerateKeys()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, other, _ := GenerateKeys()
+	if err := ValidateKeys(public, private); err != nil {
+		t.Fatalf("poprawne klucze: %v", err)
+	}
+	if err := ValidateKeys(" "+public+"\n", private); err != nil {
+		t.Fatalf("klucz z białymi znakami (wklejony z terminala): %v", err)
+	}
+	for name, keys := range map[string][2]string{
+		"puste":       {"", private},
+		"nie base64":  {"!!!", private},
+		"zamienione":  {private, public},
+		"niepasujące": {public, other},
+		"krótki":      {public, "AAAA"},
+	} {
+		if err := ValidateKeys(keys[0], keys[1]); err == nil {
+			t.Errorf("%s: brak błędu", name)
+		}
+	}
+	if _, err := New("x", "y", "mailto:a@b.c", t.TempDir()+"/push.json"); err == nil {
+		t.Fatal("New przyjął złe klucze")
+	}
+}

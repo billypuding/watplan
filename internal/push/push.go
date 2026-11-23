@@ -1,6 +1,9 @@
 package push
 
 import (
+	"bytes"
+	"crypto/ecdh"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -101,9 +104,46 @@ func GenerateKeys() (public, private string, err error) {
 	return public, private, err
 }
 
-func New(public, private, subject, path string) (*Service, error) {
+func decodeKey(key string) ([]byte, error) {
+	var lastErr error
+	for _, enc := range []*base64.Encoding{base64.RawURLEncoding, base64.URLEncoding, base64.RawStdEncoding, base64.StdEncoding} {
+		data, err := enc.DecodeString(strings.TrimSpace(key))
+		if err == nil {
+			return data, nil
+		}
+		lastErr = err
+	}
+	return nil, lastErr
+}
+
+func ValidateKeys(public, private string) error {
 	if public == "" || private == "" {
-		return nil, errors.New("brak kluczy VAPID")
+		return errors.New("brak kluczy VAPID")
+	}
+	pub, err := decodeKey(public)
+	if err != nil {
+		return fmt.Errorf("klucz publiczny VAPID nie jest w base64: %w", err)
+	}
+	if _, err := ecdh.P256().NewPublicKey(pub); err != nil {
+		return fmt.Errorf("klucz publiczny VAPID nie jest kluczem P-256: %w", err)
+	}
+	priv, err := decodeKey(private)
+	if err != nil {
+		return fmt.Errorf("klucz prywatny VAPID nie jest w base64: %w", err)
+	}
+	key, err := ecdh.P256().NewPrivateKey(priv)
+	if err != nil {
+		return fmt.Errorf("klucz prywatny VAPID nie jest kluczem P-256: %w", err)
+	}
+	if !bytes.Equal(key.PublicKey().Bytes(), pub) {
+		return errors.New("klucz publiczny VAPID nie pasuje do prywatnego")
+	}
+	return nil
+}
+
+func New(public, private, subject, path string) (*Service, error) {
+	if err := ValidateKeys(public, private); err != nil {
+		return nil, err
 	}
 	s := &Service{public: public, private: private, subject: subject, path: path, subs: map[string]Subscription{}}
 	s.send = s.webpushSend
