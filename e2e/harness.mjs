@@ -46,7 +46,7 @@ async function waitFor(fn, timeout = 20000, step = 100) {
     throw last || new Error('timeout');
 }
 
-export async function startServer() {
+export async function startServer(extraEnv = {}) {
     const work = mkdtempSync(join(tmpdir(), 'watplan-e2e-'));
     cpSync(join(root, 'e2e', 'fixtures'), work, { recursive: true });
     const bin = join(work, 'watplan');
@@ -55,7 +55,7 @@ export async function startServer() {
     const port = await freePort();
     const proc = spawn(bin, ['-offline'], {
         cwd: work,
-        env: { ...process.env, PLANWAT_ADDR: `127.0.0.1:${port}`, PLANWAT_CONFIG: join(work, 'plans.json'), PLANWAT_DATA: join(work, 'data') },
+        env: { ...process.env, PLANWAT_ADDR: `127.0.0.1:${port}`, PLANWAT_CONFIG: join(work, 'plans.json'), PLANWAT_DATA: join(work, 'data'), ...extraEnv },
         stdio: 'ignore',
     });
     const base = `http://127.0.0.1:${port}`;
@@ -158,6 +158,10 @@ export async function startBrowser() {
             const base = { key, code: key, windowsVirtualKeyCode: codes[key], nativeVirtualKeyCode: codes[key] };
             await send('Input.dispatchKeyEvent', { type: 'rawKeyDown', ...base });
             await send('Input.dispatchKeyEvent', { type: 'keyUp', ...base });
+        },
+        async blockURLs(urls) {
+            await send('Network.enable');
+            await send('Network.setBlockedURLs', { urls });
         },
         async offline(on) {
             await send('Network.enable');

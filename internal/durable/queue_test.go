@@ -244,3 +244,22 @@ func TestOpenTursoFailsFastWhenUnreachable(t *testing.T) {
 		t.Fatalf("OpenTurso czekał %v", time.Since(start))
 	}
 }
+
+func TestQueueAlertName(t *testing.T) {
+	m := newFlaky()
+	m.setDown(true)
+	got := &alerts{}
+	q := newQueue(m, time.Millisecond, 2*time.Millisecond)
+	q.SetAlert(alert.NewFunc(got.post))
+	q.SetAlertName("cdn", "Wysyłanie planów do CDN (R2)")
+	q.Put("plans/A.json", []byte("v"))
+	waitUntil(t, "alert", func() bool { return len(got.list()) >= 1 })
+	if s := got.list()[0]; !strings.Contains(s, "Wysyłanie planów do CDN (R2) nie działa") || strings.Contains(s, "Turso") {
+		t.Fatalf("alert %q", s)
+	}
+	m.setDown(false)
+	waitUntil(t, "naprawa", func() bool {
+		l := got.list()
+		return len(l) >= 2 && strings.Contains(l[len(l)-1], "CDN (R2) znów działa")
+	})
+}

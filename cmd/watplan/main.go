@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/billypuding/watplan/internal/alert"
+	"github.com/billypuding/watplan/internal/cdn"
 	"github.com/billypuding/watplan/internal/config"
 	"github.com/billypuding/watplan/internal/durable"
 	"github.com/billypuding/watplan/internal/model"
@@ -124,6 +125,11 @@ func main() {
 		}
 	}
 
+	publisher, cdnURL := setupCDN(alerts)
+	if publisher != nil {
+		st.SetPublisher(publisher.Publish)
+	}
+
 	var upd *updater.Updater
 	if !offline || len(imports) > 0 {
 		fetcher, err := wat.NewFetcher()
@@ -162,6 +168,9 @@ func main() {
 		HealthFetchMaxAge: envDuration("PLANWAT_HEALTH_FETCH_MAX_AGE"),
 
 		StatusToken: os.Getenv("PLANWAT_STATUS_TOKEN"),
+
+		CDNURL:    cdnURL,
+		CDNStatus: cdnStatus(publisher),
 	})
 	handler, err := srvApp.Handler()
 	if err != nil {
@@ -261,6 +270,19 @@ func main() {
 		<-ready
 		srvApp.Warm()
 	}()
+
+	if publisher != nil {
+		go func() {
+			<-ready
+			queued, current, err := publisher.Backfill(st.PlanIDs(), st.Raw)
+			if err != nil {
+				log.Printf("CDN: uzupełnianie przerwane: %v", err)
+				alerts.Raise("cdn-backfill", fmt.Sprintf("Nie udało się sprawdzić planów w R2 (%v). Sprawdź PLANWAT_R2_*.", err))
+				return
+			}
+			log.Printf("CDN: do wysłania %d planów, aktualnych %d", queued, current)
+		}()
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -442,4 +464,33 @@ func discoverFaculty(faculty, sourcesFile, plansFile string, static []config.Pla
 	}
 	log.Printf("zapisano %s (wszystkich planów: %d)", plansFile, len(plans))
 	return nil
+}
+
+func setupCDN(alerts *alert.Notifier) (*cdn.Publisher, string) {
+	endpoint := os.Getenv("PLANWAT_R2_ENDPOINT")
+	cdnURL := strings.TrimRight(os.Getenv("PLANWAT_CDN_URL"), "/")
+	if endpoint == "" {
+		if cdnURL != "" {
+			log.Printf("PLANWAT_CDN_URL bez PLANWAT_R2_*: CDN wyłączony")
+		}
+		return nil, ""
+	}
+	bucket, err := cdn.New(endpoint, os.Getenv("PLANWAT_R2_BUCKET"), os.Getenv("PLANWAT_R2_ACCESS_KEY_ID"), os.Getenv("PLANWAT_R2_SECRET_ACCESS_KEY"), os.Getenv("PLANWAT_R2_REGION"))
+	if err == nil && !strings.HasPrefix(cdnURL, "https://") && !strings.HasPrefix(cdnURL, "http://127.0.0.1:") && !strings.HasPrefix(cdnURL, "http://localhost:") {
+		err = fmt.Errorf("PLANWAT_CDN_URL musi być adresem https://, jest %q", cdnURL)
+	}
+	if err != nil {
+		log.Printf("CDN WYŁĄCZONY: %v", err)
+		alerts.Raise("cdn-config", fmt.Sprintf("CDN jest wyłączony: %v", err))
+		return nil, ""
+	}
+	log.Printf("CDN włączony: plany idą do R2 i są czytane z %s", cdnURL)
+	return cdn.NewPublisher(bucket, alerts), cdnURL
+}
+
+func cdnStatus(p *cdn.Publisher) func() (string, int) {
+	if p == nil {
+		return nil
+	}
+	return p.Status
 }

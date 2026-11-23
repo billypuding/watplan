@@ -104,10 +104,16 @@ type Queue struct {
 	failed     string
 	saved      int
 	alert      *alert.Notifier
+	key        string
+	label      string
 }
 
 func (q *Queue) SetAlert(n *alert.Notifier) {
 	q.alert = n
+}
+
+func (q *Queue) SetAlertName(key, label string) {
+	q.key, q.label = key, label
 }
 
 func NewQueue(target Mirror) *Queue {
@@ -115,7 +121,7 @@ func NewQueue(target Mirror) *Queue {
 }
 
 func newQueue(target Mirror, batchDelay, retryDelay time.Duration) *Queue {
-	q := &Queue{target: target, batchDelay: batchDelay, retryDelay: retryDelay, wait: map[string][]byte{}, wake: make(chan struct{}, 1)}
+	q := &Queue{target: target, batchDelay: batchDelay, retryDelay: retryDelay, wait: map[string][]byte{}, wake: make(chan struct{}, 1), key: "db", label: "Zapis do bazy Turso"}
 	go q.run()
 	return q
 }
@@ -159,11 +165,11 @@ func (q *Queue) run() {
 			}
 			q.failMu.Unlock()
 			if err == nil {
-				q.alert.Resolved("db", "Zapis do bazy znów działa.")
+				q.alert.Resolved(q.key, q.label+" znów działa.")
 			}
 			if err != nil {
-				q.alert.Raise("db", "Zapis do bazy Turso nie działa: "+err.Error())
-				log.Printf("baza: zapis %s: %v", key, err)
+				q.alert.Raise(q.key, q.label+" nie działa: "+err.Error())
+				log.Printf("%s: %s: %v", q.label, key, err)
 				q.mu.Lock()
 				if _, newer := q.wait[key]; !newer {
 					q.wait[key] = value

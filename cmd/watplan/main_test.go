@@ -367,3 +367,33 @@ func TestDiscoverUnknownFaculty(t *testing.T) {
 		t.Fatal("brak sources.json powinien dać błąd")
 	}
 }
+
+func TestBrokenCDNConfigDisablesCDNButServerRuns(t *testing.T) {
+	for name, env := range map[string][]string{
+		"brak kluczy":   {"PLANWAT_R2_ENDPOINT=https://acc.r2.cloudflarestorage.com", "PLANWAT_CDN_URL=https://cdn.watplan.me"},
+		"cdn bez https": {"PLANWAT_R2_ENDPOINT=https://acc.r2.cloudflarestorage.com", "PLANWAT_R2_BUCKET=b", "PLANWAT_R2_ACCESS_KEY_ID=a", "PLANWAT_R2_SECRET_ACCESS_KEY=s", "PLANWAT_CDN_URL=http://cdn.watplan.me"},
+		"zły endpoint":  {"PLANWAT_R2_ENDPOINT=ftp://x", "PLANWAT_R2_BUCKET=b", "PLANWAT_R2_ACCESS_KEY_ID=a", "PLANWAT_R2_SECRET_ACCESS_KEY=s", "PLANWAT_CDN_URL=https://cdn.watplan.me"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			e := newServerEnv(t)
+			_, out, base := startServer(t, e, []string{"-offline"}, env...)
+			if !strings.Contains(out.String(), "CDN WYŁĄCZONY") {
+				t.Fatalf("brak ostrzeżenia:\n%s", out.String())
+			}
+			_, page := get(t, base+"/app")
+			if strings.Contains(page, `<meta name="watplan-cdn"`) {
+				t.Fatal("strona zawiera adres CDN mimo wyłączonego CDN")
+			}
+		})
+	}
+	t.Run("sam adres CDN bez R2", func(t *testing.T) {
+		e := newServerEnv(t)
+		_, out, base := startServer(t, e, []string{"-offline"}, "PLANWAT_CDN_URL=https://cdn.watplan.me")
+		if !strings.Contains(out.String(), "CDN wyłączony") {
+			t.Fatalf("log:\n%s", out.String())
+		}
+		if _, page := get(t, base+"/app"); strings.Contains(page, `<meta name="watplan-cdn"`) {
+			t.Fatal("adres CDN na stronie bez R2")
+		}
+	})
+}

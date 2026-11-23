@@ -350,6 +350,38 @@ The `watplan.me` zone is on Cloudflare, in front of Render:
 Check: `curl -sI "https://watplan.me$(curl -s https://watplan.me/app | grep -o '/app.js?v=[0-9a-f]*')" | grep -i cf-cache-status`
 should show `HIT` on the second request.
 
+### Plans on a CDN (Cloudflare R2, optional)
+
+With R2 configured, every saved plan is also uploaded to an R2 bucket as
+`plans/<ID>.json` (the same JSON as `/api/plan/<ID>`, `Cache-Control: public, max-age=60`).
+On the first visit to a group, when the browser has no saved copy yet, the page fetches
+the plan from the CDN and from the server at the same time and shows whichever comes first;
+the server's answer still decides freshness, refreshing and notifications. If the server
+does not answer, a new visitor still sees the plan from the CDN. On start the server checks
+each plan's `ETag` in R2 and uploads only missing or changed ones. Upload errors are retried
+and reported as the `cdn` alert; `/api/status` (with the token) shows `cdn`.
+
+Setup in the Cloudflare dashboard:
+
+1. R2 → Create bucket, e.g. `watplan-plans` (R2 asks for a payment method even on the free tier).
+2. Bucket → Settings → Custom Domains → connect `cdn.watplan.me`.
+3. Bucket → Settings → CORS policy:
+   `[{"AllowedOrigins":["https://watplan.me"],"AllowedMethods":["GET"],"MaxAgeSeconds":86400}]`
+4. R2 → Manage API tokens → Create token with *Object Read & Write* on that bucket only.
+
+Then on Render:
+
+| Variable | Value |
+|---|---|
+| `PLANWAT_R2_ENDPOINT` | `https://<account id>.r2.cloudflarestorage.com` |
+| `PLANWAT_R2_BUCKET` | `watplan-plans` |
+| `PLANWAT_R2_ACCESS_KEY_ID` | from the token |
+| `PLANWAT_R2_SECRET_ACCESS_KEY` | from the token |
+| `PLANWAT_CDN_URL` | `https://cdn.watplan.me` |
+
+Without these variables nothing changes. An incomplete or invalid setup turns only the CDN
+off, with a log line and an alert.
+
 ## Tests
 
 ```bash
@@ -379,6 +411,14 @@ when `PLANWAT_TEST_DB_URL` is set and are skipped otherwise. CI starts
 ```bash
 docker run -d --rm -p 18080:8080 ghcr.io/tursodatabase/libsql-server:v0.24.33
 PLANWAT_TEST_DB_URL=http://127.0.0.1:18080 go test ./internal/durable ./internal/store
+```
+
+The R2 client (`internal/cdn`) is tested the same way against an S3-compatible gateway that
+checks signatures (`PLANWAT_TEST_S3_URL`, `PLANWAT_TEST_S3_KEY`, `PLANWAT_TEST_S3_SECRET`):
+
+```bash
+docker run -d --rm -p 19000:7070 -e ROOT_ACCESS_KEY=testkey -e ROOT_SECRET_KEY=testsecret123 versity/versitygw:v1.11.0 posix /tmp
+PLANWAT_TEST_S3_URL=http://127.0.0.1:19000 PLANWAT_TEST_S3_KEY=testkey PLANWAT_TEST_S3_SECRET=testsecret123 go test ./internal/cdn
 ```
 
 `go test ./cmd/watplan` starts the real server binary offline and checks that it serves

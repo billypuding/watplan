@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"sync"
 	"testing"
 
 	"github.com/billypuding/watplan/internal/durable"
@@ -99,5 +100,37 @@ func TestMetaSurvivesRestore(t *testing.T) {
 	}
 	if data, err := second.LoadMeta("usage"); err != nil || string(data) != `{"x":1}` {
 		t.Fatalf("po odtworzeniu LoadMeta = %q, %v", data, err)
+	}
+}
+
+func TestPublisherAndPlanIDs(t *testing.T) {
+	st, err := NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var mu sync.Mutex
+	published := map[string]string{}
+	st.SetPublisher(func(id string, data []byte) {
+		mu.Lock()
+		published[id] = string(data)
+		mu.Unlock()
+	})
+	if err := st.Save("A1", model.Plan{FetchedAt: "2026-11-23 12:00:00"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SaveMeta("usage", []byte("{}")); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.AddHistory("A1", model.Change{}, 10); err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := st.Raw("A1")
+	mu.Lock()
+	if published["A1"] != string(raw) || len(published) != 1 {
+		t.Fatalf("opublikowano %v", published)
+	}
+	mu.Unlock()
+	if ids := st.PlanIDs(); len(ids) != 1 || ids[0] != "A1" {
+		t.Fatalf("PlanIDs %v, chcę tylko A1 (bez .meta i .history.json)", ids)
 	}
 }

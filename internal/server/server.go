@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"compress/gzip"
 	"context"
 	"crypto/sha1"
@@ -9,11 +10,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"html"
 	"io"
 	"io/fs"
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -67,6 +70,9 @@ type Options struct {
 	HealthFetchMaxAge time.Duration
 
 	StatusToken string
+
+	CDNURL    string
+	CDNStatus func() (string, int)
 }
 
 const defaultHealthFetchMaxAge = 3 * time.Hour
@@ -188,6 +194,9 @@ func (s *Server) Handler() (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+	if s.options.CDNURL != "" {
+		appPage = bytes.Replace(appPage, []byte("<head>\n"), []byte("<head>\n"+`<meta name="watplan-cdn" content="`+html.EscapeString(s.options.CDNURL)+`">`+"\n"), 1)
+	}
 	mux.HandleFunc("/app", htmlPage(appPage))
 	mux.HandleFunc("/plan/", s.handlePlanPage(appPage))
 	mux.HandleFunc("/sitemap.xml", s.handleSitemap)
@@ -236,7 +245,7 @@ func (s *Server) Handler() (http.Handler, error) {
 		files.ServeHTTP(w, r)
 	})
 
-	return withSecurityHeaders(withCanonicalHost(withAPIHeaders(mux), s.options.CanonicalHost), contentSecurityPolicy(static.scriptHashes())), nil
+	return withSecurityHeaders(withCanonicalHost(withAPIHeaders(mux), s.options.CanonicalHost), contentSecurityPolicy(static.scriptHashes(), s.options.CDNURL)), nil
 }
 
 func withCanonicalHost(next http.Handler, canonical string) http.Handler {
@@ -803,6 +812,10 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	if s.options.Push != nil {
 		detail["push_subscriptions"] = s.options.Push.Count()
 	}
+	if s.options.CDNStatus != nil {
+		failed, saved := s.options.CDNStatus()
+		detail["cdn"] = map[string]any{"url": s.options.CDNURL, "uploaded": saved, "last_error": failed}
+	}
 	writeJSON(w, http.StatusOK, detail)
 }
 
@@ -1009,7 +1022,11 @@ func htmlPage(page []byte) http.HandlerFunc {
 
 const permissionsPolicy = "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), hid=(), magnetometer=(), microphone=(), midi=(), payment=(), publickey-credentials-get=(), serial=(), usb=(), xr-spatial-tracking=()"
 
-func contentSecurityPolicy(scriptHashes []string) string {
+func contentSecurityPolicy(scriptHashes []string, cdn string) string {
+	connect := "connect-src 'self' https://cloud.umami.is https://gateway.umami.is"
+	if u, err := url.Parse(cdn); err == nil && u.Scheme != "" && u.Host != "" {
+		connect += " " + u.Scheme + "://" + u.Host
+	}
 	scripts := append([]string{"'self'"}, scriptHashes...)
 	scripts = append(scripts, "https://cloud.umami.is")
 	return strings.Join([]string{
@@ -1018,7 +1035,7 @@ func contentSecurityPolicy(scriptHashes []string) string {
 		"style-src 'self'",
 		"img-src 'self' data:",
 		"font-src 'self'",
-		"connect-src 'self' https://cloud.umami.is https://gateway.umami.is",
+		connect,
 		"manifest-src 'self'",
 		"worker-src 'self'",
 		"object-src 'none'",

@@ -20,6 +20,7 @@ type Store struct {
 	remotePlans int
 	onSave      []func(string, model.Plan)
 	hookMu      sync.Mutex
+	publish     func(string, []byte)
 }
 
 func (s *Store) OnSave(fn func(id string, plan model.Plan)) {
@@ -47,6 +48,30 @@ func (s *Store) RemotePlans() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.remotePlans
+}
+
+func (s *Store) SetPublisher(fn func(id string, data []byte)) {
+	s.mu.Lock()
+	s.publish = fn
+	s.mu.Unlock()
+}
+
+func (s *Store) PlanIDs() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	entries, err := os.ReadDir(s.dir)
+	if err != nil {
+		return nil
+	}
+	var ids []string
+	for _, e := range entries {
+		name := e.Name()
+		if e.IsDir() || !strings.HasSuffix(name, ".json") || strings.HasSuffix(name, ".history.json") {
+			continue
+		}
+		ids = append(ids, strings.TrimSuffix(name, ".json"))
+	}
+	return ids
 }
 
 func (s *Store) SetMirror(m durable.Mirror) {
@@ -190,6 +215,9 @@ func (s *Store) Save(id string, plan model.Plan) error {
 		return err
 	}
 	s.mirrorPut(durable.Keyed(planPrefix, id), data)
+	if s.publish != nil {
+		s.publish(id, data)
+	}
 	go s.notify(id, plan)
 	return nil
 }

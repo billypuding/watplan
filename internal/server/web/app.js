@@ -500,6 +500,14 @@ async function loadPlan(quiet = false) {
     render();
     const changes = earlyChanges(planId);
     changes.catch(() => undefined);
+    let fromCdn = null;
+    const cdn = cached ? null : cdnPlan(planId);
+    if (cdn) cdn.then((found) => {
+        if (!found || requestId !== loadCounter || status === 'ready') return;
+        fromCdn = found;
+        applyPlanData(found.data);
+        render();
+    });
     try {
         const response = await earlyPlanResponse(planId);
         const text = await response.text();
@@ -518,12 +526,12 @@ async function loadPlan(quiet = false) {
         }
         if (fetchingFor === planId) fetchingFor = '';
         if (response.headers.get('X-Plan-Refresh') === 'background') watchVisit(planId, data);
-        if (!acceptPlan(planId, text, data, cached, changes)) return data;
+        if (!acceptPlan(planId, text, data, cached || fromCdn, changes)) return data;
         render();
         return data;
     } catch (err) {
         if (requestId !== loadCounter) return null;
-        if (cached) {
+        if (cached || fromCdn) {
             if (!quiet) setNotice('Nie udało się pobrać planu, pokazuję zapisaną wersję', true);
             return null;
         }
@@ -1316,6 +1324,21 @@ async function earlyChanges(planId) {
     try { response = await pending; } catch (_) { return fetchChanges(planId); }
     if (!response.ok) throw new Error(`Błąd serwera (${response.status})`);
     return response.json();
+}
+
+const CDN_URL = (document.querySelector('meta[name="watplan-cdn"]') || {}).content || '';
+
+async function cdnPlan(planId) {
+    if (!CDN_URL) return null;
+    try {
+        const response = await (takeEarly(planId, 'cdn') || fetch(`${CDN_URL}/plans/${encodeURIComponent(planId)}.json`, { mode: 'cors', credentials: 'omit' }));
+        if (!response.ok) return null;
+        const raw = await response.text();
+        const data = JSON.parse(raw);
+        return data && Array.isArray(data.events) ? { raw, data } : null;
+    } catch (_) {
+        return null;
+    }
 }
 
 async function earlyPlanResponse(planId) {
