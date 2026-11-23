@@ -127,6 +127,9 @@ func parseCellFields(cell Cell, subjects map[string]string, index *teacherIndex,
 	var rawTypeAbbr string
 
 	fields := collectFields(cell.Node)
+	if ev, ok := parsePlansoftCell(fields, subjects, index, event.Color); ok {
+		return ev, true, nil
+	}
 	for i, f := range fields {
 		field := f.text
 		teacherName, strong := index.strong(field)
