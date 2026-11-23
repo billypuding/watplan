@@ -247,6 +247,14 @@ The app re-sends its subscription every time it opens, so a lost
 `push.json` heals itself, but to keep subscriptions and change history across
 deploys put `PLANWAT_PUSH_FILE` and `PLANWAT_DATA` on a persistent disk.
 
+### External monitoring
+
+`.github/workflows/monitor.yml` checks every 15 minutes, from outside, that `/healthz`, a group
+page, `/api/plan` and the CDN answer (three tries each). On failure it posts to the Discord
+webhook stored in the repository secret `ALERT_WEBHOOK` (the same URL as
+`PLANWAT_ALERT_WEBHOOK`), so an outage is reported even when the server cannot send alerts
+itself. Its user agent contains `bot`, so these checks never start a fetch from WAT.
+
 ### Alerts about broken fetching
 
 Set `PLANWAT_ALERT_WEBHOOK` to a Discord channel webhook URL (Server settings →

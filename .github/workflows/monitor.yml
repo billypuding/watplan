@@ -1,0 +1,55 @@
+name: monitor
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: check watplan.me
+        id: check
+        run: |
+          fail=""
+          probe() {
+            name="$1"; url="$2"; want="$3"
+            for attempt in 1 2 3; do
+              body=$(curl -sS --max-time 20 -A "watplan-monitor-bot" -w '\n%{http_code}' "$url" 2>&1) || true
+              code=$(printf '%s' "$body" | tail -n1)
+              if [ "$code" = "200" ] && { [ -z "$want" ] || printf '%s' "$body" | grep -q -- "$want"; }; then
+                echo "ok   $name"
+                return 0
+              fi
+              sleep 10
+            done
+            echo "FAIL $name (HTTP $code)"
+            fail="$fail\n- $name: HTTP $code"
+          }
+          probe "healthz" "https://watplan.me/healthz" ""
+          probe "strona grupy" "https://watplan.me/plan/WMT26AX3S1" "WMT26AX3S1"
+          probe "plan z API" "https://watplan.me/api/plan/WMT26AX3S1" '"events"'
+          probe "CDN" "https://cdn.watplan.me/plans/WMT26AX3S1.json" '"events"'
+          if [ -n "$fail" ]; then
+            printf 'failed<<EOF\n%b\nEOF\n' "$fail" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+      - name: alert on discord
+        if: failure() && steps.check.outputs.failed != ''
+        env:
+          WEBHOOK: ${{ secrets.ALERT_WEBHOOK }}
+          FAILED: ${{ steps.check.outputs.failed }}
+        run: |
+          [ -n "$WEBHOOK" ] || { echo "brak sekretu ALERT_WEBHOOK"; exit 0; }
+          text=$(printf '⚠️ Monitoring z zewnątrz: watplan.me nie działa poprawnie%s\n%s' "" "$FAILED")
+          jq -n --arg c "$text" '{content: $c}' | curl -sS -H 'Content-Type: application/json' -d @- "$WEBHOOK"
