@@ -152,6 +152,67 @@ func (s *Server) handlePlanPage(tpl []byte) http.HandlerFunc {
 	}
 }
 
+var (
+	faqLDRe    = regexp.MustCompile(`(?s)<script type="application/ld\+json">\s*\{"@context":"https://schema.org","@type":"FAQPage".*?</script>\n`)
+	faqBodyRe  = regexp.MustCompile(`(?s)<h1 class="faq-h1">.*</section>\n`)
+	allPlansAt = "/plany"
+)
+
+func groupsWord(n int) string {
+	switch {
+	case n == 1:
+		return "1 grupa"
+	case n%10 >= 2 && n%10 <= 4 && (n%100 < 12 || n%100 > 14):
+		return fmt.Sprintf("%d grupy", n)
+	default:
+		return fmt.Sprintf("%d grup", n)
+	}
+}
+
+func renderAllPlans(tpl []byte, plans []config.PlanConfig, site string) []byte {
+	byFaculty := map[string][]string{}
+	for _, p := range plans {
+		code := p.Faculty
+		if code == "" && len(p.ID) >= 3 {
+			code = strings.ToUpper(p.ID[:3])
+		}
+		byFaculty[code] = append(byFaculty[code], p.ID)
+	}
+	codes := make([]string, 0, len(byFaculty))
+	for code := range byFaculty {
+		codes = append(codes, code)
+	}
+	sort.Strings(codes)
+	var b strings.Builder
+	fmt.Fprintf(&b, "<h1 class=\"faq-h1\">Plany zajęć wszystkich grup WAT</h1>\n  <p class=\"faq-lead\">%s ze wszystkich wydziałów Wojskowej Akademii Technicznej. Wybierz swoją, a zobaczysz plan na dziś, tydzień i miesiąc.</p>\n", groupsWord(len(plans)))
+	b.WriteString("  <nav class=\"faculty-jump\" aria-label=\"Wydziały\">")
+	for _, code := range codes {
+		fmt.Fprintf(&b, `<a href="#%s">%s</a>`, code, code)
+	}
+	b.WriteString("</nav>\n")
+	for _, code := range codes {
+		ids := byFaculty[code]
+		sort.Strings(ids)
+		name := facultyName(config.PlanConfig{Faculty: code})
+		fmt.Fprintf(&b, "  <section class=\"faculty-groups\" id=\"%s\" aria-labelledby=\"h-%s\">\n    <h2 id=\"h-%s\">%s <span>%s, %s</span></h2>\n    <ul class=\"group-links\">", code, code, code, html.EscapeString(name), code, groupsWord(len(ids)))
+		for _, id := range ids {
+			esc := html.EscapeString(id)
+			fmt.Fprintf(&b, `<li><a href="/plan/%s">%s</a></li>`, esc, esc)
+		}
+		b.WriteString("</ul>\n  </section>\n")
+	}
+	title := "Plany zajęć wszystkich grup WAT | WATplan"
+	desc := fmt.Sprintf("Lista %d grup WAT ze wszystkich wydziałów z linkami do planów zajęć: dzień, tydzień, miesiąc i eksport do kalendarza. Za darmo i bez logowania.", len(plans))
+	out := faqLDRe.ReplaceAll(tpl, nil)
+	out = faqBodyRe.ReplaceAllLiteral(out, []byte(b.String()))
+	out = titleRe.ReplaceAll(out, []byte("<title>"+title+"</title>"))
+	out = descriptionRe.ReplaceAll(out, []byte(`<meta name="description" content="`+desc+`">`))
+	out = ogTitleRe.ReplaceAll(out, []byte(`<meta property="og:title" content="`+title+`">`))
+	out = ogDescRe.ReplaceAll(out, []byte(`<meta property="og:description" content="`+desc+`">`))
+	out = canonicalRe.ReplaceAll(out, []byte(`<link rel="canonical" href="`+site+allPlansAt+`">`))
+	return out
+}
+
 func (s *Server) handleSitemap(w http.ResponseWriter, r *http.Request) {
 	site := s.siteURL(r)
 	today := time.Now().In(warsawLoc).Format("2006-01-02")
@@ -162,6 +223,7 @@ func (s *Server) handleSitemap(w http.ResponseWriter, r *http.Request) {
 	}
 	entry(site+"/", today)
 	entry(site+"/o-watplan", today)
+	entry(site+allPlansAt, today)
 	plans := s.registry.List()
 	sort.Slice(plans, func(i, j int) bool { return plans[i].ID < plans[j].ID })
 	for _, p := range plans {

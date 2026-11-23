@@ -47,3 +47,14 @@
     .faq-list summary::after { transition: none; }
 }
 .home > .site-foot { width: 100%; max-width: 760px; margin: 0 auto; padding-left: 18px; padding-right: 18px; box-sizing: border-box; }
+.faculty-jump { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 8px; }
+.faculty-jump a, .group-links a {
+    display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 10px;
+    background: var(--surface); color: var(--text); font-weight: 600; font-size: 14px; text-decoration: none;
+}
+.faculty-groups { margin-top: 28px; scroll-margin-top: 16px; }
+.faculty-groups h2 { margin: 0 0 12px; font-size: 18px; }
+.faculty-groups h2 span { display: block; color: var(--muted); font-size: 13px; font-weight: 500; }
+.group-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.group-links a { width: 100%; box-sizing: border-box; }
+.faculty-jump a:hover, .group-links a:hover { background: var(--surface-2); }

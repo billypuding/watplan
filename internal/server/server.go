@@ -195,6 +195,12 @@ func (s *Server) Handler() (http.Handler, error) {
 		return nil, err
 	}
 	mux.HandleFunc("/o-watplan", htmlPage(faqPage))
+	allPlans := s.registry.List()
+	site := "https://watplan.me"
+	if s.options.CanonicalHost != "" {
+		site = "https://" + s.options.CanonicalHost
+	}
+	mux.HandleFunc(allPlansAt, htmlPage(renderAllPlans(faqPage, allPlans, site)))
 	mux.HandleFunc("/app/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, withQuery("/app", r), http.StatusMovedPermanently)
 	})

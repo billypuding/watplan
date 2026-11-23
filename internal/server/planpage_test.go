@@ -128,6 +128,7 @@ func TestSitemapAndRobots(t *testing.T) {
 	for _, want := range []string{
 		"<loc>https://watplan.me/</loc>",
 		"<loc>https://watplan.me/o-watplan</loc>",
+		"<loc>https://watplan.me/plany</loc>",
 		"<loc>https://watplan.me/plan/WMT26AX3S1</loc>\n    <lastmod>2026-11-19</lastmod>",
 	} {
 		if !strings.Contains(body, want) {
@@ -161,5 +162,43 @@ func TestBotsDoNotTriggerFetches(t *testing.T) {
 	}
 	if got := env.visit(t); got != "background" {
 		t.Fatalf("zwykły użytkownik: %q, chcę background", got)
+	}
+}
+
+func TestAllPlansPage(t *testing.T) {
+	h := planPageServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/plany", nil)
+	req.Host = "watplan.me"
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	body := rec.Body.String()
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d", rec.Code)
+	}
+	for _, want := range []string{
+		"<title>Plany zajęć wszystkich grup WAT | WATplan</title>",
+		`<link rel="canonical" href="https://watplan.me/plany">`,
+		`<a href="#WCY">WCY</a><a href="#WML">WML</a>`,
+		`<h2 id="h-WCY">Wydział Cybernetyki <span>WCY, 1 grupa</span></h2>`,
+		`<li><a href="/plan/WMT26AX3S1">WMT26AX3S1</a></li>`,
+		`<li><a href="/plan/WCY26KY4S1">WCY26KY4S1</a></li>`,
+		`<footer class="site-foot">`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/plany bez %q", want)
+		}
+	}
+	for _, unwanted := range []string{`"FAQPage"`, "noindex", "<details"} {
+		if strings.Contains(body, unwanted) {
+			t.Errorf("/plany zawiera %q", unwanted)
+		}
+	}
+}
+
+func TestGroupsWord(t *testing.T) {
+	for n, want := range map[int]string{1: "1 grupa", 2: "2 grupy", 4: "4 grupy", 5: "5 grup", 12: "12 grup", 14: "14 grup", 22: "22 grupy", 112: "112 grup", 182: "182 grupy", 831: "831 grup"} {
+		if got := groupsWord(n); got != want {
+			t.Errorf("groupsWord(%d) = %q, chcę %q", n, got, want)
+		}
 	}
 }
