@@ -1,6 +1,6 @@
 module github.com/billypuding/watplan
 
-go 1.27.1
+go 1.27.4
 
 require (
 	github.com/PuerkitoBio/goquery v1.13.0
