@@ -154,7 +154,7 @@ test('strona grupy /plan/ID: tytuł, indeksowanie i przełączanie', { skip }, a
 
 test('strona grupy z planem z serwera: widać go bez /api/plan, bez przesunięć i tak samo jak w JS', { skip }, async () => {
     const html = await (await fetch(server.base + '/plan/WMT26AX3S1')).text();
-    const ssrSubjects = [...html.split('<section class="plan-info"')[0].matchAll(/<div class="ev-subject">([^<]*)<\/div>/g)].map(m => m[1].replace(/&#34;/g, '"').replace(/&amp;/g, '&'));
+    const ssrSubjects = [...html.split('<details class="plan-info"')[0].matchAll(/<div class="ev-subject">([^<]*)<\/div>/g)].map(m => m[1].replace(/&#34;/g, '"').replace(/&amp;/g, '&'));
     assert.ok(ssrSubjects.length > 0, 'brak zajęć w HTML z serwera');
     await page.blockURLs(['*/api/plan/*']);
     await page.goto(server.base + '/plan/WMT26AX3S1');
@@ -179,7 +179,7 @@ test('strona grupy na komputerze: tydzień z serwera taki sam jak z JS, bez prze
     await page.viewport(1366, 900, false);
     await page.reset();
     const html = await (await fetch(server.base + '/plan/WMT26AX3S1')).text();
-    const grid = html.split('<div class="week-grid ssr-w')[1].split('<section class="plan-info"')[0];
+    const grid = html.split('<div class="week-grid ssr-w')[1].split('<details class="plan-info"')[0];
     const decode = (t) => t.replace(/&#34;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'");
     const ssrCells = [...grid.matchAll(/<span class="ab">([^<]*)<\/span><span class="full">([^<]*)<\/span><span class="meta sub"><span class="kind"><span class="dot"><\/span>([^<]*)<\/span>/g)].map(m => decode(`${m[1]}|${m[2]}|${m[3]}`));
     assert.ok(ssrCells.length > 5, 'brak komórek tygodnia w HTML');

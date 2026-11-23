@@ -29,7 +29,7 @@ func TestRenderSSRDay(t *testing.T) {
 			t.Errorf("widok bez %q", want)
 		}
 	}
-	if !strings.Contains(page.info, `<h2 id="planInfoTitle">Przedmioty grupy WMT26AX3S1 w semestrze zimowym</h2>`) || !strings.Contains(page.info, "<li><b>") {
+	if !strings.Contains(page.info, `<summary><h2 id="planInfoTitle">Przedmioty grupy WMT26AX3S1 w semestrze zimowym</h2></summary>`) || !strings.Contains(page.info, "<li><b>") {
 		t.Errorf("sekcja przedmiotów: %.200s", page.info)
 	}
 	if strings.Contains(string(page.data), "</") || len(page.data) < len(raw)/2 {

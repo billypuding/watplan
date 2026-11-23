@@ -671,7 +671,7 @@ func renderSSR(planID string, raw []byte, history []model.Change, now time.Time)
 		semName = "letnim"
 	}
 	var info strings.Builder
-	fmt.Fprintf(&info, `<section class="plan-info" aria-labelledby="planInfoTitle"><h2 id="planInfoTitle">Przedmioty grupy %s w semestrze %s</h2><ul>`, esc(planID), semName)
+	fmt.Fprintf(&info, `<details class="plan-info"><summary><h2 id="planInfoTitle">Przedmioty grupy %s w semestrze %s</h2></summary><ul>`, esc(planID), semName)
 	for _, n := range names {
 		s := subjects[n]
 		var kinds []string
@@ -689,7 +689,7 @@ func renderSSR(planID string, raw []byte, history []model.Change, now time.Time)
 		}
 		info.WriteString(`</li>`)
 	}
-	info.WriteString(`</ul></section>`)
+	info.WriteString(`</ul></details>`)
 
 	var data bytes.Buffer
 	json.HTMLEscape(&data, raw)
