@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
+    inputs:
+      test_alert:
+        description: "Wyślij testowy alert na Discord"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -43,6 +48,16 @@ jobs:
             printf 'failed<<EOF\n%b\nEOF\n' "$fail" >> "$GITHUB_OUTPUT"
             exit 1
           fi
+
+      - name: test alert
+        if: inputs.test_alert
+        env:
+          WEBHOOK: ${{ secrets.ALERT_WEBHOOK }}
+        run: |
+          [ -n "$WEBHOOK" ] || { echo "sekret ALERT_WEBHOOK jest pusty"; exit 1; }
+          code=$(jq -n '{content: "✅ Test monitoringu WATplan: alerty z GitHub Actions docierają."}' | curl -sS -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' -d @- "$WEBHOOK")
+          echo "Discord odpowiedział HTTP $code"
+          [ "$code" = 204 ] || [ "$code" = 200 ]
 
       - name: alert on discord
         if: failure() && steps.check.outputs.failed != ''
