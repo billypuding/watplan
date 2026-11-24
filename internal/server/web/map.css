@@ -6,4 +6,5 @@
 .map-actions .primary-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .map-actions .hint { margin: 0; }
 .map-modal .series-head { width: 100%; box-sizing: border-box; }
-.map-pin { padding: 4px 10px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 14px; box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
+.map-pin { padding: 1px 6px; border-radius: 8px; background: rgba(255, 255, 255, .92); color: #1d2024; font-weight: 700; font-size: 11px; line-height: 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); pointer-events: none; }
+.map-pin.sel { padding: 4px 10px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font-size: 14px; line-height: 18px; box-shadow: 0 2px 8px rgba(0, 0, 0, .35); z-index: 2; }

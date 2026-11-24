@@ -755,12 +755,12 @@ function eventCard(e) {
     const card = h('button', {
         type: 'button', class: 'ev-card tint', 'data-start': start, 'data-end': end,
         'aria-label': `${e.subject}, ${typeLabel(e.type)}${e.room ? ', sala ' + e.room : ''}, ${e._n} z ${e._total}. Pokaż wszystkie`,
-        onclick: () => openSeries(e),
+        onclick: (ev) => openRoomOrSeries(ev, e, '.ev-place'),
     },
         h('div', { class: 'ev-subject' }, e.subject),
         h('div', { class: 'ev-type sub' }, h('span', { class: 'dot' }), typeLabel(e.type), h('span', { class: 'count' }, `${e._n}/${e._total}`)),
         (room || e.teacher) ? h('div', { class: 'ev-meta sub' },
-            room ? h('span', { class: 'ev-place', title: e.room }, svg(ICON_BUILDING, 16), h('b', null, room),
+            room ? h('span', { class: MAP_BUILDINGS.has(roomBuilding(e.room)) ? 'ev-place on-map' : 'ev-place', title: e.room }, svg(ICON_BUILDING, 16), h('b', null, room),
                 more ? ` +${more} ${plural(more, 'sala', 'sale', 'sal')}` : null) : null,
             e.teacher ? h('span', { class: 'ev-person' }, svg(ICON_USER, 16), e.teacher) : null,
         ) : null,
@@ -874,14 +874,14 @@ function weekCell(e) {
         type: 'button', class: 'wk-cell tint', 'data-start': start, 'data-end': end,
         title: `${e.start}–${e.end} ${e.subject}${e.room ? ', sala ' + e.room : ''}${e.teacher ? ', ' + e.teacher : ''}`,
         'aria-label': `${e.subject}, ${typeLabel(e.type)}, ${e.start}–${e.end}${e.room ? ', sala ' + e.room : ''}. Pokaż wszystkie`,
-        onclick: () => openSeries(e),
+        onclick: (ev) => openRoomOrSeries(ev, e, '.room'),
     },
         h('span', { class: 'time sub' }, `${e.start}–${e.end}`),
         h('span', { class: 'ab' }, abbreviate(e.subject)),
         h('span', { class: 'full' }, e.subject),
         h('span', { class: 'meta sub' },
             h('span', { class: 'kind' }, h('span', { class: 'dot' }), `${typeShort(e.type)} ${e._n}/${e._total}`),
-            room ? h('span', { class: 'room' }, svg(ICON_BUILDING, 13), room, more ? ` +${more}` : null) : null,
+            room ? h('span', { class: MAP_BUILDINGS.has(roomBuilding(e.room)) ? 'room on-map' : 'room' }, svg(ICON_BUILDING, 13), room, more ? ` +${more}` : null) : null,
             e.teacher ? h('span', { class: 'teacher' }, svg(ICON_USER, 13), e.teacher) : null),
         h('span', { class: 'wk-live' }, h('span', { class: 'fill' })),
     );
@@ -957,6 +957,15 @@ function closeSeries() {
 window.addEventListener('popstate', () => { if (seriesModal.open) seriesModal.close(); });
 seriesBack.addEventListener('click', closeSeries);
 seriesModal.addEventListener('cancel', (ev) => { ev.preventDefault(); closeSeries(); });
+
+function openRoomOrSeries(ev, e, place) {
+    const code = roomBuilding(e.room);
+    if (ev && ev.target.closest(place) && MAP_BUILDINGS.has(code)) {
+        lazyTool(MAP_JS, 'openCampusMap', code);
+        return;
+    }
+    openSeries(e);
+}
 
 function mapButton(room) {
     const code = roomBuilding(room);

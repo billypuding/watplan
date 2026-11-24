@@ -500,6 +500,19 @@ test('mapa kampusu: przycisk przy znanym budynku, ładowanie na żądanie, komun
     assert.deepEqual(page.policyErrors, []);
 });
 
+test('kliknięcie sali w znanym budynku otwiera od razu mapę, reszta karty otwiera szczegóły', { skip }, async () => {
+    await page.reset();
+    await page.goto(app());
+    await page.waitFor(`document.querySelectorAll('.ev-place.on-map').length > 0`);
+    await page.click('.ev-place.on-map');
+    await page.waitFor(`document.getElementById('mapModal')?.open`, 10000);
+    assert.equal(await page.eval(`document.getElementById('seriesModal').open`), false);
+    await page.eval(`document.getElementById('mapModal').close()`);
+    await page.eval(`document.querySelector('.ev-place.on-map').closest('.ev-card').querySelector('.ev-subject').click()`);
+    await page.waitFor(`document.getElementById('seriesModal').open`);
+    assert.deepEqual(page.errors, []);
+});
+
 test('szczegóły zajęć bez znanego budynku nie mają przycisku mapy ani napisu null', { skip }, async () => {
     await page.reset();
     await page.goto(app('&view=week'));

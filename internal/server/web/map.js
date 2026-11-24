@@ -5,9 +5,13 @@ const MAPLIBRE_CSS = '/vendor/maplibre-gl.css?v=0';
 const MAP_CSS = '/map.css?v=0';
 const CAMPUS_JSON = '/campus.json?v=0';
 const MAP_STYLES = { light: 'https://tiles.openfreemap.org/styles/positron', dark: 'https://tiles.openfreemap.org/styles/dark' };
+const FACULTY_COLORS = {
+    WCY: '#f5a623', WEL: '#a24bdb', WIM: '#7ccf3a', WML: '#3fd7b4', WTC: '#3b8fe0', WIG: '#ea3f8a',
+    IOE: '#f0727a', WLO: '#8a5a32', WCBKT: '#3a3d42', SJO: '#2f4a8a', AW: '#5f9a3c',
+};
 const MAP_COLORS = {
-    light: { building: '#d9d6cf', target: '#1d2024' },
-    dark: { building: '#2b2e33', target: '#ebe5d3' },
+    light: { other: '#cfcac0', target: '#1d2024' },
+    dark: { other: '#5a5e66', target: '#ebe5d3' },
 };
 
 let campusPromise = null;
@@ -16,7 +20,7 @@ let campusMap = null;
 let campusTheme = '';
 let mapDialog = null;
 let mapTarget = '';
-let mapMarker = null;
+let mapMarkers = [];
 
 function mapTheme() {
     return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
@@ -64,35 +68,67 @@ function mapMessage(text) {
     campusMap = null;
 }
 
-function targetFeature(building) {
-    return { type: 'Feature', properties: { height: (building.levels || 3) * 4 + 4 }, geometry: { type: 'Polygon', coordinates: [building.outline] } };
-}
-
-function placeMarker(maplibre, map, code, building) {
-    if (mapMarker) mapMarker.remove();
-    const label = h('div', { class: 'map-pin' }, code === 'S' ? '100' : code);
-    mapMarker = new maplibre.Marker({ element: label, anchor: 'bottom', offset: [0, -24] }).setLngLat(building.center).addTo(map);
-}
-
-function addCampusLayers(map, building, theme) {
-    const colors = MAP_COLORS[theme];
-    const layers = map.getStyle().layers || [];
-    const label = layers.find(l => l.type === 'symbol' && l.layout && l.layout['text-field']);
-    if (map.getSource('openmaptiles')) {
-        map.addLayer({
-            id: 'wp-buildings', type: 'fill-extrusion', source: 'openmaptiles', 'source-layer': 'building', minzoom: 14,
-            paint: {
-                'fill-extrusion-color': colors.building,
-                'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 8],
-                'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
-                'fill-extrusion-opacity': 0.85,
+function campusFeatures(campus, code, theme) {
+    const target = campus.buildings[code];
+    const seen = new Set();
+    const features = [];
+    for (const [key, b] of Object.entries(campus.buildings)) {
+        const id = b.center.join(',');
+        if (seen.has(id)) continue;
+        seen.add(id);
+        const selected = target && id === target.center.join(',');
+        features.push({
+            type: 'Feature',
+            properties: {
+                color: selected ? MAP_COLORS[theme].target : (FACULTY_COLORS[b.faculty] || MAP_COLORS[theme].other),
+                height: (b.levels || 3) * 3.6,
+                selected,
             },
-        }, label && label.id);
+            geometry: { type: 'Polygon', coordinates: [b.outline] },
+        });
     }
-    map.addSource('wp-target', { type: 'geojson', data: targetFeature(building) });
+    return { type: 'FeatureCollection', features };
+}
+
+function buildingLabels(campus) {
+    const byCenter = new Map();
+    for (const [code, b] of Object.entries(campus.buildings)) {
+        const id = b.center.join(',');
+        const shown = code === 'S' ? '100' : code;
+        const current = byCenter.get(id);
+        if (!current || shown.length < current.label.length) byCenter.set(id, { label: shown, center: b.center });
+    }
+    return [...byCenter.values()];
+}
+
+function placeLabels(maplibre, map, campus, code) {
+    for (const m of mapMarkers) m.remove();
+    mapMarkers = [];
+    const target = campus.buildings[code];
+    const targetId = target ? target.center.join(',') : '';
+    for (const { label, center } of buildingLabels(campus)) {
+        const selected = center.join(',') === targetId;
+        const el = h('div', { class: selected ? 'map-pin sel' : 'map-pin' }, label);
+        const marker = new maplibre.Marker({ element: el, anchor: 'bottom', offset: [0, selected ? -26 : -14] }).setLngLat(center).addTo(map);
+        mapMarkers.push(marker);
+    }
+}
+
+function addCampusLayers(map, campus, code, theme) {
+    const layers = map.getStyle().layers || [];
+    for (const l of layers) {
+        if (l.type === 'fill-extrusion') map.removeLayer(l.id);
+    }
+    map.setLight({ anchor: 'map', position: [1.4, 200, 35], color: '#ffffff', intensity: theme === 'dark' ? 0.55 : 0.4 });
+    map.addSource('wp-campus', { type: 'geojson', data: campusFeatures(campus, code, theme) });
     map.addLayer({
-        id: 'wp-target', type: 'fill-extrusion', source: 'wp-target',
-        paint: { 'fill-extrusion-color': colors.target, 'fill-extrusion-height': ['get', 'height'], 'fill-extrusion-opacity': 0.95 },
+        id: 'wp-campus', type: 'fill-extrusion', source: 'wp-campus',
+        paint: {
+            'fill-extrusion-color': ['get', 'color'],
+            'fill-extrusion-height': ['get', 'height'],
+            'fill-extrusion-opacity': 0.92,
+            'fill-extrusion-vertical-gradient': true,
+        },
     });
 }
 
@@ -125,9 +161,9 @@ async function openCampusMap(code) {
         return;
     }
     const theme = mapTheme();
-    if (campusMap && campusTheme === theme && campusMap.getSource('wp-target')) {
-        campusMap.getSource('wp-target').setData(targetFeature(building));
-        placeMarker(await loadMaplibre(), campusMap, code, building);
+    if (campusMap && campusTheme === theme && campusMap.getSource('wp-campus')) {
+        campusMap.getSource('wp-campus').setData(campusFeatures(campus, code, theme));
+        placeLabels(await loadMaplibre(), campusMap, campus, code);
         flyToBuilding(campusMap, building, false);
         return;
     }
@@ -145,6 +181,7 @@ async function openCampusMap(code) {
     try {
         map = new maplibre.Map({
             container: 'campusMap', style: MAP_STYLES[theme], center: campus.center, zoom: 15.6, pitch: 45, bearing: -28,
+            maxBounds: campus.bounds, minZoom: 13.5, maxZoom: 18.6, maxPitch: 70,
             attributionControl: false,
         });
     } catch (_) {
@@ -158,8 +195,8 @@ async function openCampusMap(code) {
     map.on('load', () => {
         loaded = true;
         const current = campus.buildings[mapTarget] || building;
-        addCampusLayers(map, current, theme);
-        placeMarker(maplibre, map, mapTarget, current);
+        addCampusLayers(map, campus, mapTarget, theme);
+        placeLabels(maplibre, map, campus, mapTarget);
         map.getContainer().querySelector('.maplibregl-compact-show')?.classList.remove('maplibregl-compact-show');
         flyToBuilding(map, current, false);
     });
