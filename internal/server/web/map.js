@@ -7,7 +7,7 @@ const CAMPUS_JSON = '/campus.json?v=0';
 const MAP_STYLES = { light: 'https://tiles.openfreemap.org/styles/positron', dark: 'https://tiles.openfreemap.org/styles/dark' };
 const FACULTY_COLORS = {
     WCY: '#f5a623', WEL: '#a24bdb', WIM: '#7ccf3a', WML: '#3fd7b4', WTC: '#3b8fe0', WIG: '#ea3f8a',
-    IOE: '#f0727a', WLO: '#8a5a32', WCBKT: '#3a3d42', SJO: '#2f4a8a', AW: '#5f9a3c',
+    IOE: '#f0727a', WLO: '#8a5a32', WCBKT: '#3a3d42', SJO: '#2f4a8a', AW: '#5f9a3c', SWF: '#e5484d',
 };
 const MAP_COLORS = {
     light: { other: '#cfcac0', target: '#1d2024' },
@@ -94,7 +94,7 @@ function buildingLabels(campus) {
     const byCenter = new Map();
     for (const [code, b] of Object.entries(campus.buildings)) {
         const id = b.center.join(',');
-        const shown = code === 'S' ? '100' : code;
+        const shown = code === 'S' ? '100' : code === 'SWF' ? 'WF' : code;
         const current = byCenter.get(id);
         if (!current || shown.length < current.label.length) byCenter.set(id, { label: shown, center: b.center });
     }

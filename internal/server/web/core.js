@@ -191,7 +191,7 @@ async function fetchJSON(url, options) {
     return body;
 }
 
-const MAP_BUILDINGS = new Set('5|K|S|10|13|14|15|16|17|19|20|21|22|23|24|25|26|28|29|34|35|36|38|39|41|42|45|46|47|49|50|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72|74|75|80|100|114|121|125|126|135|136|144|158|23A|63A|AW 1|AW 2|AW 3|AW 4|AW 5|AW 7'.split('|'));
+const MAP_BUILDINGS = new Set('5|K|S|10|13|14|15|16|17|19|20|21|22|23|24|25|26|28|29|34|35|36|38|39|41|42|45|46|47|49|50|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72|74|75|80|100|114|121|125|126|135|136|144|158|23A|63A|AW 1|AW 2|AW 3|AW 4|AW 5|AW 7|SWF'.split('|'));
 const MAP_JS = '/map.js?v=0';
 
 function roomBuilding(room) {
@@ -205,9 +205,17 @@ function roomBuilding(room) {
     return '';
 }
 
+function eventBuilding(e) {
+    if (!e) return '';
+    const code = roomBuilding(e.room);
+    if (code) return code;
+    return /wychowanie fizyczne/i.test(e.subject || '') ? 'SWF' : '';
+}
+
 function buildingLabel(code) {
     if (code === 'S') return 'Budynek 100';
     if (code === 'K') return 'Klub WAT';
+    if (code === 'SWF') return 'Studium WF';
     if (code.startsWith('AW ')) return 'Akademik ' + code;
     return 'Budynek ' + code;
 }

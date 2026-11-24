@@ -513,12 +513,29 @@ test('kliknięcie sali w znanym budynku otwiera od razu mapę, reszta karty otwi
     assert.deepEqual(page.errors, []);
 });
 
+test('wychowanie fizyczne bez sali prowadzi na mapę do Studium WF', { skip }, async () => {
+    await page.reset();
+    await page.goto(app('&view=week'));
+    await page.waitFor(`document.querySelectorAll('.wk-cell').length > 0`);
+    const opened = await page.eval(`(() => {
+        const e = allEvents.find(x => /wychowanie fizyczne/i.test(x.subject) && !x.room);
+        if (!e) return false;
+        openSeries(e);
+        return true;
+    })()`);
+    assert.ok(opened, 'w danych testowych brak WF bez sali');
+    await page.waitFor(`document.getElementById('seriesModal').open`);
+    assert.equal(await page.text('#seriesModal .map-btn'), 'Pokaż na mapie · Studium WF');
+    assert.deepEqual(page.errors, []);
+});
+
 test('szczegóły zajęć bez znanego budynku nie mają przycisku mapy ani napisu null', { skip }, async () => {
     await page.reset();
     await page.goto(app('&view=week'));
     await page.waitFor(`document.querySelectorAll('.wk-cell').length > 0`);
     const opened = await page.eval(`(() => {
-        const e = allEvents.find(x => (seriesByKey[seriesKey(x)] || []).every(y => !MAP_BUILDINGS.has(roomBuilding(y.room))));
+        MAP_BUILDINGS.delete('SWF');
+        const e = allEvents.find(x => (seriesByKey[seriesKey(x)] || []).every(y => !MAP_BUILDINGS.has(eventBuilding(y))));
         if (!e) return false;
         openSeries(e);
         return true;

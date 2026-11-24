@@ -967,8 +967,8 @@ function openRoomOrSeries(ev, e, place) {
     openSeries(e);
 }
 
-function mapButton(room) {
-    const code = roomBuilding(room);
+function mapButton(e) {
+    const code = eventBuilding(e);
     if (!MAP_BUILDINGS.has(code)) return null;
     return h('button', { type: 'button', class: 'map-btn', onclick: () => lazyTool(MAP_JS, 'openCampusMap', code) },
         svg(ICON_BUILDING, 16), `Pokaż na mapie · ${buildingLabel(code)}`);
@@ -1025,7 +1025,7 @@ function renderSeries() {
         ));
     }
 
-    seriesBody.replaceChildren(...[chips, summary, mapButton((next || sample || {}).room), makeupSection(list, next), h('ul', { class: 'series-list' }, items)].filter(Boolean));
+    seriesBody.replaceChildren(...[chips, summary, mapButton(next || sample), makeupSection(list, next), h('ul', { class: 'series-list' }, items)].filter(Boolean));
 }
 
 function overlapsMine(m) {
