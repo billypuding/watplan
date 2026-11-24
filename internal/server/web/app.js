@@ -1016,7 +1016,7 @@ function renderSeries() {
         ));
     }
 
-    seriesBody.replaceChildren(chips, summary, mapButton((next || sample || {}).room), makeupSection(list, next), h('ul', { class: 'series-list' }, items));
+    seriesBody.replaceChildren(...[chips, summary, mapButton((next || sample || {}).room), makeupSection(list, next), h('ul', { class: 'series-list' }, items)].filter(Boolean));
 }
 
 function overlapsMine(m) {

@@ -500,6 +500,23 @@ test('mapa kampusu: przycisk przy znanym budynku, ładowanie na żądanie, komun
     assert.deepEqual(page.policyErrors, []);
 });
 
+test('szczegóły zajęć bez znanego budynku nie mają przycisku mapy ani napisu null', { skip }, async () => {
+    await page.reset();
+    await page.goto(app('&view=week'));
+    await page.waitFor(`document.querySelectorAll('.wk-cell').length > 0`);
+    const opened = await page.eval(`(() => {
+        const e = allEvents.find(x => (seriesByKey[seriesKey(x)] || []).every(y => !MAP_BUILDINGS.has(roomBuilding(y.room))));
+        if (!e) return false;
+        openSeries(e);
+        return true;
+    })()`);
+    assert.ok(opened, 'w danych testowych brak zajęć bez znanego budynku');
+    await page.waitFor(`document.getElementById('seriesModal').open`);
+    assert.equal(await page.eval(`document.querySelector('#seriesModal .map-btn')`), null);
+    assert.doesNotMatch(await page.eval(`document.getElementById('seriesBody').textContent`), /null|undefined/);
+    assert.deepEqual(page.errors, []);
+});
+
 test('wolne sale pokazują sale dla wybranego bloku', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
