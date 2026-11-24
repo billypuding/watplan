@@ -315,7 +315,7 @@ func main() {
 		go upd.WatchCredits(ctx)
 		go func() {
 			<-ready
-			upd.RepairMisparsed(ctx, reg, 0)
+			upd.RepairMisparsed(ctx, reg, 0, 0)
 		}()
 	}
 

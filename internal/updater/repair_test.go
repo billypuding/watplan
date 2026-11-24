@@ -105,7 +105,7 @@ func TestRepairMisparsedFixesOnlyBrokenPlans(t *testing.T) {
 	if got := u.misparsedPlans(reg); len(got) != 1 || got[0].ID != broken.ID {
 		t.Fatalf("do naprawy: %+v", got)
 	}
-	u.RepairMisparsed(context.Background(), reg, time.Millisecond)
+	u.RepairMisparsed(context.Background(), reg, time.Millisecond, time.Millisecond)
 	if p := loadPlan(t, st, broken.ID); wat.Misparsed(p.Events) {
 		t.Fatal("plan nie został naprawiony")
 	}
@@ -114,5 +114,34 @@ func TestRepairMisparsedFixesOnlyBrokenPlans(t *testing.T) {
 	}
 	if len(u.misparsedPlans(reg)) != 0 {
 		t.Fatal("po naprawie nadal są plany do naprawy")
+	}
+}
+
+func TestRepairRetriesFailedPlansLater(t *testing.T) {
+	var body atomic.Value
+	body.Store("<html>chwilowo zła strona</html>")
+	u, st, cfg := newTestUpdater(t, &body)
+	broken := config.PlanConfig{ID: "WLO26FW4S0", URL: cfg.URL, StartYear: 2026}
+	st.Save(broken.ID, misparsedWLO())
+	reg := config.NewRegistry([]config.PlanConfig{broken})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan struct{})
+	go func() {
+		u.RepairMisparsed(ctx, reg, time.Millisecond, 20*time.Millisecond)
+		close(done)
+	}()
+	time.Sleep(60 * time.Millisecond)
+	if !wat.Misparsed(loadPlan(t, st, broken.ID).Events) {
+		t.Fatal("zepsuta strona nie powinna naprawić planu")
+	}
+	body.Store(wloFixture(t))
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("naprawa nie ponowiła nieudanego planu")
+	}
+	if wat.Misparsed(loadPlan(t, st, broken.ID).Events) {
+		t.Fatal("plan nadal zepsuty po ponowieniu")
 	}
 }
