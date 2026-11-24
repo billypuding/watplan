@@ -52,6 +52,9 @@ var budgets = []budget{
 	{budgetCritical, metricCompact, 78000},
 	{budgetOther, metricGzip, 16500},
 	{budgetPlan, metricBrotli, 2100},
+	{"vendor/maplibre-gl.mjs", metricBrotli, 250000},
+	{"vendor/maplibre-gl-worker.mjs", metricBrotli, 135000},
+	{"vendor/maplibre-gl.css", metricGzip, 11000},
 }
 
 type assetSize struct {
@@ -210,6 +213,11 @@ func TestSizeBudget(t *testing.T) {
 			t.Fatalf("ścieżka krytyczna: brak pliku %s", name)
 		}
 		total += s.compact(name)
+	}
+	for _, name := range critical {
+		if strings.HasPrefix(name, "vendor/") || name == "map.js" || name == "campus.json" {
+			t.Errorf("mapa trafiła na ścieżkę krytyczną: %s", name)
+		}
 	}
 	if len(critical) < 5 {
 		t.Fatalf("ścieżka krytyczna: za mało plików (%v)", critical)

@@ -187,7 +187,8 @@ function roomsBuildingCard(b) {
         ? h('button', { type: 'button', class: 'link-btn', onclick: (e) => { fill(true); e.currentTarget.remove(); } }, `Pokaż wszystkie (${b.rooms.length})`)
         : null;
     return h('section', { class: 'room-building' },
-        h('header', null, h('b', null, `Budynek ${b.building}`), h('span', null, `${b.rooms.length} z ${b.total} wolnych`)),
+        h('header', null, h('b', null, `Budynek ${b.building}`), h('span', null, `${b.rooms.length} z ${b.total} wolnych`),
+            MAP_BUILDINGS.has(b.building) ? h('button', { type: 'button', class: 'link-btn map-link', onclick: () => lazyTool(MAP_JS, 'openCampusMap', b.building) }, 'Mapa') : null),
         grid, more);
 }
 

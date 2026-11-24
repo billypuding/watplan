@@ -83,7 +83,7 @@ test('cdn: serwer przy starcie wysyła plany do R2, a strona zna adres CDN', { s
     const html = await (await fetch(server.base + '/plan/WMT26AX3S1')).text();
     assert.ok(html.includes(`<meta name="watplan-cdn" content="${cdnBase()}">`));
     const csp = (await fetch(server.base + '/app')).headers.get('content-security-policy');
-    assert.ok(csp.includes(`connect-src 'self' https://cloud.umami.is https://gateway.umami.is ${cdnBase()}`), csp);
+    assert.ok(csp.includes(`connect-src 'self' https://cloud.umami.is https://gateway.umami.is https://tiles.openfreemap.org ${cdnBase()}`), csp);
 });
 
 test('cdn: pierwsze wejście pobiera plan także z CDN', { skip }, async () => {

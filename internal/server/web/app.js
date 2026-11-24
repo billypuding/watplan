@@ -958,6 +958,13 @@ window.addEventListener('popstate', () => { if (seriesModal.open) seriesModal.cl
 seriesBack.addEventListener('click', closeSeries);
 seriesModal.addEventListener('cancel', (ev) => { ev.preventDefault(); closeSeries(); });
 
+function mapButton(room) {
+    const code = roomBuilding(room);
+    if (!MAP_BUILDINGS.has(code)) return null;
+    return h('button', { type: 'button', class: 'map-btn', onclick: () => lazyTool(MAP_JS, 'openCampusMap', code) },
+        svg(ICON_BUILDING, 16), `Pokaż na mapie · ${buildingLabel(code)}`);
+}
+
 function renderSeries() {
     const list = seriesByKey[seriesKey({ subject: seriesSubjectName, type: seriesType })] || [];
     const nowMs = warsawNow().getTime();
@@ -1009,7 +1016,7 @@ function renderSeries() {
         ));
     }
 
-    seriesBody.replaceChildren(chips, summary, makeupSection(list, next), h('ul', { class: 'series-list' }, items));
+    seriesBody.replaceChildren(chips, summary, mapButton((next || sample || {}).room), makeupSection(list, next), h('ul', { class: 'series-list' }, items));
 }
 
 function overlapsMine(m) {
@@ -1642,11 +1649,11 @@ const LAZY_TOOLS = {
     extras: [MORE_JS, 'openExtras'], stats: [MORE_JS, 'openStats'], share: [MORE_JS, 'openShare'], install: [MORE_JS, 'openInstall'],
 };
 const lazyScripts = {};
-function lazyTool(src, name) {
+function lazyTool(src, name, ...args) {
     lazyScripts[src] ||= new Promise((resolve, reject) => {
         document.head.append(h('script', { src, onload: resolve, onerror: reject }));
     });
-    lazyScripts[src].then(() => window[name](), () => {
+    lazyScripts[src].then(() => window[name](...args), () => {
         delete lazyScripts[src];
         setNotice(navigator.onLine ? 'Nie udało się otworzyć. Spróbuj ponownie.' : 'Brak internetu. Spróbuj, gdy wróci połączenie.', true);
     });

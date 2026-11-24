@@ -190,3 +190,24 @@ async function fetchJSON(url, options) {
     if (!response.ok) throw new Error((body && body.error) || `Błąd serwera (${response.status})`);
     return body;
 }
+
+const MAP_BUILDINGS = new Set('5|K|S|10|13|14|15|16|17|19|20|21|22|23|24|25|26|28|29|34|35|36|38|39|41|42|45|46|47|49|50|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72|74|75|80|100|114|121|125|126|135|136|144|158|23A|63A|AW 1|AW 2|AW 3|AW 4|AW 5|AW 7'.split('|'));
+const MAP_JS = '/map.js?v=0';
+
+function roomBuilding(room) {
+    for (const part of String(room || '').split(/\s*[;,]\s*/)) {
+        const text = part.trim();
+        const dorm = /\bAW\s*(\d)\b/i.exec(text);
+        if (dorm) return 'AW ' + dorm[1];
+        const m = /(?:\s|\/)\s*(\d{1,3}[A-Z]?|[A-Z])$/.exec(text);
+        if (m) return m[1].replace(/^0+(?=\d)/, '');
+    }
+    return '';
+}
+
+function buildingLabel(code) {
+    if (code === 'S') return 'Budynek 100';
+    if (code === 'K') return 'Klub WAT';
+    if (code.startsWith('AW ')) return 'Akademik ' + code;
+    return 'Budynek ' + code;
+}

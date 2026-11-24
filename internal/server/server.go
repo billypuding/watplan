@@ -1070,7 +1070,7 @@ func htmlPageWith(page []byte, cacheControl string) http.HandlerFunc {
 const permissionsPolicy = "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), hid=(), magnetometer=(), microphone=(), midi=(), payment=(), publickey-credentials-get=(), serial=(), usb=(), xr-spatial-tracking=()"
 
 func contentSecurityPolicy(scriptHashes []string, cdn string) string {
-	connect := "connect-src 'self' https://cloud.umami.is https://gateway.umami.is"
+	connect := "connect-src 'self' https://cloud.umami.is https://gateway.umami.is https://tiles.openfreemap.org"
 	if u, err := url.Parse(cdn); err == nil && u.Scheme != "" && u.Host != "" {
 		connect += " " + u.Scheme + "://" + u.Host
 	}
@@ -1080,7 +1080,7 @@ func contentSecurityPolicy(scriptHashes []string, cdn string) string {
 		"default-src 'self'",
 		"script-src " + strings.Join(scripts, " "),
 		"style-src 'self'",
-		"img-src 'self' data:",
+		"img-src 'self' data: blob:",
 		"font-src 'self'",
 		connect,
 		"manifest-src 'self'",

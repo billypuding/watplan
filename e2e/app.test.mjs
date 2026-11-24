@@ -477,6 +477,29 @@ test('ustawienia pokazują wersję i informują o nowszej', { skip }, async () =
     assert.deepEqual(page.errors, []);
 });
 
+test('mapa kampusu: przycisk przy znanym budynku, ładowanie na żądanie, komunikat bez WebGL', { skip }, async () => {
+    await page.reset();
+    await page.goto(app());
+    await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
+    const cases = JSON.parse(await page.eval(`JSON.stringify(['19 36', '233 K', '032 S', '0.19/135', 'aula/ 135', '111 58', 'AW 3/038', '2.01 54A', 'online'].map(roomBuilding))`));
+    assert.deepEqual(cases, ['36', 'K', 'S', '135', '135', '58', 'AW 3', '54A', '']);
+    assert.equal(await page.eval(`MAP_BUILDINGS.has('54A')`), false);
+    const loaded = `[...document.querySelectorAll('script[src], link[href]')].map(e => e.src || e.href).filter(u => /map\\.js|maplibre|campus\\.json/.test(u)).length`;
+    assert.equal(await page.eval(loaded), 0, 'mapa nie może ładować się na starcie');
+    await page.click('.ev-card');
+    await page.waitFor(`document.getElementById('seriesModal').open`);
+    assert.match(await page.text('.map-btn'), /Pokaż na mapie · Budynek 36/);
+    await page.click('.map-btn');
+    await page.waitFor(`document.getElementById('mapModal')?.open`);
+    assert.equal(await page.text('#mapTitle'), 'Budynek 36');
+    assert.match(await page.eval(`document.getElementById('mapGo').href`), /destination=52\.25\d+,20\.90\d+&travelmode=walking/);
+    await page.waitFor(`document.querySelector('#campusMap canvas') !== null || document.querySelector('.map-message') !== null`, 15000);
+    const message = await page.eval(`(document.querySelector('.map-message') || {}).textContent || ''`);
+    if (message) assert.match(message, /Prowadź/);
+    assert.deepEqual(page.errors, []);
+    assert.deepEqual(page.policyErrors, []);
+});
+
 test('wolne sale pokazują sale dla wybranego bloku', { skip }, async () => {
     await page.goto(app());
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
@@ -486,6 +509,7 @@ test('wolne sale pokazują sale dla wybranego bloku', { skip }, async () => {
     await page.click('[data-tool="rooms"]');
     await page.waitFor(`document.querySelectorAll('.room-chip').length > 0 || !!document.querySelector('#roomsBody .empty-day')`);
     assert.ok(await page.eval(`document.querySelectorAll('.room-building').length > 0`));
+    assert.ok(await page.eval(`[...document.querySelectorAll('.room-building')].some(b => b.querySelector('.map-link'))`), 'brak linku „Mapa” przy budynku');
     assert.match(await page.text('#roomsSub'), /\d{2}:\d{2}–\d{2}:\d{2}/);
     assert.equal(await page.eval(toolsScripts), 1);
 });

@@ -73,6 +73,23 @@ keeps what is safe to share:
 - everything under `/api/`: `private, no-store`, or `private, no-cache` with an `ETag`
   for `/api/plan` and `/api/plans`; compressed responses carry `Vary: Accept-Encoding`.
 
+### Campus map
+
+"Pokaż na mapie" (class details) and "Mapa" (free rooms) open a 3D map of the campus with the
+building highlighted and a "Prowadź" link to walking directions in Apple or Google Maps. The
+building is read from the room name (`19 36`, `0.19/135`, `aula/ 135`, `233 K`, `032 S`,
+`AW 3/038`); `K` is the Klub WAT / Studium Języków Obcych building and `S` the main building 100.
+
+- `web/campus.json`: 72 building codes with outline and centre, taken from OpenStreetMap
+  (© OpenStreetMap contributors, ODbL 1.0) and matched to WAT building numbers. A code is
+  included only when it appears on the official campus plan or is confirmed otherwise; annex
+  codes without a known location (e.g. `54A`, `61A`) get no map button.
+- `web/vendor/`: MapLibre GL JS 6.19.0 (BSD-3-Clause, see `maplibre-gl-LICENSE.txt`), served
+  from this server. Map tiles come from OpenFreeMap (`positron` / `dark` style by theme).
+- `web/map.js` and `web/map.css` load only when a map is opened; `TestSizeBudget` fails if any
+  of them reaches the critical path. Without WebGL2 or internet the dialog shows a message and
+  the directions link instead of the map.
+
 ### Plansoft cells (WLO)
 
 WLO publishes plans with a Plansoft layout where each cell is `Subject(type)` / group list /
