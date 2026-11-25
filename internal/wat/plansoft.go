@@ -9,9 +9,11 @@ import (
 	"github.com/billypuding/watplan/internal/model"
 )
 
-const ParserVersion = 2
+const ParserVersion = 3
 
 var misparsedRoomRe = regexp.MustCompile(`\b[A-Z]{3}\d{2}[A-Z]{2}\d[A-Z]\d\b|\b\d[Pp][Ll]/\d+[Kk][Pp]\b`)
+
+var shortTeacherRe = regexp.MustCompile(`^\p{Lu}[\p{L}.]{0,6}$`)
 
 func Misparsed(events []model.Event) bool {
 	for _, e := range events {
@@ -20,6 +22,24 @@ func Misparsed(events []model.Event) bool {
 		}
 	}
 	return false
+}
+
+func shortTeachers(events []model.Event) bool {
+	for _, e := range events {
+		for _, t := range strings.Split(e.Teacher, ", ") {
+			if shortTeacherRe.MatchString(t) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func NeedsReparse(plan model.Plan) bool {
+	if plan.Parser >= ParserVersion {
+		return false
+	}
+	return Misparsed(plan.Events) || plan.Parser == 2 && shortTeachers(plan.Events)
 }
 
 var (
@@ -78,15 +98,32 @@ func nameWords(name string) []string {
 	return out
 }
 
-func chunksMatch(chunks, words []string, used []bool) bool {
+func chunkFits(chunk, word string, loose bool) bool {
+	if strings.HasPrefix(word, chunk) {
+		return true
+	}
+	c, w := []rune(chunk), []rune(word)
+	if !loose || len(c) < 2 || len(w) == 0 || w[0] != c[0] {
+		return false
+	}
+	j := 1
+	for _, r := range w[1:] {
+		if j < len(c) && r == c[j] {
+			j++
+		}
+	}
+	return j == len(c)
+}
+
+func chunksMatch(chunks, words []string, used []bool, loose bool) bool {
 	if len(chunks) == 0 {
 		return true
 	}
 	c := strings.ToLower(chunks[0])
 	for i, w := range words {
-		if !used[i] && strings.HasPrefix(w, c) {
+		if !used[i] && chunkFits(c, w, loose) {
 			used[i] = true
-			if chunksMatch(chunks[1:], words, used) {
+			if chunksMatch(chunks[1:], words, used, loose) {
 				return true
 			}
 			used[i] = false
@@ -108,22 +145,36 @@ func (ix *teacherIndex) byAbbreviation(abbr string) (string, bool) {
 			names = append(names, name)
 		}
 	}
+	for _, name := range ix.names {
+		if !seen[name] {
+			seen[name] = true
+			names = append(names, name)
+		}
+	}
 	sort.Strings(names)
+	if name, ok, ambiguous := matchAbbreviation(chunks, names, false); ok || ambiguous {
+		return name, ok
+	}
+	name, ok, _ := matchAbbreviation(chunks, names, true)
+	return name, ok
+}
+
+func matchAbbreviation(chunks, names []string, loose bool) (string, bool, bool) {
 	found, foundKey := "", ""
 	for _, name := range names {
 		words := nameWords(name)
-		if len(words) < len(chunks) || !chunksMatch(chunks, words, make([]bool, len(words))) {
+		if len(words) < len(chunks) || !chunksMatch(chunks, words, make([]bool, len(words)), loose) {
 			continue
 		}
 		key := strings.Join(words, " ")
 		if found != "" && foundKey != key {
-			return "", false
+			return "", false, true
 		}
 		if found == "" {
 			found, foundKey = name, key
 		}
 	}
-	return found, found != ""
+	return found, found != "", false
 }
 
 func looksLikePlansoftRoom(field string) bool {

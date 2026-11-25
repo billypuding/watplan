@@ -305,7 +305,7 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (r
 		}
 	}
 
-	reparse := old.Parser < wat.ParserVersion && wat.Misparsed(old.Events)
+	reparse := wat.NeedsReparse(old)
 	var prev wat.Validators
 	if len(old.Events) > 0 && old.DropStreak == 0 && len(cfg.Extra) == 0 && !reparse {
 		prev = wat.Validators{ETag: old.ETag, LastModified: old.LastMod}

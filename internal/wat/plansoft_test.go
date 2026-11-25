@@ -91,3 +91,44 @@ func TestAbbreviationMatching(t *testing.T) {
 		}
 	}
 }
+
+func TestWLOTeachersResolvedFromWholeLegend(t *testing.T) {
+	short := regexp.MustCompile(`^[\p{L}.]{1,7}$`)
+	names := map[string]bool{}
+	left := map[string]bool{}
+	for _, e := range parseWLOFixture(t) {
+		names[e.teacher] = true
+		if short.MatchString(e.teacher) {
+			left[e.teacher] = true
+		}
+	}
+	for _, want := range []string{
+		"mgr inż. Żentara Tomasz",
+		"dr hab. inż.(prof. ucz.) Wysocki Józef",
+		"ppłk mgr inż. Świętochowski Mieczysław",
+		"ppłk rez. mgr Czarnecki Jarosław",
+		"ppłk rez. mgr Pytlos Dariusz",
+	} {
+		if !names[want] {
+			t.Errorf("brak wykładowcy %q", want)
+		}
+	}
+	delete(left, "Mak")
+	if len(left) > 0 {
+		t.Errorf("nierozwinięte skróty: %v", left)
+	}
+}
+
+func TestLooseAbbreviationNeedsUniquePerson(t *testing.T) {
+	ix := newTeacherIndex(nil)
+	ix.names = []string{"dr hab. inż. Marczyk Maciej", "mgr inż. Oleksiak Marek", "ppłk rez. mgr Czarnecki Jarosław"}
+	for abbr, want := range map[string]string{
+		"Czr":  "ppłk rez. mgr Czarnecki Jarosław",
+		"Mak":  "",
+		"OleM": "mgr inż. Oleksiak Marek",
+	} {
+		if got, _ := ix.byAbbreviation(abbr); got != want {
+			t.Errorf("%q → %q, chcę %q", abbr, got, want)
+		}
+	}
+}

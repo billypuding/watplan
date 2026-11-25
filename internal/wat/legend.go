@@ -92,6 +92,21 @@ func buildLegend(grid [][]Cell, legendCol int, evidence map[string]*abbrEvidence
 	return subjects, teachers, subjectTeachers, legendTeachers
 }
 
+func legendNames(grid [][]Cell, legendCol int) []string {
+	var out []string
+	for _, row := range grid {
+		for _, cell := range row {
+			if cell.Col != legendCol+1 {
+				continue
+			}
+			if name := cleanText(cell.Text); name != "" && (isTeacherName(name) || looksLikePersonName(name)) {
+				out = appendUnique(out, name)
+			}
+		}
+	}
+	return out
+}
+
 func isTypeToken(s string) bool {
 	_, exists := typeMap[s]
 	return exists

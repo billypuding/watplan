@@ -19,6 +19,7 @@ type teacherIndex struct {
 	entries       []teacherEntry
 	byKey         map[string]string
 	ambiguous     map[string]bool
+	names         []string
 }
 
 var polishFold = strings.NewReplacer(

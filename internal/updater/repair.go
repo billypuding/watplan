@@ -19,7 +19,7 @@ func (u *Updater) misparsedPlans(reg *config.Registry) []config.PlanConfig {
 	var out []config.PlanConfig
 	for _, cfg := range reg.List() {
 		plan, err := u.store.Load(cfg.ID)
-		if err != nil || plan.Parser >= wat.ParserVersion || !wat.Misparsed(plan.Events) {
+		if err != nil || !wat.NeedsReparse(plan) {
 			continue
 		}
 		out = append(out, cfg)

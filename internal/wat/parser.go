@@ -57,6 +57,7 @@ func ParsePlan(r io.Reader, startYear int) ([]model.Event, error) {
 		}
 	}
 	index := newTeacherIndex(teachers)
+	index.names = legendNames(grid, legendCol)
 
 	var events []model.Event
 	for _, row := range grid {

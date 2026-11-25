@@ -43,6 +43,25 @@ func TestMisparsedDetection(t *testing.T) {
 	}
 }
 
+func TestNeedsReparseAfterAbbreviationFix(t *testing.T) {
+	abbr := []model.Event{{Teacher: "ŻT", Room: "255 S"}}
+	full := []model.Event{{Teacher: "mgr inż. Żentara Tomasz", Room: "255 S"}}
+	cases := []struct {
+		plan model.Plan
+		want bool
+	}{
+		{model.Plan{Parser: 2, Events: abbr}, true},
+		{model.Plan{Parser: 2, Events: full}, false},
+		{model.Plan{Parser: wat.ParserVersion, Events: abbr}, false},
+		{misparsedWLO(), true},
+	}
+	for i, c := range cases {
+		if got := wat.NeedsReparse(c.plan); got != c.want {
+			t.Errorf("%d: %v, chcę %v", i, got, c.want)
+		}
+	}
+}
+
 func TestReparseIsSilentAndFetchesFullPage(t *testing.T) {
 	var body atomic.Value
 	body.Store(wloFixture(t))
