@@ -62,6 +62,10 @@ type Updater struct {
 
 	index *indexWatch
 	alert *alert.Notifier
+
+	dirMu sync.Mutex
+	dir   *wat.Directory
+	dirAt time.Time
 }
 
 const (
@@ -306,6 +310,8 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (r
 	}
 
 	reparse := wat.NeedsReparse(old)
+	dir := u.directory()
+	old.Events, _ = wat.ResolveTeachers(old.Events, dir)
 	var prev wat.Validators
 	if len(old.Events) > 0 && old.DropStreak == 0 && len(cfg.Extra) == 0 && !reparse {
 		prev = wat.Validators{ETag: old.ETag, LastModified: old.LastMod}
@@ -326,6 +332,7 @@ func (u *Updater) updateLockedMode(cfg config.PlanConfig, mode wat.FetchMode) (r
 		return updateResult{}, err
 	}
 
+	events, _ = wat.ResolveTeachers(events, dir)
 	if len(events) == 0 {
 		if len(old.Events) > 0 {
 			u.markSuspect(cfg.ID, fmt.Sprintf("plan %s w nowym odczycie nie ma żadnych zajęć (wcześniej %d)", cfg.ID, len(old.Events)))

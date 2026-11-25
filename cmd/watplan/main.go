@@ -315,6 +315,7 @@ func main() {
 		go upd.WatchCredits(ctx)
 		go func() {
 			<-ready
+			upd.ResolveStoredTeachers(ctx)
 			upd.RepairMisparsed(ctx, reg, 0, 0)
 		}()
 	}
