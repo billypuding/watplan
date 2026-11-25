@@ -95,7 +95,7 @@ func TestTursoReopenAndQueue(t *testing.T) {
 	deadline := time.Now().Add(20 * time.Second)
 	for {
 		all, err := q.All(run + "/q/")
-		if err == nil && len(all) == 20 {
+		if _, saved := q.Status(); err == nil && len(all) == 20 && saved == 20 {
 			if string(all[run+"/q/P19"]) != strings.Repeat("v", 20) {
 				t.Fatalf("P19 = %q", all[run+"/q/P19"])
 			}
