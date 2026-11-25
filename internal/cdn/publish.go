@@ -7,7 +7,7 @@ import (
 
 type objectStore interface {
 	durable.Mirror
-	ETag(key string) (string, error)
+	ETags(prefix string) (map[string]string, error)
 }
 
 type Publisher struct {
@@ -27,16 +27,16 @@ func (p *Publisher) Publish(id string, data []byte) {
 }
 
 func (p *Publisher) Backfill(ids []string, raw func(id string) ([]byte, error)) (queued, current int, err error) {
+	etags, err := p.bucket.ETags("plans/")
+	if err != nil {
+		return 0, 0, err
+	}
 	for _, id := range ids {
 		data, rerr := raw(id)
 		if rerr != nil {
 			continue
 		}
-		etag, herr := p.bucket.ETag(PlanKey(id))
-		if herr != nil {
-			return queued, current, herr
-		}
-		if etag == ContentETag(data) {
+		if etags[PlanKey(id)] == ContentETag(data) {
 			current++
 			continue
 		}

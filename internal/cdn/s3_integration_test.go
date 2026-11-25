@@ -77,3 +77,31 @@ func TestS3RejectsWrongSecret(t *testing.T) {
 		t.Fatalf("zły sekret: %v, chcę 403", err)
 	}
 }
+
+func TestS3ListETagsAcrossPages(t *testing.T) {
+	b := testBucket(t)
+	want := map[string]string{}
+	for i := 0; i < 1005; i++ {
+		key := PlanKey(fmt.Sprintf("P%04d", i))
+		body := []byte(fmt.Sprintf(`{"n":%d}`, i))
+		if err := b.Put(key, body); err != nil {
+			t.Fatal(err)
+		}
+		want[key] = ContentETag(body)
+	}
+	if err := b.Put("other/x.json", []byte("{}")); err != nil {
+		t.Fatal(err)
+	}
+	got, err := b.ETags("plans/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != len(want) {
+		t.Fatalf("kluczy %d, chcę %d", len(got), len(want))
+	}
+	for k, v := range want {
+		if got[k] != v {
+			t.Fatalf("%s: %q, chcę %q", k, got[k], v)
+		}
+	}
+}

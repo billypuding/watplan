@@ -24,8 +24,10 @@ function startFakeR2() {
                 });
                 return;
             }
-            if (req.method === 'HEAD' && url.pathname.startsWith('/bucket/')) {
-                res.writeHead(objects.has(url.pathname.slice('/bucket/'.length)) ? 200 : 404).end();
+            if (req.method === 'GET' && url.pathname === '/bucket' && url.searchParams.get('list-type') === '2') {
+                const prefix = url.searchParams.get('prefix') || '';
+                const items = [...objects.keys()].filter(k => k.startsWith(prefix)).map(k => `<Contents><Key>${k}</Key><ETag>"x"</ETag></Contents>`).join('');
+                res.writeHead(200, { 'Content-Type': 'application/xml' }).end(`<ListBucketResult><IsTruncated>false</IsTruncated>${items}</ListBucketResult>`);
                 return;
             }
             if (req.method === 'GET' && url.pathname.startsWith('/plans/')) {

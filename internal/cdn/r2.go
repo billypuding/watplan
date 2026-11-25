@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -129,6 +130,58 @@ func (b *Bucket) ETag(key string) (string, error) {
 	return strings.Trim(resp.Header.Get("ETag"), `"`), nil
 }
 
+type listResult struct {
+	Contents []struct {
+		Key  string
+		ETag string
+	}
+	IsTruncated           bool
+	NextContinuationToken string
+}
+
+func (b *Bucket) ETags(prefix string) (map[string]string, error) {
+	out := map[string]string{}
+	token := ""
+	for page := 0; page < 100; page++ {
+		u := *b.endpoint
+		u.Path += "/" + b.bucket
+		q := url.Values{"list-type": {"2"}, "prefix": {prefix}}
+		if token != "" {
+			q.Set("continuation-token", token)
+		}
+		u.RawQuery = strings.ReplaceAll(q.Encode(), "+", "%20")
+		req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+		if err != nil {
+			return nil, err
+		}
+		b.sign(req, nil)
+		resp, err := b.client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("R2 LIST %s: %s", prefix, resp.Status)
+		}
+		var res listResult
+		if err := xml.Unmarshal(body, &res); err != nil {
+			return nil, fmt.Errorf("R2 LIST %s: %w", prefix, err)
+		}
+		for _, c := range res.Contents {
+			out[c.Key] = strings.Trim(c.ETag, `"`)
+		}
+		if !res.IsTruncated || res.NextContinuationToken == "" {
+			return out, nil
+		}
+		token = res.NextContinuationToken
+	}
+	return nil, fmt.Errorf("R2 LIST %s: za dużo stron", prefix)
+}
+
 func ContentETag(value []byte) string {
 	sum := md5.Sum(value)
 	return hex.EncodeToString(sum[:])
@@ -190,7 +243,7 @@ func signRequest(req *http.Request, payload []byte, access, secret, region strin
 	canonical := strings.Join([]string{
 		req.Method,
 		req.URL.EscapedPath(),
-		req.URL.Query().Encode(),
+		strings.ReplaceAll(req.URL.Query().Encode(), "+", "%20"),
 		canonicalHeaders.String(),
 		signed,
 		payloadHash,

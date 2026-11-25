@@ -2,6 +2,7 @@ package cdn
 
 import (
 	"errors"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -23,17 +24,20 @@ func (f *fakeBucket) Put(key string, value []byte) error {
 
 func (f *fakeBucket) All(string) (map[string][]byte, error) { return nil, nil }
 
-func (f *fakeBucket) ETag(key string) (string, error) {
+func (f *fakeBucket) ETags(prefix string) (map[string]string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.heads++
 	if f.headErr != nil {
-		return "", f.headErr
+		return nil, f.headErr
 	}
-	if v, ok := f.objects[key]; ok {
-		return ContentETag(v), nil
+	out := map[string]string{}
+	for k, v := range f.objects {
+		if strings.HasPrefix(k, prefix) {
+			out[k] = ContentETag(v)
+		}
 	}
-	return "", nil
+	return out, nil
 }
 
 func (f *fakeBucket) get(key string) (string, bool) {
@@ -67,7 +71,7 @@ func TestBackfillUploadsOnlyMissingOrChanged(t *testing.T) {
 		}
 		return nil, errors.New("brak pliku")
 	})
-	if err != nil || queued != 2 || current != 1 {
+	if err != nil || queued != 2 || current != 1 || bucket.heads != 1 {
 		t.Fatalf("queued %d current %d err %v", queued, current, err)
 	}
 	waitFor(t, func() bool {
@@ -82,7 +86,7 @@ func TestBackfillStopsWhenBucketUnreachable(t *testing.T) {
 	p := NewPublisher(bucket, nil)
 	_, _, err := p.Backfill([]string{"A", "B", "C"}, func(string) ([]byte, error) { return []byte("{}"), nil })
 	if err == nil || bucket.heads != 1 {
-		t.Fatalf("err %v, zapytań HEAD %d (chcę przerwać po pierwszym błędzie)", err, bucket.heads)
+		t.Fatalf("err %v, zapytań o listę %d (chcę przerwać po pierwszym błędzie)", err, bucket.heads)
 	}
 }
 
