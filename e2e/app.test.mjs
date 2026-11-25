@@ -578,8 +578,15 @@ test('gdzie odrobić szuka zajęć w innych grupach rocznika', { skip }, async (
     await page.waitFor(`document.querySelectorAll('.ev-card').length > 0`);
     await page.click('.ev-card');
     await page.waitFor(`!!document.querySelector('.makeup')`);
-    await page.waitFor(`!document.querySelector('.makeup-results')?.textContent.includes('Szukam')`);
+    assert.equal(await page.eval(`document.querySelector('.makeup').open`), false);
+    assert.equal(await page.eval(`document.querySelector('.makeup-results').childElementCount`), 0);
+    await page.click('.makeup summary');
+    await page.waitFor(`document.querySelector('.makeup').open && document.querySelector('.makeup-results').childElementCount > 0 && !document.querySelector('.makeup-results').textContent.includes('Szukam')`);
     assert.match(await page.text('.makeup-results'), /WMT26/);
+    assert.doesNotMatch(await page.eval(`document.querySelector('.makeup').textContent`), /null|undefined/);
+    await page.click('.makeup summary');
+    assert.equal(await page.eval(`document.querySelector('.makeup').open`), false);
+    assert.deepEqual(page.errors, []);
 });
 
 test('sesja i egzaminy pokazuje ostatnie zajęcia z przedmiotów', { skip }, async () => {

@@ -1082,18 +1082,20 @@ function makeupSection(list, next) {
             const list = h('ul', { class: 'makeup-list' }, upcoming.map(row));
             const morePast = past.length ? h('button', { type: 'button', class: 'link-btn', onclick: (e) => { list.prepend(...past.map(row)); e.currentTarget.remove(); } },
                 `Pokaż minione (${past.length})`) : null;
-            results.replaceChildren(
+            results.replaceChildren(...[
                 h('p', { class: 'hint' }, upcoming.length ? `Zajęcia nr ${n} w innych grupach ${data.cohort}:` : `Wszystkie terminy zajęć nr ${n} w innych grupach ${data.cohort} już minęły.`),
-                list, morePast);
+                list, morePast].filter(Boolean));
         } catch (err) {
             results.replaceChildren(h('p', { class: 'hint error' }, errorText(err)));
         }
     };
     select.addEventListener('change', load);
-    load();
-    return h('section', { class: 'makeup' },
-        h('header', null, h('b', null, 'Gdzie odrobić?'), select),
+    const box = h('details', { class: 'makeup' },
+        h('summary', null, h('b', null, 'Gdzie odrobić?'), h('span', { class: 'makeup-chev', 'aria-hidden': 'true' })),
+        h('div', { class: 'makeup-pick' }, h('span', null, 'Zajęcia'), select),
         results);
+    box.addEventListener('toggle', () => { if (box.open && !results.childElementCount) load(); });
+    return box;
 }
 
 function tickLive() {

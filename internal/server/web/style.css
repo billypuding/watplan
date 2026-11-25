@@ -670,8 +670,13 @@ dialog::backdrop { background: var(--scrim); }
 }
 
 .makeup { margin-top: 16px; padding: 14px; border-radius: 18px; background: var(--surface); }
-.makeup header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.makeup header b { font-size: 16px; font-weight: 650; }
+.makeup summary, .makeup-pick { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.makeup summary { cursor: pointer; list-style: none; }
+.makeup summary::-webkit-details-marker { display: none; }
+.makeup summary b { font-size: 16px; font-weight: 650; }
+.makeup-chev { width: 9px; height: 9px; margin-right: 4px; border: solid var(--muted); border-width: 0 2px 2px 0; rotate: 45deg; }
+.makeup[open] .makeup-chev { rotate: -135deg; }
+.makeup-pick { margin-top: 12px; font-size: 14px; color: var(--muted); }
 .makeup select { height: 38px; max-width: 60%; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; }
 .makeup .hint { margin: 10px 0 6px; font-size: 13px; }
 .makeup .hint.error, .extra-form .hint.error { color: var(--error); }
