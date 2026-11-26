@@ -207,6 +207,7 @@ func (s *Server) handlePlanPage(tpl []byte) http.HandlerFunc {
 
 var (
 	faqLDRe    = regexp.MustCompile(`(?s)<script type="application/ld\+json">\s*\{"@context":"https://schema.org","@type":"FAQPage".*?</script>\n`)
+	listJSRe   = regexp.MustCompile(`<script src="/plany\.js\?v=[^"]*" defer></script>\n`)
 	faqBodyRe  = regexp.MustCompile(`(?s)<h1 class="faq-h1">.*</section>\n`)
 	allPlansAt = "/plany"
 )
@@ -280,27 +281,122 @@ func renderListPage(tpl []byte, site string, page listPage) []byte {
 	return out
 }
 
+func groupFind(b *strings.Builder, example string) {
+	fmt.Fprintf(b, `  <form class="group-find" action="/app" method="get" role="search">
+    <input id="groupFind" name="plan" type="search" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="np. %s" aria-label="Kod grupy">
+    <button type="submit">Otwórz</button>
+  </form>
+  <ul class="group-links find-results" id="findResults" aria-live="polite" hidden></ul>
+`, html.EscapeString(example))
+}
+
+func facultyCards(b *strings.Builder, groups []facultyGroups) {
+	b.WriteString("  <h2 class=\"list-h2\">Wydziały</h2>\n  <ul class=\"faculty-cards\">")
+	for _, g := range groups {
+		name := html.EscapeString(facultyName(config.PlanConfig{Faculty: g.code}))
+		fmt.Fprintf(b, `<li><a href="%s"><b>%s</b><span>%s</span><small>%s</small></a></li>`, facultyPath(g.code), g.code, name, groupsWord(len(g.ids)))
+	}
+	b.WriteString("</ul>\n")
+}
+
+const codeHelp = `  <section class="code-help" aria-labelledby="h-code">
+    <h2 class="list-h2" id="h-code">Jak odczytać nazwę grupy?</h2>
+    <p class="code-sample" aria-hidden="true"><span>WLO</span><span>26</span><span>FW</span><span>4</span><span>S0</span></p>
+    <ul>
+      <li><b>WLO</b> – wydział</li>
+      <li><b>26</b> – rok rozpoczęcia studiów (2026)</li>
+      <li><b>FW</b> – kierunek i specjalność</li>
+      <li><b>4</b> – numer grupy</li>
+      <li><b>S0</b> – tryb: S to studia stacjonarne, N niestacjonarne</li>
+    </ul>
+  </section>
+`
+
 func renderAllPlans(tpl []byte, plans []config.PlanConfig, site string) []byte {
 	groups := groupByFaculty(plans)
 	var b strings.Builder
-	fmt.Fprintf(&b, "<h1 class=\"faq-h1\">Plany zajęć wszystkich grup WAT</h1>\n  <p class=\"faq-lead\">%s ze wszystkich wydziałów Wojskowej Akademii Technicznej. Wybierz swoją, a zobaczysz plan na dziś, tydzień i miesiąc.</p>\n", groupsWord(len(plans)))
-	b.WriteString("  <nav class=\"faculty-jump\" aria-label=\"Wydziały\">")
-	for _, g := range groups {
-		fmt.Fprintf(&b, `<a href="#%s">%s</a>`, g.code, g.code)
-	}
-	b.WriteString("</nav>\n")
+	fmt.Fprintf(&b, "<h1 class=\"faq-h1\">Plany zajęć WAT</h1>\n  <p class=\"faq-lead\">%s ze wszystkich wydziałów Wojskowej Akademii Technicznej. Znajdź swoją, a zobaczysz plan na dziś, tydzień i miesiąc.</p>\n", groupsWord(len(plans)))
+	groupFind(&b, "WLO26FW4S0")
+	facultyCards(&b, groups)
+	b.WriteString(codeHelp)
+	fmt.Fprintf(&b, "  <details class=\"all-groups\">\n  <summary>Wszystkie grupy (%d)</summary>\n", len(plans))
 	for _, g := range groups {
 		name := html.EscapeString(facultyName(config.PlanConfig{Faculty: g.code}))
 		fmt.Fprintf(&b, "  <section class=\"faculty-groups\" id=\"%s\" aria-labelledby=\"h-%s\">\n    <h2 id=\"h-%s\"><a href=\"%s\">%s</a> <span>%s, %s</span></h2>\n    ", g.code, g.code, g.code, facultyPath(g.code), name, g.code, groupsWord(len(g.ids)))
 		groupLinks(&b, g.ids)
 		b.WriteString("  </section>\n")
 	}
+	b.WriteString("  </details>\n")
 	return renderListPage(tpl, site, listPage{
 		title: "Plany zajęć wszystkich grup WAT | WATplan",
 		desc:  fmt.Sprintf("Lista %d grup WAT ze wszystkich wydziałów z linkami do planów zajęć: dzień, tydzień, miesiąc i eksport do kalendarza. Za darmo i bez logowania.", len(plans)),
 		path:  allPlansAt,
 		body:  b.String(),
 	})
+}
+
+var startYearRe = regexp.MustCompile(`^[A-Z]+(\d{2})`)
+
+type cohortGroups struct {
+	label string
+	ids   []string
+}
+
+func groupByCohort(ids []string) []cohortGroups {
+	by := map[string][]string{}
+	for _, id := range ids {
+		key := ""
+		if m := startYearRe.FindStringSubmatch(id); m != nil {
+			key = "20" + m[1]
+		}
+		by[key] = append(by[key], id)
+	}
+	keys := make([]string, 0, len(by))
+	for k := range by {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i] == "" || keys[j] == "" {
+			return keys[j] == ""
+		}
+		return keys[i] > keys[j]
+	})
+	out := make([]cohortGroups, 0, len(keys))
+	for _, k := range keys {
+		label := "Pozostałe grupy"
+		if k != "" {
+			label = "Rocznik " + k
+		}
+		out = append(out, cohortGroups{label, by[k]})
+	}
+	return out
+}
+
+const shownCohorts = 3
+
+func cohortSections(b *strings.Builder, ids []string) {
+	cohorts := groupByCohort(ids)
+	write := func(c cohortGroups) {
+		fmt.Fprintf(b, "  <section class=\"faculty-groups\">\n    <h2>%s <span>%s</span></h2>\n    ", html.EscapeString(c.label), groupsWord(len(c.ids)))
+		groupLinks(b, c.ids)
+		b.WriteString("  </section>\n")
+	}
+	rest := 0
+	for i, c := range cohorts {
+		if i < shownCohorts {
+			write(c)
+		} else {
+			rest += len(c.ids)
+		}
+	}
+	if rest == 0 {
+		return
+	}
+	fmt.Fprintf(b, "  <details class=\"all-groups\">\n  <summary>Starsze roczniki (%s)</summary>\n", groupsWord(rest))
+	for _, c := range cohorts[shownCohorts:] {
+		write(c)
+	}
+	b.WriteString("  </details>\n")
 }
 
 const maxFacultyTitle = 65
@@ -323,9 +419,10 @@ func renderFacultyPages(tpl []byte, plans []config.PlanConfig, site string) map[
 		full := facultyName(config.PlanConfig{Faculty: g.code})
 		name := html.EscapeString(full)
 		var b strings.Builder
-		fmt.Fprintf(&b, "<h1 class=\"faq-h1\">Plan zajęć – %s (%s)</h1>\n  <p class=\"faq-lead\">%s Wojskowej Akademii Technicznej. Wybierz swoją grupę, a zobaczysz plan zajęć (plan lekcji) na dziś, tydzień i miesiąc, z salami i prowadzącymi.</p>\n  <p class=\"faq-lead\"><a href=\"%s\">Wszystkie wydziały</a></p>\n  <section class=\"faculty-groups\" aria-label=\"Grupy\">\n    ", name, g.code, groupsWord(len(g.ids))+" – "+name, allPlansAt)
-		groupLinks(&b, g.ids)
-		b.WriteString("  </section>\n")
+		fmt.Fprintf(&b, "<h1 class=\"faq-h1\">Plan zajęć – %s (%s)</h1>\n  <p class=\"faq-lead\">%s Wojskowej Akademii Technicznej. Wybierz swoją grupę, a zobaczysz plan zajęć (plan lekcji) na dziś, tydzień i miesiąc, z salami i prowadzącymi.</p>\n  <p class=\"faq-back\"><a href=\"%s\">‹ Wszystkie wydziały</a></p>\n", name, g.code, groupsWord(len(g.ids))+" – "+name, allPlansAt)
+		example := g.ids[len(g.ids)-1]
+		groupFind(&b, example)
+		cohortSections(&b, g.ids)
 		path := facultyPath(g.code)
 		pages[strings.ToLower(g.code)] = renderListPage(tpl, site, listPage{
 			title: facultyTitle(g.code, full),

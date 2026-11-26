@@ -218,7 +218,7 @@ func (s *Server) Handler() (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	mux.HandleFunc("/o-watplan", htmlPage(faqPage))
+	mux.HandleFunc("/o-watplan", htmlPage(listJSRe.ReplaceAll(faqPage, nil)))
 	allPlans := s.registry.List()
 	site := "https://watplan.me"
 	if s.options.CanonicalHost != "" {

@@ -47,14 +47,60 @@
     .faq-list summary::after { transition: none; }
 }
 .home > .site-foot { width: 100%; max-width: 760px; margin: 0 auto; padding-left: 18px; padding-right: 18px; box-sizing: border-box; }
-.faculty-jump { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 8px; }
-.faculty-jump a, .group-links a {
-    display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 10px;
-    background: var(--surface); color: var(--text); font-weight: 600; font-size: 14px; text-decoration: none;
+.faq-back { margin: 12px 0 0; font-size: 15px; font-weight: 600; }
+.faq-back a { color: var(--muted); text-decoration: none; }
+.faq-back a:hover { color: var(--text); }
+.group-find { display: flex; gap: 8px; margin-top: 24px; }
+.group-find input {
+    flex: 1; min-width: 0; height: 52px; padding: 0 16px; border-radius: 14px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--text); font: inherit; font-size: 17px; font-weight: 600; letter-spacing: .02em;
 }
+.group-find input::placeholder { color: var(--muted); font-weight: 500; letter-spacing: 0; }
+.group-find input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.group-find button {
+    flex: none; height: 52px; padding: 0 18px; border: 0; border-radius: 14px; cursor: pointer;
+    background: var(--accent); color: var(--accent-ink); font: inherit; font-size: 16px; font-weight: 650;
+}
+.find-results { margin-top: 10px !important; }
+.find-results .find-empty { grid-column: 1 / -1; padding: 6px 2px; color: var(--muted); font-size: 14px; }
+.list-h2 { margin: 36px 0 12px; font-size: 20px; font-weight: 650; letter-spacing: -.01em; }
+.faculty-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.faculty-cards a {
+    display: flex; flex-direction: column; gap: 4px; height: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: 16px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--text); text-decoration: none;
+}
+.faculty-cards a:hover { background: var(--surface-2); }
+.faculty-cards b { font-size: 20px; font-weight: 700; letter-spacing: .02em; }
+.faculty-cards span { font-size: 14px; font-weight: 550; line-height: 1.3; }
+.faculty-cards small { margin-top: auto; padding-top: 6px; color: var(--muted); font-size: 13px; font-weight: 550; }
+.code-sample { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 12px; }
+.code-sample span { padding: 6px 9px; border-radius: 9px; background: var(--surface); font-size: 18px; font-weight: 700; letter-spacing: .03em; }
+.code-sample span:nth-child(2n) { background: var(--surface-2); color: var(--accent); }
+.code-help ul { margin: 0; padding: 0 0 0 20px; color: var(--muted); font-size: 15px; line-height: 1.7; font-weight: 500; }
+.code-help ul b { color: var(--text); font-weight: 650; }
+.all-groups { margin-top: 32px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); padding: 0 16px; }
+.all-groups summary {
+    list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 0; font-size: 17px; font-weight: 650;
+}
+.all-groups summary::-webkit-details-marker { display: none; }
+.all-groups summary::after {
+    content: ""; width: 10px; height: 10px; margin-right: 4px; border: solid var(--muted); border-width: 0 2.5px 2.5px 0;
+    transform: translateY(-3px) rotate(45deg);
+}
+.all-groups[open] summary::after { transform: translateY(2px) rotate(-135deg); }
+.all-groups[open] { padding-bottom: 16px; }
+.all-groups .faculty-groups:first-of-type { margin-top: 4px; }
+.all-groups .group-links a { background: var(--surface-2); }
 .faculty-groups { margin-top: 28px; scroll-margin-top: 16px; }
 .faculty-groups h2 { margin: 0 0 12px; font-size: 18px; }
 .faculty-groups h2 span { display: block; color: var(--muted); font-size: 13px; font-weight: 500; }
 .group-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
-.group-links a { width: 100%; box-sizing: border-box; }
-.faculty-jump a:hover, .group-links a:hover { background: var(--surface-2); }
+.group-links a {
+    display: inline-flex; align-items: center; width: 100%; box-sizing: border-box; min-height: 36px; padding: 0 12px; border-radius: 10px;
+    background: var(--surface); color: var(--text); font-weight: 600; font-size: 14px; text-decoration: none;
+}
+.group-links a:hover { background: var(--surface-2); }
+@media (max-width: 520px) {
+    .group-find button { padding: 0 14px; }
+}

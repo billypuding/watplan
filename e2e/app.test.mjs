@@ -40,6 +40,22 @@ test('strona główna: wyszukanie grupy otwiera jej plan', { skip }, async () =>
     assert.deepEqual(page.errors, []);
 });
 
+test('lista grup: wyszukiwarka filtruje grupy i otwiera plan, listy są zwinięte', { skip }, async () => {
+    await page.reset();
+    await page.goto(server.base + '/plany');
+    await page.waitFor('!!document.querySelector("#groupFind")');
+    assert.equal(await page.eval(`document.querySelector('.all-groups').open`), false);
+    assert.ok(await page.eval(`document.querySelectorAll('.faculty-cards a').length >= 1`));
+    await page.eval(`(() => { const i = document.querySelector('#groupFind'); i.value = 'ax3'; i.dispatchEvent(new Event('input')); return true; })()`);
+    await page.waitFor(`!document.querySelector('#findResults').hidden && document.querySelector('#findResults a')?.textContent === 'WMT26AX3S1'`);
+    await page.eval(`(() => { const i = document.querySelector('#groupFind'); i.value = 'zzz9'; i.dispatchEvent(new Event('input')); return true; })()`);
+    assert.match(await page.text('#findResults'), /Nie ma grupy/);
+    await page.eval(`(() => { const i = document.querySelector('#groupFind'); i.value = 'wmt26ax3s1'; i.form.requestSubmit(); return true; })()`);
+    await page.waitFor(`location.pathname === '/plan/WMT26AX3S1'`);
+    assert.deepEqual(page.errors, []);
+    assert.deepEqual(page.policyErrors, []);
+});
+
 test('strona główna: licznik semestru z danych planów', { skip }, async () => {
     await page.goto(server.base + '/?landing');
     await page.waitFor(`document.querySelector('[data-sem-weeks]')?.textContent.includes('/ 17')`);

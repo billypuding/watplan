@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"html"
 	"image/png"
 	"net/http"
@@ -188,7 +189,11 @@ func TestAllPlansPage(t *testing.T) {
 		`<link rel="canonical" href="https://watplan.me/plany">`,
 		`<meta property="og:url" content="https://watplan.me/plany">`,
 		`<meta property="og:image" content="https://watplan.me/og.png">`,
-		`<a href="#WCY">WCY</a><a href="#WML">WML</a>`,
+		`<form class="group-find" action="/app" method="get" role="search">`,
+		`<li><a href="/plany/wml"><b>WML</b><span>Wydział Mechatroniki, Uzbrojenia i Lotnictwa</span><small>1 grupa</small></a></li>`,
+		`Jak odczytać nazwę grupy?`,
+		`<summary>Wszystkie grupy (2)</summary>`,
+		`<script src="/plany.js?v=`,
 		`<h2 id="h-WCY"><a href="/plany/wcy">Wydział Cybernetyki</a> <span>WCY, 1 grupa</span></h2>`,
 		`<li><a href="/plan/WMT26AX3S1">WMT26AX3S1</a></li>`,
 		`<li><a href="/plan/WCY26KY4S1">WCY26KY4S1</a></li>`,
@@ -198,7 +203,7 @@ func TestAllPlansPage(t *testing.T) {
 			t.Errorf("/plany bez %q", want)
 		}
 	}
-	for _, unwanted := range []string{`"FAQPage"`, "noindex", "<details"} {
+	for _, unwanted := range []string{`"FAQPage"`, "noindex"} {
 		if strings.Contains(body, unwanted) {
 			t.Errorf("/plany zawiera %q", unwanted)
 		}
@@ -292,6 +297,8 @@ func TestFacultyPages(t *testing.T) {
 		`<meta property="og:url" content="https://watplan.me/plany/wml">`,
 		`<h1 class="faq-h1">Plan zajęć – Wydział Mechatroniki, Uzbrojenia i Lotnictwa (WML)</h1>`,
 		`<li><a href="/plan/WMT26AX3S1">WMT26AX3S1</a></li>`,
+		`<h2>Rocznik 2026 <span>1 grupa</span></h2>`,
+		`placeholder="np. WMT26AX3S1"`,
 		`"@type":"BreadcrumbList"`,
 		`"item":"https://watplan.me/plany/wml"`,
 		"plan lekcji",
@@ -396,5 +403,45 @@ func TestEdgeCacheOnlyForIndexablePages(t *testing.T) {
 		if got := cc(p); strings.Contains(got, "s-maxage") {
 			t.Errorf("%s nie powinno być w cache CDN: %q", p, got)
 		}
+	}
+}
+
+func TestGroupByCohortNewestFirst(t *testing.T) {
+	got := groupByCohort([]string{"WLO24AB1S1", "1PL/21KP", "WLO26FW4S0", "WLO25FW3S0", "WLO26EW1S0"})
+	var labels []string
+	for _, c := range got {
+		labels = append(labels, fmt.Sprintf("%s:%d", c.label, len(c.ids)))
+	}
+	if strings.Join(labels, " ") != "Rocznik 2026:2 Rocznik 2025:1 Rocznik 2024:1 Pozostałe grupy:1" {
+		t.Fatalf("%v", labels)
+	}
+}
+
+func TestOlderCohortsCollapsed(t *testing.T) {
+	var b strings.Builder
+	cohortSections(&b, []string{"WLO26A", "WLO25A", "WLO24A", "WLO23A", "WLO22A", "WLO22B"})
+	out := b.String()
+	open := strings.Index(out, `<details class="all-groups">`)
+	if open < 0 || !strings.Contains(out, "<summary>Starsze roczniki (3 grupy)</summary>") {
+		t.Fatalf("brak zwiniętych starszych roczników:\n%s", out)
+	}
+	if strings.Index(out, "Rocznik 2024") > open || strings.Index(out, "Rocznik 2023") < open {
+		t.Fatal("zła granica zwijania")
+	}
+	var small strings.Builder
+	cohortSections(&small, []string{"WLO26A", "WLO25A"})
+	if strings.Contains(small.String(), "<details") {
+		t.Fatal("bez starszych roczników nie powinno być zwijania")
+	}
+}
+
+func TestFAQPageHasNoListScript(t *testing.T) {
+	h := planPageServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/o-watplan", nil)
+	req.Host = "watplan.me"
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || strings.Contains(rec.Body.String(), "plany.js") || !strings.Contains(rec.Body.String(), `"FAQPage"`) {
+		t.Fatalf("status %d, plany.js w FAQ: %v", rec.Code, strings.Contains(rec.Body.String(), "plany.js"))
 	}
 }
