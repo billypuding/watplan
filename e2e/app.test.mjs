@@ -193,13 +193,30 @@ test('strona grupy z planem z serwera: widać go bez /api/plan, bez przesunięć
     await page.blockURLs([]);
 });
 
+test('tydzień na telefonie: puste kratki, karta zajęć pod tabelą po stuknięciu', { skip }, async () => {
+    await page.viewport(390, 844, true);
+    await page.reset();
+    await page.goto(app('&view=week'));
+    await page.waitFor(`document.querySelectorAll('.wk-cell').length > 0`);
+    assert.ok(await page.eval(`document.querySelectorAll('#view .wk-bg').length > document.querySelectorAll('#view .wk-slot').length`));
+    assert.ok(await page.eval(`!!document.querySelector('.wk-detail .ev-card, .wk-detail .wk-hint')`));
+    const subject = await page.eval(`(() => { const c = document.querySelectorAll('#view .wk-cell')[1]; c.querySelector('.ab').click(); return c.querySelector('.full').textContent; })()`);
+    assert.equal(await page.text('.wk-detail .ev-subject'), subject);
+    assert.ok(await page.eval(`document.querySelectorAll('#view .wk-cell')[1].classList.contains('sel')`));
+    assert.equal(await page.eval(`document.getElementById('seriesModal').open`), false);
+    await page.click('.wk-detail .ev-subject');
+    await page.waitFor(`document.getElementById('seriesModal').open`);
+    assert.deepEqual(page.errors, []);
+    await page.viewport(1366, 900, false);
+});
+
 test('strona grupy na komputerze: tydzień z serwera taki sam jak z JS, bez przesunięć', { skip }, async () => {
     await page.viewport(1366, 900, false);
     await page.reset();
     const html = await (await fetch(server.base + '/plan/WMT26AX3S1')).text();
     const grid = html.split('<div class="week-grid ssr-w')[1].split('<details class="plan-info"')[0];
     const decode = (t) => t.replace(/&#34;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'");
-    const ssrCells = [...grid.matchAll(/<span class="ab">([^<]*)<\/span><span class="full">([^<]*)<\/span><span class="meta sub"><span class="kind"><span class="dot"><\/span>([^<]*)<\/span>/g)].map(m => decode(`${m[1]}|${m[2]}|${m[3]}`));
+    const ssrCells = [...grid.matchAll(/<span class="ab">([^<]*)<\/span><span class="full">([^<]*)<\/span><span class="meta sub"><span class="kind"><span class="dot"><\/span>([^<]*)<span class="cnt">([^<]*)<\/span><\/span>/g)].map(m => decode(`${m[1]}|${m[2]}|${m[3]}${m[4]}`));
     assert.ok(ssrCells.length > 5, 'brak komórek tygodnia w HTML');
     await page.blockURLs(['*/api/plan/*']);
     await page.goto(server.base + '/plan/WMT26AX3S1');

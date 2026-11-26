@@ -45,7 +45,7 @@ const (
 
 var budgets = []budget{
 	{"app.js", metricGzip, 22500},
-	{"style.css", metricGzip, 9500},
+	{"style.css", metricGzip, 9600},
 	{"app.html", metricGzip, 5400},
 	{"sw.js", metricGzip, 1600},
 	{budgetFonts, metricRaw, 32500},

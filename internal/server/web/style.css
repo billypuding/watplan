@@ -297,12 +297,12 @@ a.link-btn { display: inline-flex; align-items: center; text-decoration: none; }
 
 .week-grid {
     display: grid;
-    grid-template-columns: 34px repeat(var(--days, 5), minmax(0, 1fr));
+    grid-template-columns: 38px repeat(var(--days, 5), minmax(0, 1fr));
     grid-auto-rows: minmax(78px, auto);
     grid-template-rows: 44px;
     gap: 4px;
 }
-.wk-line { border-top: 1px dashed var(--line); margin-top: -2px; pointer-events: none; }
+.wk-bg { border-radius: 10px; background: var(--surface); }
 .wk-today { border-radius: 12px; background: color-mix(in srgb, var(--accent) 7%, transparent); margin: -2px; pointer-events: none; }
 .wk-head {
     border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1;
@@ -311,7 +311,10 @@ a.link-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .wk-head .dd { font-size: 14px; font-weight: 650; }
 .wk-head.today { background: var(--accent); color: var(--accent-ink); }
 .week-grid .long { display: none; }
-.wk-time { padding-top: 4px; font-size: 11px; font-weight: 550; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1.2; display: flex; flex-direction: column; }
+.wk-time { padding-top: 6px; font-size: 10.5px; font-weight: 550; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1.2; display: flex; flex-direction: column; }
+.wk-time b { color: var(--text); font-size: 12px; font-weight: 650; }
+.wk-cell .cnt { display: none; }
+.wk-when, .wk-hint { margin: 14px 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
 .wk-slot { display: flex; flex-direction: column; gap: 4px; min-width: 0; position: relative; }
 .wk-cell {
     position: relative; flex: 1; min-width: 0; border-radius: 10px; padding: 6px;
@@ -323,7 +326,7 @@ a.link-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .wk-cell .meta > span { display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wk-cell .meta svg { flex: none; opacity: .8; display: none; }
 .wk-cell .kind .dot { width: 6px; height: 6px; border-radius: 3px; flex: none; display: none; }
-.wk-cell.live { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+.wk-cell.live, .wk-cell.sel { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
 .wk-live { display: none; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; }
 .wk-live .fill { display: block; height: 100%; border-radius: 0; }
 .wk-cell.live .wk-live { display: block; }
@@ -338,10 +341,11 @@ a.link-btn { display: inline-flex; align-items: center; text-decoration: none; }
     .wk-head small.long { display: block; font-size: 12px; font-weight: 550; color: var(--muted); }
     .wk-head.today { background: transparent; color: var(--text); }
     .wk-head.today b.long::after { content: "Dziś"; margin-left: 8px; padding: 2px 8px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 650; vertical-align: 2px; }
-    .wk-time { padding: 10px 6px 0 0; align-items: flex-end; font-size: 13px; }
-    .wk-time b.long { display: block; color: var(--text); font-weight: 650; }
-    .wk-time span.long { display: block; font-size: 12px; }
-    .wk-line { margin-top: -4px; }
+    .wk-time { padding: 10px 6px 0 0; align-items: flex-end; font-size: 12px; }
+    .wk-time b { font-size: 13px; }
+    .wk-bg { border-radius: 12px; background: none; border: 1px dashed var(--line); }
+    .wk-cell .cnt { display: inline; }
+    .wk-detail { display: none; }
     .wk-today { margin: -4px; border-radius: 14px; }
     .wk-cell { padding: 10px 12px 12px; border-radius: 12px; justify-content: flex-start; gap: 6px; }
     .wk-cell .ab { display: none; }
@@ -718,7 +722,6 @@ dialog::backdrop { background: var(--scrim); }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 :root[data-wide] #view > .ssr-d, :root[data-wide] .day-title + .change-chip, :root:not([data-wide]) #view > .ssr-w { display: none; }
 .wd7 { --days: 7; }
-.wc-all { grid-column: 2 / -1; }
 .wc-1 { grid-column: 1; } .wc-2 { grid-column: 2; } .wc-3 { grid-column: 3; } .wc-4 { grid-column: 4; } .wc-5 { grid-column: 5; } .wc-6 { grid-column: 6; } .wc-7 { grid-column: 7; } .wc-8 { grid-column: 8; }
 .wr-s1 { grid-row-start: 1; } .wr-s2 { grid-row-start: 2; } .wr-s3 { grid-row-start: 3; } .wr-s4 { grid-row-start: 4; } .wr-s5 { grid-row-start: 5; } .wr-s6 { grid-row-start: 6; } .wr-s7 { grid-row-start: 7; } .wr-s8 { grid-row-start: 8; } .wr-s9 { grid-row-start: 9; }
 .wr-e2 { grid-row-end: 2; } .wr-e3 { grid-row-end: 3; } .wr-e4 { grid-row-end: 4; } .wr-e5 { grid-row-end: 5; } .wr-e6 { grid-row-end: 6; } .wr-e7 { grid-row-end: 7; } .wr-e8 { grid-row-end: 8; } .wr-e9 { grid-row-end: 9; } .wr-e10 { grid-row-end: 10; }

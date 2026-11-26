@@ -806,7 +806,7 @@ function renderWeek() {
     const today = todayISO();
     const lastRow = maxSlot - minSlot + 2;
     for (let s = minSlot; s <= maxSlot; s++) {
-        grid.append(h('div', { class: 'wk-line', style: `grid-row:${s - minSlot + 2};grid-column:2 / ${days + 2}` }));
+        for (let c = 0; c < days; c++) grid.append(h('div', { class: 'wk-bg', style: `grid-row:${s - minSlot + 2};grid-column:${c + 2}` }));
     }
     const todayCol = dates.slice(0, days).indexOf(today);
     if (todayCol >= 0) grid.append(h('div', { class: 'wk-today', style: `grid-row:1 / ${lastRow + 1};grid-column:${todayCol + 2}` }));
@@ -824,8 +824,7 @@ function renderWeek() {
         const [st, en] = SLOTS[s];
         const [hh, mm] = st.split(':');
         grid.append(h('div', { class: 'wk-time', style: `grid-row:${s - minSlot + 2};grid-column:1` },
-            h('span', { class: 'short' }, hh), h('span', { class: 'short' }, mm),
-            h('b', { class: 'long' }, st), h('span', { class: 'long' }, en)));
+            h('b', null, st), h('span', null, en)));
     }
 
     const buckets = {};
@@ -842,7 +841,26 @@ function renderWeek() {
             list.map(weekCell)));
     }
 
-    view.replaceChildren(nav, grid);
+    weekDetail = h('div', { class: 'wk-detail', 'aria-live': 'polite' });
+    const now = Date.now();
+    const plain = events.filter(e => !e._extra);
+    const pick = plain.find(e => { const [, end] = eventRange(e); return end > now; });
+    if (pick) showWeekDetail(pick, grid.querySelector(`[data-key="${CSS.escape(weekKey(pick))}"]`));
+    else weekDetail.append(h('p', { class: 'wk-hint' }, 'Stuknij zajęcia, żeby zobaczyć szczegóły'));
+    view.replaceChildren(nav, grid, weekDetail);
+}
+
+let weekDetail = null;
+const weekKey = (e) => `${e.date}|${e.start}|${e.subject}|${e.type || ''}`;
+const narrowWeek = () => matchMedia('(max-width: 719px)').matches;
+
+function showWeekDetail(e, cell) {
+    if (!weekDetail) return;
+    for (const c of document.querySelectorAll('.wk-cell.sel')) c.classList.remove('sel');
+    if (cell && narrowWeek()) cell.classList.add('sel');
+    weekDetail.replaceChildren(
+        h('p', { class: 'wk-when' }, `${DAY_NAMES[dayIndex(parseISO(e.date))]}, ${longDate(e.date)}`),
+        h('div', { class: 'ev-row' }, h('div', { class: 'ev-time' }, h('b', null, e.start), h('span', null, e.end)), eventCard(e)));
 }
 
 function emptyWeek(mondayISO) {
@@ -871,16 +889,19 @@ function weekCell(e) {
     const [start, end] = eventRange(e);
     const { main: room, more } = splitRooms(e.room);
     const cell = h('button', {
-        type: 'button', class: 'wk-cell tint', 'data-start': start, 'data-end': end,
+        type: 'button', class: 'wk-cell tint', 'data-start': start, 'data-end': end, 'data-key': weekKey(e),
         title: `${e.start}–${e.end} ${e.subject}${e.room ? ', sala ' + e.room : ''}${e.teacher ? ', ' + e.teacher : ''}`,
-        'aria-label': `${e.subject}, ${typeLabel(e.type)}, ${e.start}–${e.end}${e.room ? ', sala ' + e.room : ''}. Pokaż wszystkie`,
-        onclick: (ev) => openRoomOrSeries(ev, e, '.room'),
+        'aria-label': `${e.subject}, ${typeLabel(e.type)}, ${e.start}–${e.end}${e.room ? ', sala ' + e.room : ''}. Pokaż szczegóły`,
+        onclick: (ev) => {
+            if (narrowWeek() && !ev.target.closest('.room')) showWeekDetail(e, ev.currentTarget);
+            else openRoomOrSeries(ev, e, '.room');
+        },
     },
         h('span', { class: 'time sub' }, `${e.start}–${e.end}`),
         h('span', { class: 'ab' }, abbreviate(e.subject)),
         h('span', { class: 'full' }, e.subject),
         h('span', { class: 'meta sub' },
-            h('span', { class: 'kind' }, h('span', { class: 'dot' }), `${typeShort(e.type)} ${e._n}/${e._total}`),
+            h('span', { class: 'kind' }, h('span', { class: 'dot' }), typeShort(e.type), h('span', { class: 'cnt' }, ` ${e._n}/${e._total}`)),
             room ? h('span', { class: MAP_BUILDINGS.has(roomBuilding(e.room)) ? 'room on-map' : 'room' }, svg(ICON_BUILDING, 13), room, more ? ` +${more}` : null) : null,
             e.teacher ? h('span', { class: 'teacher' }, svg(ICON_USER, 13), e.teacher) : null),
         h('span', { class: 'wk-live' }, h('span', { class: 'fill' })),

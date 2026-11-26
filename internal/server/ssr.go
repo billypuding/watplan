@@ -373,7 +373,9 @@ func ssrWeekView(selected, today string, byDate map[string][]ssrEvent, weeks []s
 	b.WriteString(`<div class="` + grid + `">`)
 	lastRow := maxSlot - minSlot + 2
 	for s := minSlot; s <= maxSlot; s++ {
-		fmt.Fprintf(&b, `<div class="wk-line wr-s%d wc-all"></div>`, s-minSlot+2)
+		for c := 0; c < days; c++ {
+			fmt.Fprintf(&b, `<div class="wk-bg wr-s%d wc-%d"></div>`, s-minSlot+2, c+2)
+		}
 	}
 	for i := 0; i < days; i++ {
 		if dates[i] == today {
@@ -396,7 +398,7 @@ func ssrWeekView(selected, today string, byDate map[string][]ssrEvent, weeks []s
 	}
 	for s := minSlot; s <= maxSlot; s++ {
 		st, en := ssrSlots[s][0], ssrSlots[s][1]
-		fmt.Fprintf(&b, `<div class="wk-time wr-s%d wc-1"><span class="short">%s</span><span class="short">%s</span><b class="long">%s</b><span class="long">%s</span></div>`, s-minSlot+2, st[:2], st[3:], st, en)
+		fmt.Fprintf(&b, `<div class="wk-time wr-s%d wc-1"><b>%s</b><span>%s</span></div>`, s-minSlot+2, st, en)
 	}
 	type bucket struct {
 		key  string
@@ -440,7 +442,7 @@ func ssrWeekView(selected, today string, byDate map[string][]ssrEvent, weeks []s
 			if e.Teacher != "" {
 				title += ", " + e.Teacher
 			}
-			fmt.Fprintf(&b, `<button type="button" class="%s" title="%s" aria-label="%s"><span class="time sub">%s–%s</span><span class="ab">%s</span><span class="full">%s</span><span class="meta sub"><span class="kind"><span class="dot"></span>%s %d/%d</span>`,
+			fmt.Fprintf(&b, `<button type="button" class="%s" title="%s" aria-label="%s"><span class="time sub">%s–%s</span><span class="ab">%s</span><span class="full">%s</span><span class="meta sub"><span class="kind"><span class="dot"></span>%s<span class="cnt"> %d/%d</span></span>`,
 				cls, esc(title), esc(label+". Pokaż wszystkie"), esc(e.Start), esc(e.End), esc(ssrAbbreviate(e.Subject)), esc(e.Subject), esc(ssrTypeShort(e.Type)), e.n, e.total)
 			if room != "" {
 				b.WriteString(`<span class="room">` + ssrIconBuilding13 + esc(room))

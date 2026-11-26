@@ -136,7 +136,8 @@ func TestSSRWeekView(t *testing.T) {
 		`<div class="week-grid ssr-w">`,
 		`<div class="wk-today wr-s1 wr-e`,
 		`<div class="wk-head today wr-s1 wc-5"><b class="short">Cz</b><b class="long">Czwartek</b>`,
-		`<div class="wk-time wr-s2 wc-1"><span class="short">08</span><span class="short">00</span><b class="long">08:00</b><span class="long">09:35</span></div>`,
+		`<div class="wk-time wr-s2 wc-1"><b>08:00</b><span>09:35</span></div>`,
+		`<div class="wk-bg wr-s2 wc-2"></div>`,
 		`<button type="button" class="wk-cell tint" title="13:30–15:05 Matematyka 2`,
 	} {
 		if !strings.Contains(page.view, want) {
